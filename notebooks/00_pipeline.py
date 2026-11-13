@@ -277,8 +277,13 @@ def calcular_indice(gdf, pesos=PESOS):
     g["c_acceso_salud"] = normalizar(g["dist_salud_m"])
     g["c_bloqueo_via"] = g["puede_bloquear_via"].astype(float)
     g["indice_riesgo"] = indice_riesgo(g, pesos)
-    q = g["indice_riesgo"].rank(pct=True)
+    # El ranking de inspección es de edificios con dato satelital. Los predios sin dato y los sin construcción
+    # registrada (NPISOS = 0) quedan fuera del percentil, con su propia categoría para verificar en terreno.
+    lote = g["sin_construccion_registrada"] if "sin_construccion_registrada" in g else False
+    g["en_ranking"] = ~g["sin_dato_satelital"] & ~lote
+    q = g.loc[g["en_ranking"], "indice_riesgo"].rank(pct=True).reindex(g.index)
     g["prioridad"] = np.select([q > 0.95, q > 0.85, q > 0.60], ["Muy alta", "Alta", "Media"], "Baja")
+    g.loc[g["en_ranking"].eq(False) & lote, "prioridad"] = "Sin construcción registrada: verificar"
     g.loc[g["sin_dato_satelital"], "prioridad"] = "Sin dato: verificar en terreno"
     return g
 

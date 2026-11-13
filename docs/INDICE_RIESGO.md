@@ -13,7 +13,7 @@ El daño satelital no se asocia con ninguna característica conocida: ni la edad
 
 ## Explicación en 30 segundos (para el jurado)
 
-> "Cada edificio recibe un puntaje de 0 a 1. El satélite dice si se ve dañado, y eso pesa más, pero no basta: el daño satelital no sigue ningún patrón, así que le sumamos lo que sí sabemos de cada edificio. Del modelo de exposición de GEM tomamos qué tan frágil es su tipo de construcción y cuánta gente duerme ahí; de la microzonificación, cuánto amplifica su suelo y si puede licuarse; y de OpenStreetMap, qué tan lejos está del hospital y si sus escombros tapan una vía. Con siete combinaciones de pesos distintas, el ranking se mantiene correlacionado entre 0,71 y 0,97."
+> "Cada edificio recibe un puntaje de 0 a 1. El satélite dice si se ve dañado, y eso pesa más, pero no basta: el daño satelital no sigue ningún patrón, así que le sumamos lo que sí sabemos de cada edificio. Del modelo de exposición de GEM tomamos qué tan frágil es su tipo de construcción y cuánta gente duerme ahí; de la microzonificación, cuánto amplifica su suelo y si puede licuarse; y de OpenStreetMap, qué tan lejos está del hospital y si sus escombros tapan una vía. Con siete combinaciones de pesos distintas, el ranking se mantiene correlacionado entre 0,76 y 0,97."
 
 ## Componentes
 
@@ -35,11 +35,14 @@ Todos de 0 a 1 (1 = más urgente). Para que un valor atípico no aplaste al rest
 
 | Prioridad | Regla | Edificios |
 |---|---|---|
-| Muy alta | 5 % de índice más alto | 253 |
-| Alta | siguiente 10 % | 466 |
-| Media | siguiente 25 % | 1.125 |
-| Baja | resto | 2.867 |
+| Muy alta | 5 % de índice más alto | 179 |
+| Alta | siguiente 10 % | 357 |
+| Media | siguiente 25 % | 892 |
+| Baja | resto | 2.141 |
 | Sin dato: verificar en terreno | sin información satelital | 435 |
+| Sin construcción registrada: verificar | `NPISOS` = 0 con dato satelital (342 con daño visible) | 1.142 |
+
+Los percentiles se calculan solo entre los 3.569 edificios con construcción registrada y dato satelital (`en_ranking`). Los lotes quedan fuera del ranking de edificios, como pidió la organización, pero visibles en el mapa con su propia categoría.
 
 Se usan percentiles (no cortes fijos) porque el objetivo es ordenar a quién inspeccionar primero con recursos limitados.
 
@@ -51,14 +54,14 @@ Se usan percentiles (no cortes fijos) porque el objetivo es ordenar a quién ins
 
 | Escenario | Spearman vs. base | Top 50 que se mantiene |
 |---|---|---|
-| Solo datos oficiales (daño 60 %, altura 40 %) | 0,714 | 8 % |
-| Sin fuentes GEM (sin vulnerabilidad ni suelo) | 0,852 | 50 % |
-| Sin suelo (borrador de la mañana) | 0,857 | 50 % |
-| Pesos iguales | 0,922 | 62 % |
-| Énfasis en servicios | 0,915 | 66 % |
-| Énfasis en población | 0,970 | 48 % |
+| Solo datos oficiales (daño 60 %, altura 40 %) | 0,764 | 40 % |
+| Sin fuentes GEM (sin vulnerabilidad ni suelo) | 0,876 | 64 % |
+| Sin suelo (borrador de la mañana) | 0,878 | 66 % |
+| Pesos iguales | 0,918 | 64 % |
+| Énfasis en servicios | 0,918 | 72 % |
+| Énfasis en población | 0,972 | 66 % |
 
-**Lectura:** el orden general es estable (Spearman ≥ 0,84 en todos los escenarios con fuentes externas). **Lo que más cambia el top 50 es quitar las fuentes externas:** con solo los datos oficiales, solo el 8 % del top se mantiene. Esa es la prueba de que las fuentes externas cambian la respuesta, no solo la decoran.
+**Lectura:** el orden general es estable (Spearman ≥ 0,87 en todos los escenarios con fuentes externas; sensibilidad calculada sobre los edificios en ranking). **Lo que más cambia el top 50 es quitar las fuentes externas:** con solo los datos oficiales, solo el 40 % del top se mantiene. Esa es la prueba de que las fuentes externas cambian la respuesta, no solo la decoran.
 
 ## Limitaciones a decir en voz alta
 

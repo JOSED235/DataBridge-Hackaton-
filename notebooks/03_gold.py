@@ -35,7 +35,7 @@ g["prioridad"].value_counts()
 
 # COMMAND ----------
 
-sens = sensibilidad(g, ESCENARIOS_SENSIBILIDAD)
+sens = sensibilidad(g[g["en_ranking"]], ESCENARIOS_SENSIBILIDAD)
 spark.createDataFrame(sens).write.mode("overwrite").option("overwriteSchema", True).saveAsTable(tabla("gold", "sensibilidad"))
 sens
 

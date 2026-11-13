@@ -3,7 +3,7 @@
 **Para:** marcelasabogue@ieee.org
 **Asunto:** `databridgehack: icesixuao`
 
-Cifras: corrida con los datos oficiales del 13-nov-2026, 11:45 (WKT a precisión completa) (después de tratar `NPISOS` = 0 como predio sin construcción registrada y de hacer determinista el cruce con GEM). Cada una se rastrea a una tabla gold (indicada entre corchetes en las notas de cada sección; las notas no van en el correo). Antes de enviar, confirmar que las tablas gold de Databricks dan lo mismo.
+Cifras: corrida con los datos oficiales del 13-nov-2026, 11:55 (WKT a precisión completa; lotes fuera del ranking) (después de tratar `NPISOS` = 0 como predio sin construcción registrada y de hacer determinista el cruce con GEM). Cada una se rastrea a una tabla gold (indicada entre corchetes en las notas de cada sección; las notas no van en el correo). Antes de enviar, confirmar que las tablas gold de Databricks dan lo mismo.
 
 Checklist del correo:
 
@@ -17,11 +17,11 @@ Checklist del correo:
 
 ## 2. Decisiones en silver y gold (≤ 200 palabras)
 
-**Bronze:** copia fiel del GeoJSON (5.146 edificios, 21 columnas) como texto, con los nulos y espacios tal como llegaron, más 15 capas externas sin modificar.
+**Bronze:** copia fiel del GeoJSON (5.146 edificios, 21 columnas) como texto, con nulos y espacios tal como llegaron, más 15 capas externas.
 
-**Silver:** usamos `OBJECTID` como llave, porque `ID_PREDIO` tiene 1.509 nulos. Convertimos los vacíos y los espacios en nulos. Los 1.234 predios con `NPISOS` = 0 no tienen construcción registrada en catastro (organizadores): los conservamos, porque el satélite ve daño en 342, pero sin pisos. Los 11 `NPISOS` nulos se completaron con el modelo de exposición de GEM. Reparamos los 4 polígonos inválidos de la fuente, guardando la geometría sin redondear para no crear más, y calculamos el área en m² (EPSG:9377), porque `Shape__Area` viene en grados. No borramos los 435 edificios sin datos satelitales: quedan marcados para verificar en terreno. Como el daño viene por categoría, lo convertimos en severidad: escombros 1,0; techo desaparecido 0,7; sin cambio aparente 0,1, porque no significa sin daño. Cruzamos cada edificio con GEM, el ShakeMap del USGS y OpenStreetMap.
+**Silver:** llave `OBJECTID` (`ID_PREDIO` tiene 1.509 nulos); vacíos y espacios pasan a nulo. Los 1.234 predios con `NPISOS` = 0 no tienen construcción registrada (organizadores): se conservan sin pisos, porque el satélite ve daño en 342. Los 11 `NPISOS` nulos se completaron con GEM. Reparamos los 4 polígonos inválidos de la fuente sin redondear la geometría, y calculamos el área en m² (EPSG:9377), porque `Shape__Area` viene en grados. Los 435 edificios sin dato satelital no se borran. El daño se convierte en severidad: escombros 1,0; techo desaparecido 0,7; sin cambio aparente 0,1 (no significa sin daño). Cruzamos cada edificio con GEM (por cercanía a ≤ 15 m, no por llave catastral), el ShakeMap del USGS y OpenStreetMap.
 
-**Gold:** un índice de 0 a 1 por edificio que suma daño (25 %), vulnerabilidad (20 %), ocupantes (15 %), suelo, altura, distancia a salud y bloqueo de vías (10 % cada uno), con prioridades por percentil. Por comuna usamos el percentil 90. Probamos siete combinaciones de pesos.
+**Gold:** índice de 0 a 1 por edificio: daño 25 %, vulnerabilidad 20 %, ocupantes 15 %, y suelo, altura, salud y vías 10 % cada uno. Prioridades por percentil entre edificios con dato; sin dato y lotes tienen categoría propia. Comunas por percentil 90. Siete combinaciones de pesos probadas.
 
 > Notas: [`silver_icesixuao_predios`: `pisos_fuente`, `geom_reparada`, `area_m2`, `sin_dato_satelital`], [`gold_icesixuao_sensibilidad`].
 
@@ -47,15 +47,15 @@ Primero probamos qué explica el daño. Ni la edad de construcción, ni el estra
 
 Por eso los factores que reducen el impacto combinan lo observado con lo conocido:
 
-1. **Inspeccionar primero donde coinciden daño, fragilidad y gente.** El índice deja 253 edificios en prioridad muy alta: el 99 % tiene daño visible, el 64 % se construyó antes del código sísmico de 1984 y en los que tienen construcción registrada duermen 2.945 personas. Sin las fuentes externas, solo el 8 % de los 50 primeros se mantendría.
+1. **Inspeccionar primero donde coinciden daño, fragilidad y gente.** El índice deja 179 edificios en prioridad muy alta: el 99 % tiene daño visible, el 69 % se construyó antes del código sísmico de 1984 y allí duermen 2.945 personas. Sin las fuentes externas, solo el 40 % de los 50 primeros se mantendría.
 2. **Empezar por la comuna 3:** dos de cada tres de sus edificios son anteriores a 1985 y su vulnerabilidad media es la más alta. La comuna 19 concentra el mayor número de personas en edificios dañados.
-3. **Verificar en terreno los 435 edificios sin dato**, en lugar de suponer que están bien.
+3. **Verificar en terreno los 435 edificios sin dato y los 342 lotes con daño visible**, en lugar de suponer que están bien.
 4. **Proteger los servicios:** revisar primero los edificios dañados cercanos a centros de salud y los institucionales, y despejar las vías principales que sus escombros podrían bloquear.
 5. **A mediano plazo, reforzar el parque anterior a 1985,** como hicieron Japón y Chile. Esa es la única medida que actúa sobre la vulnerabilidad, el factor que más cambia la prioridad.
 
 **Límites:** los datos son inferencias satelitales, no inspecciones. La vulnerabilidad y los ocupantes vienen de un modelo (catastro 2021, censo 2018). El índice sirve para priorizar, no para declarar un edificio seguro o inseguro.
 
-> Notas: [`gold_icesixuao_predios`], [`gold_icesixuao_comunas`: `ocupantes_en_edif_con_danio`, `pct_antes_1985`], [`gold_icesixuao_factores`], [`gold_icesixuao_sensibilidad`: `solo_datos_oficiales` 8 %].
+> Notas: [`gold_icesixuao_predios`], [`gold_icesixuao_comunas`: `ocupantes_en_edif_con_danio`, `pct_antes_1985`], [`gold_icesixuao_factores`], [`gold_icesixuao_sensibilidad`: `solo_datos_oficiales` 40 %].
 
 ---
 
@@ -97,7 +97,7 @@ Abajo, una línea por decisión clave con su porqué.
 
 ### El pantallazo del mapa (debe entenderse en 30 segundos)
 
-- Edificios coloreados por **prioridad**: rojo muy alta, naranja alta, gris el resto, morado sin dato.
+- Edificios coloreados por **prioridad**: rojo muy alta, naranja alta, gris el resto, morado sin dato, azul sin construcción registrada.
 - Comunas con borde y su puesto en el ranking: 3, 9, 18, 10, 20, 19, 17.
 - Centros de salud como puntos verdes y vías principales en blanco.
 - Título en la imagen: "Dónde inspeccionar primero ante la próxima réplica".

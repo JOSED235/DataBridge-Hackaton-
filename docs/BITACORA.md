@@ -127,6 +127,11 @@
 **Por qué:** Las cifras del correo deben coincidir con las tablas gold de Databricks.
 **Archivos:** `notebooks/00_utils_espacial.py`, `docs/ENTREGA.md`, `docs/INDICE_RIESGO.md`
 
+### 2026-11-13 11:55 · José David
+**Qué:** Se acordaron las dos diferencias con el EDA de bronce. (1) Los 1.234 lotes (`NPISOS` = 0) salen del ranking de inspección de edificios: los percentiles se calculan solo entre los 3.569 edificios con construcción registrada y dato satelital (`en_ranking`), y los lotes con dato quedan en la categoría "Sin construcción registrada: verificar" (1.142, 342 con daño visible), visible en el mapa. La sensibilidad también se calcula solo sobre el ranking. (2) Se mantiene el cruce con GEM, documentado como cruce por cercanía y no por llave catastral, con la regla determinista de empates. Nuevas cifras: muy alta 179 (99 % con daño, 69 % anteriores a 1985, 2.945 ocupantes); con solo los datos oficiales, el top 50 se mantiene en 40 %; ranking de comunas sin cambio.
+**Por qué:** Respetar la definición de lote de la organización sin esconder los predios donde el satélite ve daño, y conservar la fuente que sostiene la vulnerabilidad y la población en la respuesta.
+**Archivos:** `notebooks/00_pipeline.py`, `notebooks/03_gold.py`, `scripts/correr_local.py`, `scripts/simular_pipeline.py`, `visor/app.js`, `docs/ENTREGA.md`, `docs/INDICE_RIESGO.md`, `docs/FUENTES.md`
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |
@@ -162,3 +167,5 @@
 | 2026-11-13 11:29 | Consolidar los catálogos USGS por ID y separar observaciones instrumentales de macroseísmicas | Los 68 eventos del extracto actualizado ya están en el de 76; stationlist tiene 1 instrumento y 32 observaciones macroseísmicas | Sumar archivos como eventos independientes; llamar réplicas a todo evento posterior; llamar validación independiente a reproducir insumos de ShakeMap | Mrsasayo |
 | 2026-11-13 11:40 | `NPISOS` = 0 = predio sin construcción registrada: sin pisos, fuera del promedio de altura, pero dentro del análisis de daño. **Reemplaza** la decisión de las 10:30 y la de tomar esos pisos de GEM | Aclaración de los organizadores, verificada con `EDIFPRED`. Se conservan porque el satélite ve daño en 342 y GEM (catastro 2021) tiene edificio en casi todos: puede haber construcción no registrada | Excluirlos (perdería 342 predios con daño visible), imputar pisos (contradice la definición) | José David |
 | 2026-11-13 11:40 | Empates en el cruce con GEM: sumar ocupantes y valor; atributos del registro con más ocupantes, desempate por `id` | Un predio puede contener varios edificios GEM. "El primero" no era reproducible entre local y Databricks | Tomar el primero (no determinista), promediar (subestima ocupantes) | José David |
+| 2026-11-13 11:55 | Lotes (`NPISOS` = 0) fuera del ranking de inspección, con categoría propia "Sin construcción registrada: verificar" | Une la regla del EDA (no son edificios para el ranking) con la evidencia de daño satelital en 342 de ellos | Dejarlos en el ranking sin altura (decisión de las 11:40), excluirlos también del mapa | José David y Mrsasayo |
+| 2026-11-13 11:55 | Mantener el cruce con GEM, declarado como cruce por cercanía y no por llave catastral | Los empates ya tienen una regla determinista; sin GEM se pierden la vulnerabilidad y los ocupantes | Dejar GEM condicionado y fuera de silver (propuesta del EDA) | José David y Mrsasayo |

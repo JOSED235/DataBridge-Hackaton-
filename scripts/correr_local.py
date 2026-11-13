@@ -30,7 +30,7 @@ reporte["geometrias_reparadas"] = int(g["geom_reparada"].sum())
 reporte["comuna_completada_con_osm"] = int(silver["comuna"].isna().sum())
 g = calcular_indice(g)
 gc = gold_comunas(g, capas["comunas"], capas["salud"], bomberos)
-sens = sensibilidad(g, ESCENARIOS_SENSIBILIDAD)
+sens = sensibilidad(g[g["en_ranking"]], ESCENARIOS_SENSIBILIDAD)
 
 assert reporte["valores_estado_sin_mapear"] == [], reporte["valores_estado_sin_mapear"]
 assert g["indice_riesgo"].between(0, 1).all() and g["comuna"].notna().all()

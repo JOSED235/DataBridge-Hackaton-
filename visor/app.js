@@ -9,6 +9,7 @@ const ESTILO_OFFLINE = { version: 8, sources: {}, layers: [{ id: 'fondo', type: 
 const PRIORIDAD = {
   'Muy alta': [255, 59, 48], 'Alta': [255, 149, 0], 'Media': [255, 214, 10],
   'Baja': [70, 78, 92], 'Sin dato: verificar en terreno': [150, 120, 200],
+  'Sin construcción registrada: verificar': [90, 170, 220],
 };
 const RAMPA = [[38, 70, 83], [42, 157, 143], [233, 196, 106], [244, 162, 97], [231, 111, 81], [200, 30, 30]];
 

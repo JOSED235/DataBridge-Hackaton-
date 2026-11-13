@@ -54,6 +54,7 @@ gc = gold_comunas(g, capas["comunas"], capas["salud"], bomberos)
 assert g["comuna"].notna().mean() > 0.99, "la unión espacial no completó las comunas"
 assert g["indice_riesgo"].between(0, 1).all()
 assert (g.loc[g["sin_dato_satelital"], "prioridad"] == "Sin dato: verificar en terreno").all()
+assert (g.loc[g["en_ranking"], "prioridad"].isin(["Muy alta", "Alta", "Media", "Baja"])).all()
 assert len(gc) == 22
 assert g["amplif_suelo"].between(0.3, 4).all() and (g["microzona"] != "noaf").mean() > 0.8, "cruce con microzonas falló"
 try:  # misma conversión Arrow que hace spark.createDataFrame
@@ -64,7 +65,7 @@ except ImportError:
 
 print(g["prioridad"].value_counts().to_string())
 print(gc[["comuna", "n_edificios", "pct_alta_escombros", "indice_p90", "n_salud", "ranking"]].head(8).to_string(index=False))
-print(sensibilidad(g, ESCENARIOS_SENSIBILIDAD).to_string(index=False))
+print(sensibilidad(g[g["en_ranking"]], ESCENARIOS_SENSIBILIDAD).to_string(index=False))
 
 # --- Datos de muestra para el visor --------------------------------------------------------------
 VIS = RAIZ / "visor" / "data"
