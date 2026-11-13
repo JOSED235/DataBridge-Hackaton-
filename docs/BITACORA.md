@@ -273,6 +273,11 @@
 **Por qué:** Compartir con la organización y el jurado un tablero completo sin depender de acceso al workspace de Databricks.
 **Archivos:** `scripts/generar_dashboard.py`, `scripts/generar_documento.py`, `visor/index.html`, `docs/ENTREGA.md`, `README.md`, `docs/BITACORA.md`; rama `gh-pages` (`66fba90`).
 
+### 2026-11-13 16:50 · José David
+**Qué:** Se retiró del dashboard publicado la lista de pendientes (DANE/UNGRD, capa vectorial de microzonificación, comparación entre ciudades, validación en terreno); la sección queda como "fuentes tomadas y descartadas". La fila sobre la pendiente del terreno de GEM se renombró para no confundirla con un pendiente de trabajo. Publicado en `gh-pages` (`6d90ab3`).
+**Por qué:** El dashboard es parte de la entrega y debe mostrar lo que se hizo y por qué; los trabajos futuros quedan en `docs/FUENTES.md` y en la bitácora.
+**Archivos:** `scripts/generar_dashboard.py`, `docs/BITACORA.md`; rama `gh-pages`.
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |

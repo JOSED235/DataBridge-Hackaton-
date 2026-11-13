@@ -176,16 +176,9 @@ def main():
         ("NPISOS = 0 como error de carga", "99,5 % tienen EDIFPRED vacío: son lotes sin construcción registrada", "se conservan 1.234 lotes, fuera del ranking"),
         ("Deduplicar contornos repetidos", "9 grupos con categorías distintas: deduplicar inventaría o pierde", "se marcan y se documentan, sin borrar"),
         ("Amplificación faltante → factor 1", "inventaría respuesta del suelo", "queda NULL: una capa vacía produce distancia nula, nunca cero"),
-        ("Pendiente GEM cuantitativa", "unidad del metadato sin confirmar", "solo se conserva como atributo, sin inferencias"),
+        ("Pendiente del terreno (GEM) como valor numérico", "unidad del metadato sin confirmar", "solo se conserva como atributo, sin inferencias"),
     ]
     filas_descartadas = "".join(f'<tr><td>{a}</td><td>{b}</td><td>{c}</td></tr>' for a, b, c in descartadas)
-    pendientes = [
-        "Población por manzana del DANE y cifras UNGRD materializadas (hoy citadas solo como contexto)",
-        "Capa vectorial oficial de microzonificación (hoy grilla GEM TREQ de ~750 m)",
-        "Datasets comparables de otras ciudades: el catálogo existe, la comparación no está implementada",
-        "Validación en terreno de una muestra: el satélite prioriza hipótesis, no certifica edificios",
-    ]
-    filas_pendientes = "".join(f"<li>{p}</li>" for p in pendientes)
 
     n_plata = len(reporte_plata["tablas"])
     n_oro = len(reporte_oro["tablas"])
@@ -351,7 +344,7 @@ la altura no marca tasa de daño medible en esta muestra.</p></div></div>
 si una llave se repite. Escrituras Delta individuales: la corrida incompleta no autoriza exportar el mapa.</p></div></div>
 </div>
 
-<h2>El abanico de datos: tomadas, descartadas y pendientes</h2>
+<h2>El abanico de datos: fuentes tomadas y descartadas</h2>
 <div class="panel">
 <p style="margin:4px 0 8px"><b>Tomadas</b> — 16 fuentes materializadas en bronze (todo como texto y con huella
 SHA-256), tipadas y cruzadas en silver:</p>
@@ -364,9 +357,7 @@ bitácora de decisiones:</p>
 <table>
 <tr><th>Se evaluó</th><th>Por qué no entró como estaba</th><th>Qué se hizo en su lugar</th></tr>
 {filas_descartadas}
-</table>
-<p style="margin:14px 0 8px"><b>Pendientes (no inventadas):</b></p><ul style="margin:0 0 4px 18px;padding:0">{filas_pendientes}</ul>
-</div>
+</table></div>
 
 <p class="pie">Cifras rastreables: gold_icesixuao_{{predios, comunas, afectaciones, factores, resumen_sensibilidad,
 fuentes, parametros, calidad}} · silver_icesixuao_* (16 tablas) · reporte.json de cada capa. Generado por
