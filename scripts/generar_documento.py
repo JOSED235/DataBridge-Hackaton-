@@ -93,7 +93,7 @@ def main():
     props.title = "DataBridge Hack 2026, equipo icesixuao"
     props.comments = props.keywords = props.subject = props.category = ""
 
-    parrafo(doc, "DataBridge Hack 2026. Equipo icesixuao.")
+    parrafo(doc, "DataBridge Hack 2026. Equipo icesixuao: Nicolas Zapato (Universidad Autónoma de Occidente) y José David Rodríguez Pinilla (Universidad Icesi).")
     parrafo(doc, "Pregunta: ¿qué afectaciones generó el sismo del 10 de agosto en Cali y qué factores contribuyen a reducir "
                  "el impacto de las réplicas sobre la población, la infraestructura y los servicios urbanos?")
     parrafo(doc, "Se adjunta la presentación de 3 diapositivas.")

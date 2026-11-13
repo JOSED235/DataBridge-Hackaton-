@@ -83,9 +83,13 @@ def texto(slide, x, y, w, h, parrafos, ancla=MSO_ANCHOR.TOP, margen=0.0, nombre=
     return tb
 
 
+EQUIPO = "Equipo icesixuao · Nicolas Zapato (UAO) · José David Rodríguez Pinilla (Icesi)"
+
+
 def titulo(slide, kicker, frase):
     texto(slide, 0.5, 0.32, 12.3, 0.3, [(kicker.upper(), {"tam": 12, "negrita": True, "color": ACENTO})], nombre="Kicker")
     texto(slide, 0.5, 0.6, 12.3, 0.75, [(frase, {"tam": 30, "negrita": True})], nombre="Título")
+    texto(slide, 6.3, 0.32, 6.53, 0.3, [(EQUIPO, {"tam": 10, "color": TENUE, "align": PP_ALIGN.RIGHT})], nombre="Equipo")
 
 
 def pie(slide, t):
@@ -253,8 +257,8 @@ bloques = [
         [("Rótulo = comuna y su puesto: ", {"negrita": True}), ("C3 · #1 es la más urgente", {})],
         [("Puntos verdes = salud; azules = bomberos y policía; halos = concentración de riesgo; líneas = vías principales", {"negrita": True})],
     ]),
-    ("POR QUÉ ASÍ", [
-        [("Une las dos respuestas en una vista: dónde hubo daño y a quién inspeccionar primero, junto a los servicios que una réplica pondría en riesgo", {})],
+    ("CÓMO AYUDA A RESPONDER", [
+        [("Afectaciones: dónde hubo daño y cuánta ocupación modelada hay en él. Qué reduce el impacto: a quién inspeccionar primero y qué salud y vías proteger ante la réplica", {})],
     ]),
     ("CÓMO SE HIZO", [
         [("gold_icesixuao_predios y _comunas → GeoJSON → visor propio con MapLibre GL + deck.gl. Cada edificio muestra su ficha y motivos; la lista filtrada por comuna y cola de trabajo se descarga en Excel para las brigadas", {})],
@@ -264,7 +268,7 @@ yb = 1.55
 for cab, items in bloques:
     texto(s3, 9.35, yb, 3.5, 0.3, [(cab, {"tam": 11, "negrita": True, "color": ACENTO})])
     tb = texto(s3, 9.35, yb + 0.3, 3.5, 1.5, [(it, {"tam": 12, "despues": 4, "color": "D5D8DD"}) for it in items])
-    yb += {"QUÉ MUESTRA": 2.3, "POR QUÉ ASÍ": 1.35}.get(cab, 0)
+    yb += {"QUÉ MUESTRA": 2.3, "CÓMO AYUDA A RESPONDER": 1.35}.get(cab, 0)
 texto(s3, 0.5, 6.5, 8.6, 0.45, [([("Lectura en 30 segundos: ", {"negrita": True, "color": ACENTO}),
                                    ("los puntos rojos se concentran en las comunas 3 y 9 (puestos 1 y 2) y en el centro de la 19, con la mayor ocupación modelada en edificios dañados.", {})],
                                   {"tam": 12.5})])

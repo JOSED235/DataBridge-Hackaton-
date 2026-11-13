@@ -62,13 +62,13 @@ Los factores que reducen el impacto combinan lo observado con lo conocido:
 
 ## 4. Fuentes externas
 
-1. **GEM Foundation, proyecto TREQ: modelo de exposición de Cali** (github.com/gem/treq-riesgo-urbano, CC BY-SA 4.0). Por edificio: año de construcción, estrato, uso, pisos, ocupantes y vulnerabilidad de la tipología. Se cruzó con el 98,9 % de los edificios. Aportó la población en edificios dañados, la vulnerabilidad del índice y los pisos de los 11 registros nulos.
-2. **GEM TREQ: microzonificación sísmica INGEOMINAS-DAGMA 2005, funciones de amplificación y susceptibilidad a licuación** (mismo repositorio). Aportó el componente de suelo del índice.
-3. **USGS ShakeMap v11 del sismo us6000tjl2** (earthquake.usgs.gov). Aportó la intensidad y la aceleración recibidas por cada edificio.
-4. **Servicio Geológico Colombiano, acelerógrafo RAC2C, y USGS "Did You Feel It?"** (estaciones del ShakeMap). Validaron el ShakeMap en Cali.
-5. **USGS, catálogo de sismos ComCat** (API FDSN). Aportó las 67 réplicas hasta el 3 de noviembre.
-6. **OpenStreetMap** (Overpass API y extracto de Geofabrik, ODbL). Aportó salud, bomberos, vías principales, comunas y barrios; distancia a salud y posible bloqueo de vías.
-7. **Pontificia Universidad Javeriana Cali, IEI: "Seis clústeres de afectación del sismo del 10 de agosto de 2026"** (javerianacali.edu.co, agosto de 2026). Validación externa: ubica el daño de Cali en edificios de 3 a 6 pisos anteriores a 1984 y documenta que el satélite de Copernicus (EMSR916) vio 21 edificaciones frente a 1.538 reportes locales.
+1. **GEM Foundation, proyecto TREQ: modelo de exposición de Cali** (https://github.com/gem/treq-riesgo-urbano/tree/main/Cali/Exposicion, CC BY-SA 4.0). Por edificio: año de construcción, estrato, uso, pisos, ocupantes y vulnerabilidad de la tipología. Se cruzó con el 98,9 % de los edificios. Aportó la población en edificios dañados, la vulnerabilidad del índice y los pisos de los 11 registros nulos.
+2. **GEM TREQ: microzonificación sísmica INGEOMINAS-DAGMA 2005, funciones de amplificación y susceptibilidad a licuación** (https://github.com/gem/treq-riesgo-urbano/tree/main/Cali/Condiciones_Sitio). Aportó el componente de suelo del índice.
+3. **USGS ShakeMap v11 del sismo us6000tjl2** (https://earthquake.usgs.gov/earthquakes/eventpage/us6000tjl2/shakemap). Aportó la intensidad y la aceleración recibidas por cada edificio.
+4. **Servicio Geológico Colombiano, acelerógrafo RAC2C, y USGS "Did You Feel It?"** (https://earthquake.usgs.gov/earthquakes/eventpage/us6000tjl2/dyfi). Validaron el ShakeMap en Cali.
+5. **USGS, catálogo de sismos ComCat** (https://earthquake.usgs.gov/fdsnws/event/1/). Aportó las 67 réplicas hasta el 3 de noviembre.
+6. **OpenStreetMap** (https://www.openstreetmap.org, vía Overpass API y https://download.geofabrik.de/south-america/colombia.html, ODbL). Aportó salud, bomberos, vías principales, comunas y barrios; distancia a salud y posible bloqueo de vías.
+7. **Pontificia Universidad Javeriana Cali, IEI: "Seis clústeres de afectación del sismo del 10 de agosto de 2026"** (https://www.javerianacali.edu.co/sites/default/files/2026-08/clu%CC%81steres%20de%20afectacio%CC%81n%20del%20sismo%20del%2010%20de%20agosto%20de%202026.pdf, agosto de 2026). Validación externa: ubica el daño de Cali en edificios de 3 a 6 pisos anteriores a 1984 y documenta que el satélite de Copernicus (EMSR916) vio 21 edificaciones frente a 1.538 reportes locales.
 
 ---
 
