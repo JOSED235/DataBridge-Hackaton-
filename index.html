@@ -53,6 +53,12 @@
   #tour .paso { margin-left: auto; font: 12px var(--mono); color: var(--muted); }
   #tip { position: absolute; pointer-events: none; background: #0b0d10; border: 1px solid var(--line); padding: 8px 10px;
          font-size: 12.5px; display: none; max-width: 280px; z-index: 5; }
+  #leyendaMapa { position: absolute; right: 12px; bottom: 34px; z-index: 3; background: rgba(14,16,19,.9); border: 1px solid var(--line);
+                 padding: 8px 12px; font-size: 12px; line-height: 1.55; color: #c9cdd3; pointer-events: none; }
+  #leyendaMapa b { display: block; color: var(--text); margin-top: 4px; }
+  #leyendaMapa i { display: inline-block; width: 11px; height: 11px; margin-right: 7px; vertical-align: -1px; }
+  #leyendaMapa i.p { border-radius: 50%; } #leyendaMapa i.l { height: 2px; vertical-align: 3px; }
+  @media (max-width: 900px) { #leyendaMapa { display: none; } }
   #tip b { font-family: var(--mono); }
   .fuente { font-size: 11.5px; color: var(--muted); margin-top: 24px; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -112,6 +118,16 @@
   </aside>
   <div id="map">
     <div id="tip"></div>
+    <div id="leyendaMapa" aria-label="Leyenda del mapa">
+      <b style="margin-top:0">Edificios por prioridad del índice</b>
+      <i style="background:#ff3b30"></i>Muy alta &nbsp;<i style="background:#ff9500"></i>Alta &nbsp;<i style="background:#ffd60a"></i>Media &nbsp;<i style="background:#464e5c"></i>Baja<br>
+      <i style="background:#9678c8"></i>Sin dato satelital &nbsp;<i style="background:#5aaadc"></i>Sin construcción registrada
+      <b>Servicios y red vial (OpenStreetMap)</b>
+      <i class="p" style="background:#3ecf8e"></i>Centro de salud &nbsp;<i class="p" style="background:#5aa0ff"></i>Bomberos y policía &nbsp;<i class="l" style="background:#c8cdd7"></i>Vía principal
+      <b>Capas de análisis</b>
+      <i class="p" style="background:#ffec96;box-shadow:0 0 6px 3px #ffec96"></i>Concentración de riesgo &nbsp;<i style="background:#6e1e1e;border:1px solid #8c96a5"></i>Comuna: más rojo = mayor p90<br>
+      <span style="color:#fff;font-weight:700">C3 · #1</span> = comuna y puesto en el ranking
+    </div>
     <div id="tour" role="dialog" aria-live="polite">
       <h3 id="tourT"></h3><p id="tourP"></p>
       <nav><button class="btn ghost" id="tourPrev">Atrás</button><button class="btn" id="tourNext">Siguiente</button><span class="paso" id="tourN"></span></nav>
