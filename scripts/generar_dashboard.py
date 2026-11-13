@@ -188,21 +188,22 @@ def main():
 <span class="tag">datos derivados de oficiales: no redistribuir</span></p>
 <p class="aviso">Los datos de edificios vienen de imágenes satelitales: sirven para priorizar, no para declarar
 una edificación segura o insegura. La vulnerabilidad y la ocupación vienen de modelos (GEM); el cruce es por
-cercanía, no por llave catastral. El daño satelital no sigue ningún patrón (chi-cuadrado, p &gt; 0,05): el índice
+cercanía, no por llave catastral. Las pruebas de asociación son exploratorias y no establecen causalidad. El índice
 es un puntaje relativo de priorización, no una probabilidad de colapso.</p>
 
 <h2>Conclusiones</h2>
 <div class="panel conclusion"><ul>
-<li><b>Dónde ir primero:</b> {num(int(mh.sum()))} edificios de prioridad muy alta ({pre85_mh} anteriores al código
-de 1984; {num(ocup_mh)} ocupantes modelados). Empezar por la comuna 3, la de mayor índice: {c3_pre85} de sus
-edificios son anteriores a 1985. La comuna 19 concentra la mayor cantidad de gente en edificios dañados.</li>
-<li><b>El daño satelital no sigue ningún patrón:</b> ni edad, estrato, uso, suelo, licuación ni comuna cambian
-su tasa (p &gt; 0,05; Holm). Por eso el índice combina lo observado con lo conocido de cada edificio.</li>
+<li><b>Dónde ir primero:</b> {num(int(mh.sum()))} edificios de prioridad muy alta ({pre85_mh} construidos hasta
+1985; {num(ocup_mh)} ocupantes modelados). Empezar por la comuna 3, la de mayor índice: {c3_pre85} de sus
+edificios son de 1985 o antes. La comuna 19 concentra la mayor ocupación modelada en edificios dañados.</li>
+<li><b>El daño satelital no muestra un patrón claro:</b> con esta muestra no se detecta asociación con época,
+uso, suelo, licuación ni comuna (ver p ajustado por Holm y V de Cramér en Factores). Un p alto no prueba que no
+influyan. Por eso el índice combina lo observado con lo conocido de cada edificio.</li>
 <li><b>Las fuentes externas cambian la lista:</b> sin ellas, solo el 40 % del top 50 se mantiene. La decisión de
 prioridad depende de las fuentes tanto como del daño: por eso cada cifra se rastrea a su tabla.</li>
 <li><b>Verificación en terreno aparte:</b> {num(int(reporte_oro["prioridades"].get("Sin dato: verificar en terreno", 0)))}
 edificios sin dato satelital y {num(int(reporte_oro["prioridades"].get("Sin construcción registrada: verificar", 0)))}
-lotes con daño visible no participan en el ranking: van a censo y verificación, no se suponen sanos.</li>
+predios sin construcción registrada no participan en el ranking: van a censo y verificación, no se suponen sanos.</li>
 </ul></div>
 
 <h2>Indicadores maestros</h2>

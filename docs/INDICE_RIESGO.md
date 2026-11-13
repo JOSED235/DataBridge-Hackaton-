@@ -1,6 +1,6 @@
 > Actualización de contrato de oro: ver `docs/ORO.md`. Los pesos siguientes se
-> conservan. Las cifras de esta ficha son de una corrida anterior y deben
-> contrastarse con las tablas vigentes. GEM es un modelo cruzado por cercanía:
+> conservan. Las cifras de esta ficha coinciden con las tablas oro publicadas en
+> Databricks el 13-nov-2026 (commit `41c9e0b`). GEM es un modelo cruzado por cercanía:
 > no acredita atributos físicos de cada predio ni población única afectada.
 > Las pruebas de asociación son exploratorias; un p-valor alto no demuestra
 > ausencia de relación y no establece causalidad. El escenario antiguo sin
@@ -56,14 +56,15 @@ Se usan percentiles (no cortes fijos) porque el objetivo es ordenar a quién ins
 
 ## Por comuna
 
-`gold_icesixuao_comunas` ordena las comunas por el **percentil 90 del índice**, no por el promedio: una comuna con muchos edificios sanos y un grupo muy crítico no debe quedar escondida. Ranking: **3, 9, 10, 18, 20, 19, 17** (p90 calculado solo con los edificios del ranking). La comuna 3 queda primera por su vulnerabilidad: el 66,9 % de sus edificios se construyó antes de 1985. La comuna 19 tiene la mayor cantidad de gente en edificios con daño (4.008 con construcción registrada), pero no encabeza el p90 porque su construcción es más reciente.
+`gold_icesixuao_comunas` ordena las comunas por el **percentil 90 del índice**, no por el promedio: una comuna con muchos edificios sanos y un grupo muy crítico no debe quedar escondida. Ranking: **3, 9, 10, 18, 20, 19, 17** (p90 calculado solo con los edificios del ranking). La comuna 3 queda primera por su vulnerabilidad: el 66,9 % de sus edificios se construyó antes de 1985. La comuna 19 tiene la mayor ocupación modelada en edificios con daño (4.008 sumando por predio; más de la mitad del total), pero no encabeza el p90 porque su construcción es más reciente.
 
 ## Sensibilidad (datos reales)
 
 | Escenario | Spearman vs. base | Top 50 que se mantiene |
 |---|---|---|
 | Solo datos oficiales (daño 60 %, altura 40 %) | 0,764 | 40 % |
-| Sin fuentes GEM (sin vulnerabilidad ni suelo) | 0,876 | 64 % |
+| Sin vulnerabilidad ni suelo | 0,876 | 64 % |
+| Sin fuentes GEM (sin vulnerabilidad, suelo ni ocupantes) | 0,876 | 56 % |
 | Sin suelo (borrador de la mañana) | 0,878 | 66 % |
 | Pesos iguales | 0,918 | 64 % |
 | Énfasis en servicios | 0,918 | 72 % |

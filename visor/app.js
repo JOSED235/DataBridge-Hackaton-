@@ -197,11 +197,11 @@ function render() {
   document.querySelectorAll('#modo button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === estado.modo));
 }
 
-// --- Recorrido guiado: del problema a la recomendación. TODO-VIERNES: textos con las cifras reales. ---
+// --- Recorrido guiado: del problema a la recomendación. Cifras iguales a docs/GUION_PRESENTACION.md. ---
 const top1 = () => datos.comunas.features.reduce((a, b) => (a.properties.ranking < b.properties.ranking ? a : b)).properties.comuna;
 const PASOS = [
   {
-    t: '1 · El sismo', p: () => 'M7,4 a 116 km de profundidad, 165 km al norte de Cali. Más de 70 réplicas de magnitud 2,5 o más registradas por el USGS hasta noviembre.',
+    t: '1 · El sismo', p: () => 'M7,4 a 116 km de profundidad, 165 km al norte de Cali. El USGS registró 67 réplicas de magnitud 4 o más hasta el 3 de noviembre, la mayor de M5,4.',
     vista: { longitude: -76.4, latitude: 4.15, zoom: 7.2, pitch: 0, bearing: 0 },
     s: { capas: { sismos: true, comunas: true, edificios: false }, comuna: '', soloAlta: false },
   },
@@ -210,7 +210,7 @@ const PASOS = [
     vista: { ...CALI }, s: { modo: 'escombros', capas: { edificios: false, comunas: true, calor: true }, comuna: '', soloAlta: false },
   },
   {
-    t: '3 · Por qué importa', p: () => 'La altura, la densidad de edificios y la cercanía a vías y servicios de salud cambian el impacto de una réplica: un edificio alto dañado junto a una vía principal puede cortar el acceso de las ambulancias.',
+    t: '3 · Por qué importa', p: () => 'Una réplica hace más daño donde coinciden un edificio ya dañado, una construcción frágil (de 1985 o antes) y muchos ocupantes. Además, los escombros de un edificio dañado junto a una vía principal pueden cortar el paso de las ambulancias.',
     vista: { ...CALI, zoom: 13, pitch: 55, bearing: -20 }, s: { modo: 'indice', capas: { edificios: true, comunas: false, vias: true, salud: true }, comuna: '', soloAlta: false },
   },
   {

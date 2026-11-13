@@ -114,8 +114,8 @@ capas = [
     ("GOLD", "Responder la pregunta", ACENTO, [
         "Índice 0–1 por edificio y prioridad por percentil",
         "Ranking de comunas por percentil 90",
-        "Prueba chi-cuadrado: ¿qué explica el daño?",
-        "Sensibilidad con 7 juegos de pesos",
+        "Chi-cuadrado con ajuste Holm: ¿qué se asocia con el daño?",
+        "Sensibilidad: 7 escenarios frente al base",
     ]),
 ]
 x0, ancho, sep = 0.5, 3.95, 0.225
@@ -147,7 +147,7 @@ for i, (nom, que, para) in enumerate(fuentes):
         (que, {"tam": 11, "color": "C9CDD3", "despues": 6}),
         (f"→ {para}", {"tam": 11, "negrita": True, "color": VERDE}),
     ])
-pie(s1, "Tablas: workspace.default.bronze_icesixuao_* · silver_icesixuao_predios · gold_icesixuao_{predios, comunas, factores, sensibilidad}. Cruce con GEM por cercanía, no por llave catastral.")
+pie(s1, "Tablas: workspace.default.bronze_icesixuao_* · silver_icesixuao_predios · gold_icesixuao_{predios, comunas, factores, resumen_sensibilidad} (13 tablas). Cruce con GEM por cercanía, no por llave catastral.")
 s1.notes_slide.notes_text_frame.text = (
     "(1:15) Organizamos el trabajo en tres capas. En bronze guardamos el archivo tal como llegó: 5.146 predios y 21 columnas, "
     "todo como texto, sin corregir nada, y además 15 capas externas. Descubrimos que redondear la geometría al guardarla creaba "
@@ -167,22 +167,22 @@ s1.notes_slide.notes_text_frame.text = (
 # ------------------------------------------------------------------------------------------------
 s2 = prs.slides.add_slide(BLANCO)
 fondo(s2)
-titulo(s2, "2 · Respuesta a la pregunta", "6.950 personas duermen en edificios con daño visible")
+titulo(s2, "2 · Respuesta a la pregunta", "Unos 5.500 ocupantes modelados en edificios dañados")
 
 # Encabezados de la matriz
 texto(s2, 2.35, 1.48, 4.9, 0.3, [("¿QUÉ AFECTACIONES GENERÓ EL SISMO?", {"tam": 12, "negrita": True, "color": ACENTO})])
 texto(s2, 7.45, 1.48, 5.4, 0.3, [("¿QUÉ REDUCE EL IMPACTO DE LAS RÉPLICAS?", {"tam": 12, "negrita": True, "color": VERDE})])
 filas = [
     ("Infraestructura",
-     [("1.354", {"tam": 30, "negrita": True, "color": ACENTO}), ("  edificios con daño visible (26 %)", {"tam": 13})],
-     "296 con escombros y 1.058 con techo desaparecido; 435 sin dato satelital",
-     "Inspeccionar primero los 179 de prioridad muy alta: 99 % con daño, 69 % anteriores al código sísmico de 1984. Empezar por la comuna 3: 2 de cada 3 edificios son anteriores a 1985"),
+     [("1.354", {"tam": 30, "negrita": True, "color": ACENTO}), ("  predios con daño visible (26 %)", {"tam": 13})],
+     "296 con escombros y 1.058 con techo desaparecido (342 sin construcción registrada); 435 sin dato satelital",
+     "Inspeccionar primero los 179 de prioridad muy alta: 99 % con daño, 69 % construidos hasta 1985. Empezar por la comuna 3: 2 de cada 3 edificios son de 1985 o antes"),
     ("Población",
-     [("6.950", {"tam": 30, "negrita": True, "color": ACENTO}), ("  personas en ellos", {"tam": 13})],
-     "Ocupantes nocturnos (GEM, censo 2018); 4.008 en la comuna 19. Otras 2.298 en edificios sin dato",
-     "Verificar en terreno los 435 edificios sin dato y los 342 predios sin construcción registrada con daño. A mediano plazo, reforzar el parque anterior a 1985 (Japón y Chile)"),
+     [("5.494", {"tam": 30, "negrita": True, "color": ACENTO}), ("  ocupantes modelados", {"tam": 13})],
+     "GEM (censo 2018), cada registro contado una vez; 6.950 sumando por predio. Más de la mitad en la comuna 19. Otros 2.298 en edificios sin dato",
+     "Verificar en terreno los 435 edificios sin dato y los 342 predios sin construcción registrada con daño. A mediano plazo, reforzar el parque construido hasta 1985 (Japón y Chile)"),
     ("Servicios urbanos",
-     [("626", {"tam": 30, "negrita": True, "color": ACENTO}), ("  dañados a < 200 m de un centro de salud", {"tam": 13})],
+     [("626", {"tam": 30, "negrita": True, "color": ACENTO}), ("  predios dañados a < 200 m de un centro de salud", {"tam": 13})],
      "430 a más de 1 km de urgencias (solo 23 de 439 centros de OSM las declaran); 5 podrían bloquear una vía principal",
      "Revisar primero los dañados junto a centros de salud y vías principales, para mantener el acceso de ambulancias y bomberos durante la próxima réplica"),
 ]
@@ -200,8 +200,8 @@ for nom, cifra, detalle, accion in filas:
 caja(s2, 0.5, 5.65, 7.7, 1.25, color="22191A", borde="5A2A22", nombre="Hallazgo")
 texto(s2, 0.7, 5.72, 7.35, 1.15, [
     ("HALLAZGO", {"tam": 11, "negrita": True, "color": ACENTO, "despues": 3}),
-    ([("El daño satelital no sigue ningún patrón: ", {"negrita": True}),
-      ("ni la edad, el estrato, el uso, el suelo o la licuación cambian la tasa de daño (chi-cuadrado, p > 0,05), y los vecinos de un edificio dañado no están más dañados (p = 0,62). La señal es individual: sirve para marcar edificios, no basta para priorizar.", {})],
+    ([("El daño satelital no muestra un patrón claro: ", {"negrita": True}),
+      ("con esta muestra no detectamos asociación con época, uso, suelo, licuación ni comuna (menor p ajustado por Holm 0,27; V de Cramér ≤ 0,06). No prueba que no influyan, pero la señal sola no basta para priorizar.", {})],
      {"tam": 12.5}),
 ], ancla=MSO_ANCHOR.MIDDLE)
 caja(s2, 8.4, 5.65, 4.43, 1.25, nombre="Evidencia")
@@ -209,18 +209,18 @@ texto(s2, 8.6, 5.72, 4.1, 1.15, [
     ([("40 %", {"tam": 26, "negrita": True, "color": VERDE}), ("  del top 50", {"tam": 13})], {}),
     ("se mantiene si se quitan las fuentes externas: ellas cambian a quién se inspecciona primero", {"tam": 11.5, "color": "C9CDD3"}),
 ], ancla=MSO_ANCHOR.MIDDLE)
-pie(s2, "Límites: el daño es inferencia satelital, no inspección; vulnerabilidad y ocupantes son modelados (GEM). Cifras: gold_icesixuao_predios, _comunas, _factores, _sensibilidad. Priorizar ≠ declarar seguro.")
+pie(s2, "Límites: el daño es inferencia satelital, no inspección; vulnerabilidad y ocupantes son modelados (GEM); pruebas exploratorias, sin causalidad. Cifras: gold_icesixuao_predios, _comunas, _exposicion_gem, _factores, _resumen_sensibilidad. Priorizar ≠ declarar seguro.")
 s2.notes_slide.notes_text_frame.text = (
     "(2:15) Esta diapositiva responde las dos preguntas en las tres dimensiones que pide el reto.\n"
-    "Infraestructura: el satélite ve daño en 1.354 de los 5.146 edificios, el 26 %: 296 con escombros y 1.058 sin techo. 435 no tienen dato, "
+    "Infraestructura: el satélite ve daño en 1.354 de los 5.146 predios, el 26 %: 296 con escombros y 1.058 sin techo; 342 sin construcción registrada. 435 no tienen dato, "
     "y eso no significa que estén bien.\n"
-    "Población: cruzando cada edificio con el modelo de exposición de GEM, 6.950 personas duermen en edificios con daño visible, "
-    "4.008 de ellas en la comuna 19.\n"
-    "Servicios: 626 edificios dañados están a menos de 200 metros de un centro de salud.\n"
-    "Antes de recomendar, probamos qué explica el daño, y el hallazgo es que nada lo explica: ni la edad, ni el estrato, ni el suelo. "
-    "El daño satelital no sigue un patrón, así que no basta para decidir a quién inspeccionar primero. Por eso el índice combina el daño "
+    "Población: cruzando cada edificio con el modelo de exposición de GEM, unos 5.500 ocupantes nocturnos modelados viven en edificios con daño visible, "
+    "más de la mitad en la comuna 19. Es un modelo, no un conteo de personas: un registro GEM puede quedar cerca de varios predios.\n"
+    "Servicios: 626 predios dañados están a menos de 200 metros de un centro de salud.\n"
+    "Antes de recomendar, probamos qué se asocia con el daño, y con esta muestra no detectamos asociación con la época, el suelo ni la comuna. "
+    "No decimos que no influyan, pero el daño satelital no muestra un patrón claro, así que no basta para decidir a quién inspeccionar primero. Por eso el índice combina el daño "
     "observado con lo que sí sabemos de cada edificio: qué tan frágil es, cuánta gente tiene, su suelo y su cercanía a salud y vías.\n"
-    "De ahí salen las acciones de la columna verde: 179 edificios de prioridad muy alta, casi todos dañados y anteriores al código de 1984; "
+    "De ahí salen las acciones de la columna verde: 179 edificios de prioridad muy alta, casi todos dañados y construidos hasta 1985; "
     "empezar por la comuna 3; verificar en terreno los que no tienen dato; y proteger el acceso a salud y vías.\n"
     "Y la prueba de que las fuentes externas aportan: si las quitamos, solo el 40 % de los 50 edificios más urgentes sigue en la lista.\n"
     "Límite: son inferencias satelitales y modelos; sirven para priorizar, no para declarar un edificio seguro."
@@ -261,13 +261,13 @@ for cab, items in bloques:
     tb = texto(s3, 9.35, yb + 0.3, 3.5, 1.5, [(it, {"tam": 12, "despues": 4, "color": "D5D8DD"}) for it in items])
     yb += {"QUÉ MUESTRA": 2.3, "POR QUÉ ASÍ": 1.35}.get(cab, 0)
 texto(s3, 0.5, 6.5, 8.6, 0.45, [([("Lectura en 30 segundos: ", {"negrita": True, "color": ACENTO}),
-                                   ("los puntos rojos se concentran en las comunas 3 y 9 (puestos 1 y 2) y en el centro de la 19, donde está la mayor parte de la gente afectada.", {})],
+                                   ("los puntos rojos se concentran en las comunas 3 y 9 (puestos 1 y 2) y en el centro de la 19, con la mayor ocupación modelada en edificios dañados.", {})],
                                   {"tam": 12.5})])
 pie(s3, "Mapa base © OpenStreetMap, © CARTO. Datos: organización DataBridge Hack (satelital), GEM TREQ, USGS, SGC, OpenStreetMap.")
 s3.notes_slide.notes_text_frame.text = (
     "(1:15) El mapa resume la respuesta. Cada edificio tiene el color de su prioridad: rojo los que hay que inspeccionar primero. "
     "Los rótulos dicen la comuna y su puesto en el ranking: la comuna 3 es la primera y la 9 la segunda, por la combinación de daño y "
-    "construcción anterior al código sísmico. En la 19 está la mayor cantidad de gente en edificios dañados.\n"
+    "construcción de 1985 o antes. En la 19 está la mayor ocupación modelada en edificios dañados.\n"
     "Encima van los centros de salud y las vías principales, que son los servicios que una réplica pondría en riesgo.\n"
     "Lo construimos desde las tablas gold, exportadas a GeoJSON, en un visor propio con MapLibre y deck.gl; cada edificio muestra su ficha "
     "al pasar el cursor.\n"
