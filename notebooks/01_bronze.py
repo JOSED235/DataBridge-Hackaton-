@@ -29,12 +29,15 @@ print("Subir los archivos a:", VOL)
 # COMMAND ----------
 
 import os
+import re
 import geopandas as gpd
 from pyspark.sql.types import StringType, StructField, StructType
 
 
 def guardar_texto(pdf, nombre, comentario):
     """pandas (todo texto) -> tabla Delta con esquema explícito de strings (sirve aunque una columna sea 100 % nula)."""
+    # Delta no acepta ' ,;{}()\n\t=' en nombres de columna (p. ej. SA(0.1) de GEM): se cambian por "_" solo en el nombre.
+    pdf = pdf.rename(columns=lambda c: re.sub(r"[ ,;{}()\n\t=]", "_", c).strip("_"))
     esquema = StructType([StructField(c, StringType()) for c in pdf.columns])
     spark.createDataFrame(pdf, esquema).write.mode("overwrite").option("overwriteSchema", True).saveAsTable(nombre)
     spark.sql(f"COMMENT ON TABLE {nombre} IS '{comentario}'")

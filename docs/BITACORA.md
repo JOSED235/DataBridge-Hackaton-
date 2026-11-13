@@ -132,6 +132,11 @@
 **Por qué:** Respetar la definición de lote de la organización sin esconder los predios donde el satélite ve daño, y conservar la fuente que sostiene la vulnerabilidad y la población en la respuesta.
 **Archivos:** `notebooks/00_pipeline.py`, `notebooks/03_gold.py`, `scripts/correr_local.py`, `scripts/simular_pipeline.py`, `visor/app.js`, `docs/ENTREGA.md`, `docs/INDICE_RIESGO.md`, `docs/FUENTES.md`
 
+### 2026-11-13 12:00 · José David
+**Qué:** En `01_bronze`, los nombres de columna con caracteres que Delta no acepta (por ejemplo `SA(0.1)` de `gem_amplificacion_suelo.csv`) se guardan con `_`. Solo cambia el nombre de la columna; los valores quedan intactos. La corrida de Databricks con `6203cab` coincidió en todas las cifras con la local.
+**Por qué:** La tabla bronze de amplificación fallaba con `DELTA_INVALID_CHARACTERS_IN_COLUMN_NAMES`. Silver no dependía de ella, pero bronze debe tener todas las fuentes.
+**Archivos:** `notebooks/01_bronze.py`
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |
