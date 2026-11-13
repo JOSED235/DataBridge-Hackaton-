@@ -45,8 +45,11 @@ display(tablas_oro["calidad"])
 # COMMAND ----------
 
 guardar_oro_spark(spark, tablas_oro, plata)
-for nombre in tablas_oro:
-    spark.sql(f"COMMENT ON TABLE {tabla('gold', nombre)} IS 'Oro de priorización relativa y evidencia satelital. Datos modelados y cruces por cercanía no certifican identidad, población afectada ni seguridad estructural. Contrato docs/ORO.md.'")
+
+# COMMAND ----------
+
+# Comentarios de tabla y columna para el Catalog y Genie. Se puede correr solo, tras los %run, sobre tablas ya publicadas.
+comentar_oro_spark(spark)
 
 # COMMAND ----------
 

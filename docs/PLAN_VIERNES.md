@@ -165,7 +165,7 @@ Ambos: revisar juntos el índice al mediodía y ensayar al final. Cada uno anota
 1. Correr `03_gold`. Revisar `gold_sensibilidad` y anotar el resultado.
 2. Descargar de **Catalog → databridge → salidas** `edificios.geojson` y `comunas.geojson`, copiarlos a `visor/data/` y **borrar `visor/data/MUESTRA.txt`**.
 3. Probar el visor y el recorrido guiado; actualizar los textos de `PASOS` en `visor/app.js` con las cifras reales.
-4. Crear un espacio de Genie sobre `gold_edificios` y `gold_comunas` para responder preguntas en vivo.
+4. Crear un espacio de Genie sobre las tablas `gold_icesixuao_*` siguiendo `docs/GENIE.md`.
 
 ### Final de la tarde
 

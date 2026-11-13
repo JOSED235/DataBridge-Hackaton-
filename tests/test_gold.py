@@ -154,3 +154,11 @@ def test_exportacion_no_convierte_desconocido_en_cero(contexto, tmp_path):
     assert p['observado']['pisos'] == 2
     assert p['estimado']['pisos_observados'] is None
     assert 'motivos_principales' in p['observado']
+
+
+def test_comentarios_apuntan_a_tablas_y_columnas_publicadas(contexto):
+    api, _, oro = contexto
+    assert set(api['COMENTARIOS_TABLAS_ORO']) == set(oro)
+    for nombre, columnas in api['COMENTARIOS_COLUMNAS_ORO'].items():
+        faltan = set(columnas) - set(oro[nombre].columns)
+        assert not faltan, f"{nombre}: {faltan}"

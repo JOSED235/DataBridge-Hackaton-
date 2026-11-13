@@ -375,3 +375,106 @@ def guardar_oro_spark(spark, tablas, plata):
             filas.append(tuple(valores))
         spark.createDataFrame(filas, StructType(campos)).write.mode("overwrite").option("overwriteSchema", True).saveAsTable(tabla("gold", nombre))
         print(f"{tabla('gold', nombre)}: {len(d)} filas")
+
+
+# Comentarios de Unity Catalog: documentan el contrato en el Catalog y orientan a Genie.
+COMENTARIOS_TABLAS_ORO = {
+    "predios": "Una fila por predio del inventario satelital (5.146). Índice de riesgo ante réplicas 0..1, prioridad, posición y motivos. "
+               "Priorización relativa: no certifica seguridad ni es probabilidad de colapso. Filtrar en_ranking para edificios priorizables.",
+    "comunas": "Una fila por comuna. Ranking por indice_p90 (solo edificios en_ranking), volumen de inspección, cobertura satelital y ocupación GEM modelada.",
+    "afectaciones": "Estado satelital por ámbito (inventario o comuna): conteos de predios y áreas con su denominador.",
+    "servicios": "Servicios OSM (salud, bomberos, policía, educación, puntos de encuentro) y predios cuyo servicio más cercano es ese. No es demanda ni capacidad.",
+    "exposicion_gem": "Una fila por registro GEM vinculado a algún predio. Sumar ocupantes_noche aquí evita contar dos veces un registro; sigue siendo ocupación modelada.",
+    "sensibilidad": "Puntaje y posición de cada edificio en_ranking bajo cada escenario de pesos.",
+    "resumen_sensibilidad": "Una fila por escenario: correlación de Spearman y coincidencia del top 50 frente al escenario base.",
+    "factores": "Pruebas exploratorias chi-cuadrado de asociación con señal de daño, con V de Cramér y ajuste Holm. Un p alto no prueba ausencia de relación.",
+    "grupos_factores": "Tasa de señal de daño por categoría de cada factor, con su denominador.",
+    "verificaciones": "Predios con motivos para revisar datos o verificar en terreno (sin dato satelital, lotes con daño, cruces ambiguos).",
+    "fuentes": "Manifiesto de fuentes heredado de plata, con huellas SHA-256 y tabla que materializa cada fuente.",
+    "parametros": "Pesos por escenario, versión y parámetros de normalización del índice.",
+    "calidad": "Controles de publicación de oro: todos deben cumplir antes de escribir.",
+}
+
+COMENTARIOS_COLUMNAS_ORO = {
+    "predios": {
+        "id": "Llave del predio (OBJECTID del archivo oficial)",
+        "comuna": "Comuna del archivo oficial, completada con OSM solo si venía vacía",
+        "estado": "Estado estructural satelital entregado por la organización",
+        "sev_estado": "Severidad 0..1: escombros 1,0; techo desaparecido 0,7; sin cambio aparente 0,1; nulo sin dato",
+        "alta_escombros": "Verdadero si el satélite marca alta probabilidad de escombros",
+        "sin_dato_satelital": "Sin información satelital: no significa sano; va a verificación en terreno",
+        "sin_construccion_registrada": "NPISOS=0: predio sin construcción registrada (lote); fuera del ranking",
+        "en_ranking": "Edificio priorizable: con dato satelital y con construcción registrada",
+        "indice_riesgo": "Índice de riesgo ante réplicas 0..1, suma ponderada de 7 componentes; relativo, no probabilidad de colapso",
+        "prioridad": "Muy alta (top 5 %), Alta (siguiente 10 %), Media (25 %), Baja; sin dato y lotes con categoría propia",
+        "posicion": "Puesto en el ranking de inspección (1 = primero); nulo fuera del ranking",
+        "motivos_principales": "Los tres componentes que más aportan al índice de este predio",
+        "cola_trabajo": "inspeccion_priorizada, verificar_dato_satelital o verificar_predio_sin_construccion",
+        "pisos": "Pisos efectivos: observados o estimados; nulo en lotes",
+        "pisos_observados": "Pisos oficiales válidos; nulo si no hay dato o es lote",
+        "pisos_fuente": "Origen de los pisos: oficial, gem_estimado o sin_construccion_registrada",
+        "periodo_construccion": "Época de construcción según GEM, cruzada por cercanía",
+        "ocupantes_asignados_gem": "Ocupantes nocturnos GEM asignados por cercanía; un registro puede repetirse entre predios. No es población afectada",
+        "dist_salud_m": "Distancia euclidiana en metros al centro de salud OSM más cercano; no es tiempo de viaje",
+        "dist_salud_urgencias_m": "Distancia en metros al centro de salud OSM que declara urgencias",
+        "puede_bloquear_via": "Daño visible y a menos de pisos x 3 m de una vía principal",
+        "microzona": "Microzona sísmica INGEOMINAS-DAGMA 2005 (grilla GEM)",
+        "amplif_suelo": "Factor de amplificación del suelo para el período propio del edificio",
+        "mmi": "Intensidad Mercalli del ShakeMap USGS en el predio",
+        "c_danio": "Componente de daño observado normalizado 0..1 (peso 25 %)",
+        "c_vulnerabilidad": "Componente de vulnerabilidad de la tipología GEM 0..1 (peso 20 %)",
+        "c_exposicion": "Componente de ocupación modelada 0..1 (peso 15 %)",
+        "c_suelo": "Componente de suelo: amplificación y licuación 0..1 (peso 10 %)",
+        "c_altura": "Componente de altura 0..1 (peso 10 %)",
+        "c_acceso_salud": "Componente de lejanía a salud 0..1 (peso 10 %)",
+        "c_bloqueo_via": "Componente de posible bloqueo de vía principal 0..1 (peso 10 %)",
+    },
+    "comunas": {
+        "comuna": "Número de comuna de Cali",
+        "ranking": "Puesto de la comuna por indice_p90 (1 = más urgente)",
+        "indice_p90": "Percentil 90 del índice entre los edificios en_ranking de la comuna",
+        "n_predios": "Predios del inventario en la comuna, incluidos lotes y sin dato",
+        "n_en_ranking": "Edificios priorizables (con dato satelital y construcción registrada)",
+        "n_prioridad_muy_alta": "Edificios con prioridad Muy alta",
+        "n_prioridad_alta": "Edificios con prioridad Alta",
+        "n_alta_escombros": "Predios con alta probabilidad de escombros",
+        "n_con_senal_danio": "Predios con daño visible (severidad >= 0,7); puede incluir lotes",
+        "pct_danio_entre_con_dato": "Porcentaje con daño visible sobre los predios con dato satelital",
+        "pct_sin_dato": "Porcentaje de predios sin dato satelital sobre todo el inventario de la comuna",
+        "ocupantes_asignados_gem_con_senal_danio": "Ocupación GEM modelada en edificios con daño, sumada por predio (puede repetir registros); no es población afectada",
+        "n_salud": "Centros de salud OSM en la comuna",
+    },
+    "resumen_sensibilidad": {
+        "escenario": "Juego de pesos comparado con el base",
+        "spearman_vs_base": "Correlación de rangos con el índice base (1 = mismo orden)",
+        "pct_top_coincide": "Porcentaje del top 50 base que sigue en el top 50 del escenario",
+    },
+    "factores": {
+        "factor": "Variable probada contra la señal de daño",
+        "p_valor_chi2": "p-valor chi-cuadrado sin ajustar; exploratorio",
+        "p_ajustado_holm": "p-valor ajustado por Holm entre las pruebas admisibles; nulo si hay frecuencias bajas",
+        "v_cramer": "Tamaño de efecto 0..1; menor a 0,1 es muy pequeño",
+        "estado_prueba": "evaluada o exploratoria_frecuencias_bajas",
+    },
+    "exposicion_gem": {
+        "ocupantes_noche": "Ocupantes nocturnos modelados por GEM (censo 2018) de este registro; contado una vez",
+        "n_vinculos_con_senal_danio": "Predios con daño visible vinculados a este registro GEM; no prueba que sea el mismo edificio",
+        "comuna_gem": "Comuna donde cae el punto GEM",
+    },
+    "verificaciones": {
+        "motivos_verificacion": "Motivos coexistentes para revisar el predio",
+        "cola_trabajo": "Cola a la que pertenece el predio",
+    },
+}
+
+
+def comentar_oro_spark(spark):
+    """Aplica comentarios de tabla y columna a las tablas oro ya publicadas."""
+    def sql(texto):
+        return texto.replace("'", "''")  # comilla simple escapada para el literal SQL
+    for nombre, texto in COMENTARIOS_TABLAS_ORO.items():
+        spark.sql(f"COMMENT ON TABLE {tabla('gold', nombre)} IS '{sql(texto + ' Contrato docs/ORO.md.')}'")
+    for nombre, columnas in COMENTARIOS_COLUMNAS_ORO.items():
+        for columna, texto in columnas.items():
+            spark.sql(f"ALTER TABLE {tabla('gold', nombre)} ALTER COLUMN {columna} COMMENT '{sql(texto)}'")
+    print(f"Comentarios: {len(COMENTARIOS_TABLAS_ORO)} tablas, {sum(map(len, COMENTARIOS_COLUMNAS_ORO.values()))} columnas")

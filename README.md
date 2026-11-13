@@ -38,6 +38,7 @@ docs/
   FUENTES.md                        Fuentes, revisión de las 20 entradas y 38 referencias, cobertura y pendientes
   GUION_PRESENTACION.md             Guion de 5 a 7 min y respuestas al jurado
   ENTREGA.md                        Borrador del correo: textos de 200 y 500 palabras, fuentes y 3 diapositivas
+  GENIE.md                          Espacio de Genie sobre oro: tablas, instrucciones y preguntas con respuesta esperada
   INFORME_SISMO.md                  Informe de investigación previa (suelo, profundidad, Venezuela, casos)
 notebooks/                Para importar en Databricks (Workspace → Import)
   00_utils_espacial.py    Funciones espaciales + autoprueba
@@ -141,3 +142,5 @@ Contrato: `docs/ORO.md`. Tablas privadas: `data/oficiales/oro/`. Databricks debe
 importar también `00_gold.py`; la validación local no acredita publicación remota.
 El resumen de escenarios pasa a `gold_icesixuao_resumen_sensibilidad`;
 `gold_icesixuao_sensibilidad` contiene el detalle por predio y escenario.
+`03_gold` aplica comentarios de tabla y columna (`comentar_oro_spark`), que también orientan a Genie
+(`docs/GENIE.md`). Se pueden reaplicar solos, tras los `%run`, sin rehacer oro.
