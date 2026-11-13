@@ -142,6 +142,11 @@
 **Por qué:** Las cifras del correo deben salir de las tablas gold de Databricks.
 **Archivos:** tablas `workspace.default.*_icesixuao_*`, `docs/BITACORA.md`
 
+### 2026-11-13 12:30 · José David
+**Qué:** Mapa listo para el pantallazo. Abre ajustado a los edificios, con comunas rotuladas con su puesto en el ranking ("C3 · #1"), marcadores para prioridad muy alta y alta, vías y salud encendidas, salud más tenue y fuentes actualizadas. Los indicadores ahora son: edificios analizados, % de escombros, % con daño visible, prioridad muy alta, personas en edificios con daño y % sin dato; coinciden con el correo (5.146; 5,8 %; 26,3 %; 179; 6.950; 8,5 %). Se corrigieron dos fallos: geometrías `GeometryCollection` y 2 predios de la fuente con área 0 m² (OBJECTID 1667 y 3686), cuyo polígono se exporta vacío; no se dibujan, pero siguen en los indicadores y en las tablas. Se verificó con una captura del navegador.
+**Por qué:** La diapositiva 3 es el pantallazo del mapa y debe entenderse en 30 segundos.
+**Archivos:** `visor/app.js`, `visor/index.html`
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |
