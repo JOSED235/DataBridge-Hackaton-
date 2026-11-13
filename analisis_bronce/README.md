@@ -70,8 +70,10 @@ primero: no se suman sus filas para contar sismos.
   adicionales. Se corrigió la serialización del pipeline con precisión completa.
 - El notebook 99 decide fuentes y reglas de la siguiente plata. No constituye
   una migración de todas esas reglas al pipeline ni valida los pesos del índice.
-  En particular, la lógica heredada que imputa los ceros debe adaptarse a la
-  semántica de lotes antes de usarla como análisis final de edificios.
+  En la versión analizada inicialmente se imputaban los ceros. La actualización
+  remota `8418820`, integrada al publicar este EDA, incorpora la bandera
+  `sin_construccion_registrada` y evita imputar esos predios. El resto de las
+  restricciones de calidad del EDA conserva su alcance.
 - Los datos satelitales permiten priorizar e investigar discrepancias, no
   certificar seguridad de edificaciones. Las coordenadas redondeadas de GEM y
   sus empates impiden asumir correspondencia predial solo por cercanía.

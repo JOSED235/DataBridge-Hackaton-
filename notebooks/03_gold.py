@@ -83,7 +83,7 @@ display(spark.sql(f"""
 SELECT CASE WHEN pisos <= 1 THEN '1' WHEN pisos <= 2 THEN '2' WHEN pisos <= 3 THEN '3' ELSE '4+' END AS rango_pisos,
        count(*) AS n, round(100 * avg(cast(alta_escombros AS int)), 1) AS pct_escombros,
        round(100 * avg(cast(sev_estado >= 0.7 AS int)), 1) AS pct_escombros_o_techo
-FROM {GP} WHERE NOT sin_dato_satelital AND NOT pisos_imputado
+FROM {GP} WHERE NOT sin_dato_satelital AND NOT pisos_imputado AND pisos IS NOT NULL
 GROUP BY 1 ORDER BY 1"""))
 
 # COMMAND ----------

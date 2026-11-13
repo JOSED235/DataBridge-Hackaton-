@@ -120,13 +120,19 @@ def limpiar(raw, cols=COLS):
     df["alta_escombros"] = (df["prob_escombros"] >= UMBRAL_ALTA_ESCOMBROS) | (df["sev_estado"] >= 1.0)
 
     reporte = {"filas_bronze": len(raw)}
+    # NPISOS = 0: según los organizadores, predio sin edificación registrada en catastro (no es error de carga).
+    # Se conserva el predio (el satélite sí ve daño en muchos), pero sin pisos: no se imputa ni entra al promedio de altura.
+    df["sin_construccion_registrada"] = df["pisos"].eq(0)
+    reporte["predios_sin_construccion_registrada"] = int(df["sin_construccion_registrada"].sum())
     # Pisos fuera de rango físico en Cali (edificio más alto ~ 45 pisos): se anulan, no se borra el edificio.
-    malos = ~df["pisos"].between(1, 60)
-    reporte["pisos_invalidos_anulados"] = int((malos & df["pisos"].notna()).sum())
-    df.loc[malos, "pisos"] = np.nan
-    reporte["pisos_faltantes_imputados_mediana_comuna"] = int(df["pisos"].isna().sum())
-    df["pisos_imputado"] = df["pisos"].isna()
-    df["pisos"] = df["pisos"].fillna(df.groupby("comuna")["pisos"].transform("median")).fillna(df["pisos"].median())
+    malos = (df["pisos"] > 60) | (df["pisos"] < 0)
+    reporte["pisos_invalidos_anulados"] = int(malos.sum())
+    df.loc[malos | df["sin_construccion_registrada"], "pisos"] = np.nan
+    # Solo los nulos (o inválidos) con construcción registrada se imputan: GEM en silver y, si no, mediana de la comuna.
+    df["pisos_imputado"] = df["pisos"].isna() & ~df["sin_construccion_registrada"]
+    reporte["pisos_nulos_a_imputar"] = int(df["pisos_imputado"].sum())
+    mediana = df.groupby("comuna")["pisos"].transform("median").fillna(df["pisos"].median())
+    df.loc[df["pisos_imputado"], "pisos"] = mediana[df["pisos_imputado"]]
 
     dup = df["id"].duplicated()
     reporte["duplicados_eliminados"] = int(dup.sum())
@@ -188,7 +194,7 @@ def asignar_suelo(gdf, grilla, amplif):
     j = gpd.sjoin_nearest(gdf[["geometry"]].to_crs(CRS_METROS), grilla[["ampcode", "geometry"]].to_crs(CRS_METROS), how="left")
     out = gdf.copy()
     out["microzona"] = j.groupby(level=0)["ampcode"].first().reindex(gdf.index).astype(str)
-    t = (out["pisos"] / 10).to_numpy()[:, None]
+    t = (out["pisos"].fillna(1) / 10).to_numpy()[:, None]  # sin pisos registrados: se lee como 1 piso (período corto)
     out["periodo_s"] = PERIODOS_AF[np.abs(t - PERIODOS_AF).argmin(axis=1)]
     fila = amplif[np.isclose(amplif["level"], NIVEL_AF)]
     af = {(str(r["ampcode"]), p): r[f"SA({p})"] for _, r in fila.iterrows() for p in PERIODOS_AF}
@@ -203,7 +209,8 @@ SUSC_LICUACION = {"vh": 1.0, "h": 0.8, "m": 0.5, "l": 0.25, "vl": 0.1, "n": 0.0}
 
 
 def _mas_cercano(gdf, puntos, cols, max_m=None):
-    """Copia `cols` del punto más cercano (si es un polígono y el punto cae dentro, la distancia es 0)."""
+    """Copia `cols` del punto más cercano (si es un polígono y el punto cae dentro, la distancia es 0).
+    Para grillas regulares (sitio, ShakeMap) los empates exactos son raros y vecinos casi idénticos."""
     j = gpd.sjoin_nearest(gdf[["geometry"]].to_crs(CRS_METROS), puntos[cols + ["geometry"]].to_crs(CRS_METROS),
                           how="left", max_distance=max_m, distance_col="_d")
     return j[~j.index.duplicated(keep="first")].reindex(gdf.index)
@@ -212,24 +219,35 @@ def _mas_cercano(gdf, puntos, cols, max_m=None):
 def cruzar_externos(gdf, carpeta):
     """Une a cada edificio:
     - GEM exposición (edificio GEM dentro del polígono o a <= 15 m): año, estrato, uso, pisos, ocupantes, valor y vulnerabilidad.
-      Si NPISOS era 0 o nulo, se toman los pisos de GEM (catastro 2021) antes que la mediana de la comuna.
+      En 1.669 edificios hay varios registros GEM empatados (mismo punto o varios dentro del polígono): los ocupantes
+      se suman y los atributos salen del registro con más ocupantes (desempate por id). Así el resultado no depende
+      del orden interno del índice espacial y es igual en local y en Databricks.
+      Si NPISOS era nulo, se toman los pisos de GEM antes que la mediana de la comuna (NPISOS = 0 no se imputa).
     - GEM sitio: susceptibilidad a licuación y pendiente del sitio más cercano.
     - USGS ShakeMap: intensidad y aceleraciones del nodo más cercano (~1 km)."""
     out = gdf.copy()
     ex = a_gdf(pd.read_csv(f"{carpeta}/gem_exposicion.csv", dtype={"MICROZONE": str, "FLOORS": str}))
-    j = _mas_cercano(out, ex, ["CONSTRUCTION_PERIOD", "INCOME_LEVEL", "FLOORS", "OCCUPANCY", "night", "structural",
-                               "p_ductilidad_baja", "p_mamposteria_no_reforzada"], DIST_MAX_GEM_M)
+    cols = ["id", "CONSTRUCTION_PERIOD", "INCOME_LEVEL", "FLOORS", "OCCUPANCY", "night", "structural",
+            "p_ductilidad_baja", "p_mamposteria_no_reforzada"]
+    todos = gpd.sjoin_nearest(out[["geometry"]].to_crs(CRS_METROS), ex[cols + ["geometry"]].to_crs(CRS_METROS),
+                              how="left", max_distance=DIST_MAX_GEM_M, distance_col="_d")
+    ocupantes = todos.groupby(level=0)["night"].sum(min_count=1)
+    valor = todos.groupby(level=0)["structural"].sum(min_count=1)
+    j = (todos.assign(_n=todos["night"].fillna(-1)).sort_values(["_n", "id"], ascending=[False, True], kind="mergesort")
+         .pipe(lambda d: d[~d.index.duplicated(keep="first")]).reindex(out.index))
+    out["n_registros_gem"] = todos["id"].notna().groupby(level=0).sum().reindex(out.index)
     out["dist_gem_m"] = j["_d"].round(1)
     out["periodo_construccion"] = j["CONSTRUCTION_PERIOD"]
     out["estrato"] = j["INCOME_LEVEL"].astype("Int64")
     out["uso"] = j["OCCUPANCY"]
     out["pisos_gem"] = j["FLOORS"].map(PISOS_GEM)
-    out["ocupantes_noche"] = j["night"]
-    out["valor_reemplazo_usd"] = j["structural"].round(0)
+    out["ocupantes_noche"] = ocupantes.reindex(out.index)
+    out["valor_reemplazo_usd"] = valor.reindex(out.index).round(0)
     out["p_ductilidad_baja"] = j["p_ductilidad_baja"]
     out["p_mamposteria_no_reforzada"] = j["p_mamposteria_no_reforzada"]
     usar_gem = out["pisos_imputado"] & out["pisos_gem"].notna()
-    out["pisos_fuente"] = np.where(~out["pisos_imputado"], "oficial", np.where(usar_gem, "gem", "mediana_comuna"))
+    out["pisos_fuente"] = np.select([out["sin_construccion_registrada"], ~out["pisos_imputado"], usar_gem],
+                                    ["sin_construccion_registrada", "oficial", "gem"], "mediana_comuna")
     out.loc[usar_gem, "pisos"] = out.loc[usar_gem, "pisos_gem"]
 
     sitio = a_gdf(pd.read_csv(f"{carpeta}/gem_sitio_licuacion_ladera.csv"))
@@ -314,7 +332,7 @@ def para_spark(gdf):
     return df
 
 
-COLS_VISOR = ["id", "comuna", "barrio", "estado", "sev_estado", "area_m2", "pisos", "prob_escombros", "alta_escombros", "sin_dato_satelital",
+COLS_VISOR = ["id", "comuna", "barrio", "estado", "sev_estado", "area_m2", "pisos", "sin_construccion_registrada", "prob_escombros", "alta_escombros", "sin_dato_satelital",
               "dist_salud_m", "dist_via_principal_m", "puede_bloquear_via", "microzona", "amplif_suelo",
               "periodo_construccion", "estrato", "ocupantes_noche", "p_ductilidad_baja", "licuacion_cat", "mmi",
               "indice_riesgo", "prioridad"]
@@ -325,7 +343,7 @@ def exportar_visor(g, gc, carpeta):
     import os
     os.makedirs(carpeta, exist_ok=True)
     e = g[[c for c in COLS_VISOR if c in g] + ["geometry"]].to_crs(CRS_GEO).copy()
-    e["pisos"] = e["pisos"].round(0).astype(int)
+    e["pisos"] = e["pisos"].fillna(0).round(0).astype(int)  # 0 = sin construcción registrada
     e["comuna"] = e["comuna"].astype("float")  # Int64 con nulos no serializa en GeoJSON
     e.to_file(f"{carpeta}/edificios.geojson", driver="GeoJSON", COORDINATE_PRECISION=6)
     gc.to_file(f"{carpeta}/comunas.geojson", driver="GeoJSON", COORDINATE_PRECISION=6)

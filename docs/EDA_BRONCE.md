@@ -107,10 +107,13 @@ inexistentes ni construido un banco comparable mundial con estos datos locales.
 
 El EDA elige fuentes y reglas; no migra todas esas reglas a plata ni valida los
 pesos del índice. El pipeline local se ejecutó como comprobación del estado
-heredado y sus salidas se conservaron privadas. **Su lógica que todavía imputa
-ceros debe adaptarse a la semántica de lotes antes de usar esa corrida como
-resultado final de edificios.** La corrección implementada en esta revisión es
-la fidelidad WKT; el resto del contrato queda explícito para la siguiente fase.
+heredado y sus salidas se conservaron privadas. En la versión inicial del EDA se
+imputaban los ceros. Al publicar se integró la actualización remota `8418820`,
+que incorpora `sin_construccion_registrada` y evita imputar esos predios. También
+hace determinista la resolución de empates GEM. Esto no acredita por sí solo
+la correspondencia física de los registros; la restricción de calidad del EDA
+sigue vigente. La corrección implementada en esta revisión es la fidelidad WKT;
+el resto del contrato conserva el alcance descrito para la siguiente fase.
 
 Los 435 predios sin dato satelital son 8,45 % de filas y 9,51 % del área sumada
 de sus polígonos. Esa área no equivale a área construida por pisos ni a población.
