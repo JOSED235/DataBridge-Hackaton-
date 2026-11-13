@@ -14,7 +14,7 @@ const PRIORIDAD = {
 const RAMPA = [[38, 70, 83], [42, 157, 143], [233, 196, 106], [244, 162, 97], [231, 111, 81], [200, 30, 30]];
 
 const estado = {
-  modo: 'prioridad', comuna: '', soloAlta: false,
+  modo: 'prioridad', comuna: '', soloAlta: false, cola: '',
   capas: { edificios: true, calor: false, comunas: true, vias: true, salud: true, emergencia: false, sismos: false },
 };
 const datos = {};
@@ -49,14 +49,31 @@ async function estiloBase() {
 // 2 predios de la fuente tienen área 0 m² y su polígono se exporta vacío: no se dibujan, pero sí cuentan en los KPI.
 const dibujable = (f) => { const c = f.geometry && f.geometry.coordinates; return Boolean(c && c.length && c[0].length); };
 
-function edificiosFiltrados() {
-  return datos.edificios.features.filter((f) => {
-    const p = f.properties;
-    if (!dibujable(f)) return false;
-    if (estado.comuna && String(p.comuna) !== estado.comuna) return false;
-    if (estado.soloAlta && !['Muy alta', 'Alta'].includes(p.prioridad)) return false;
-    return true;
-  });
+function cumpleFiltros(p) {
+  if (estado.comuna && String(p.comuna) !== estado.comuna) return false;
+  if (estado.soloAlta && !['Muy alta', 'Alta'].includes(p.prioridad)) return false;
+  if (estado.cola === 'lote_con_danio') return p.sin_construccion_registrada && !p.sin_dato_satelital && p.sev_estado >= 0.7;
+  if (estado.cola && p.cola_trabajo !== estado.cola) return false;
+  return true;
+}
+
+const edificiosFiltrados = () => datos.edificios.features.filter((f) => dibujable(f) && cumpleFiltros(f.properties));
+
+// Lista para brigadas: incluye los predios sin polígono dibujable y se ordena por posición del ranking.
+function descargarCSV() {
+  const cols = ['posicion', 'id', 'comuna', 'barrio', 'prioridad', 'indice_riesgo', 'cola_trabajo', 'motivos_principales',
+    'estado', 'pisos', 'pisos_fuente', 'dist_salud_m', 'puede_bloquear_via', 'lon', 'lat'];
+  const filas = datos.edificios.features.filter((f) => cumpleFiltros(f.properties)).map((f) => {
+    const [lon, lat] = dibujable(f) ? centro(f) : [null, null];
+    return { ...f.properties, lon: lon && lon.toFixed(6), lat: lat && lat.toFixed(6) };
+  }).sort((a, b) => (a.posicion ?? Infinity) - (b.posicion ?? Infinity) || String(a.id).localeCompare(String(b.id)));
+  const celda = (v) => (v == null ? '' : /[",;\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
+  const csv = [cols.join(','), ...filas.map((p) => cols.map((c) => celda(p[c])).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿', csv], { type: 'text/csv;charset=utf-8' }));  // BOM: Excel abre las tildes bien
+  a.download = `inspeccion_${estado.comuna ? `comuna_${estado.comuna}` : 'cali'}${estado.cola ? `_${estado.cola}` : ''}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function capas() {
@@ -193,6 +210,7 @@ function render() {
   kpis(); leyenda(); ranking();
   $('selComuna').value = estado.comuna;
   $('soloAlta').checked = estado.soloAlta;
+  $('selCola').value = estado.cola;
   document.querySelectorAll('[data-capa]').forEach((el) => { el.checked = estado.capas[el.dataset.capa]; });
   document.querySelectorAll('#modo button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === estado.modo));
 }
@@ -224,7 +242,7 @@ function irPaso(i) {
   paso = i;
   const P = PASOS[i];
   const base = { edificios: false, calor: false, comunas: false, vias: false, salud: false, emergencia: false, sismos: false };
-  Object.assign(estado, P.s, { capas: { ...base, ...P.s.capas } });
+  Object.assign(estado, { cola: '' }, P.s, { capas: { ...base, ...P.s.capas } });
   if (P.al) P.al();
   if (P.vista) map.flyTo({ center: [P.vista.longitude, P.vista.latitude], zoom: P.vista.zoom, pitch: P.vista.pitch, bearing: P.vista.bearing, duration: 1600 });
   render();
@@ -261,6 +279,8 @@ let map, overlay;
 
   $('selComuna').onchange = (e) => { estado.comuna = e.target.value; if (estado.comuna) irAComuna(estado.comuna); render(); };
   $('soloAlta').onchange = (e) => { estado.soloAlta = e.target.checked; render(); };
+  $('selCola').onchange = (e) => { estado.cola = e.target.value; render(); };
+  $('btnCsv').onclick = descargarCSV;
   document.querySelectorAll('[data-capa]').forEach((el) => { el.onchange = () => { estado.capas[el.dataset.capa] = el.checked; render(); }; });
   document.querySelectorAll('#modo button').forEach((b) => { b.onclick = () => { estado.modo = b.dataset.v; render(); }; });
   $('ranking').onclick = (e) => {

@@ -20,7 +20,7 @@ Solución del equipo para la **DataBridge Hack** (IEEE Computer Society, Colombi
 | Notebooks bronze/silver/gold | Ajustados a los datos oficiales y a los nombres de la guía (`workspace.default.<capa>_icesixuao_<contenido>`) |
 | Simulación con datos ficticios | Pasa de extremo a extremo |
 | Corrida local con datos oficiales | Pasa (`scripts/correr_local.py`) |
-| Visor | Lee los GeoJSON generados con datos reales (no se suben al repo) |
+| Visor | Lee los GeoJSON generados con datos reales (no se suben al repo); filtra por comuna, prioridad y cola de trabajo (inspección priorizada, sin dato satelital, lotes con daño) y descarga la lista filtrada en CSV para brigadas |
 | Guion y preguntas del jurado | Borrador con cifras por llenar |
 
 ## Estructura

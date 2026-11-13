@@ -84,6 +84,13 @@
     <h2>Filtrar</h2>
     <select id="selComuna" aria-label="Comuna"><option value="">Todas las comunas</option></select>
     <label class="row" style="margin-top:6px"><input type="checkbox" id="soloAlta"> Solo prioridad alta y muy alta</label>
+    <select id="selCola" aria-label="Cola de trabajo" style="margin-top:6px">
+      <option value="">Todas las colas de trabajo</option>
+      <option value="inspeccion_priorizada">Inspección priorizada (ranking)</option>
+      <option value="verificar_dato_satelital">Verificar en terreno: sin dato satelital</option>
+      <option value="lote_con_danio">Verificar: lotes con daño visible</option>
+    </select>
+    <button class="btn ghost" id="btnCsv" style="margin-top:8px;width:100%">Descargar lista filtrada (CSV)</button>
 
     <h2>Capas</h2>
     <label class="row"><input type="checkbox" data-capa="edificios" checked> Edificios (3D por pisos)</label>

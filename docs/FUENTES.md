@@ -124,20 +124,30 @@ Todas las descargas son reproducibles con dos scripts: `scripts/descargar_osm.py
 
 ## Qué dicen las fuentes externas sobre el daño satelital
 
-Se probó si alguna variable externa se asocia con el daño observado (escombros o techo desaparecido), con una prueba chi-cuadrado sobre los 4.711 edificios con dato satelital (tabla `gold_icesixuao_factores`):
+Prueba exploratoria chi-cuadrado de asociación con señal de daño (escombros o techo desaparecido) entre los 3.569 edificios del ranking, con ajuste de Holm entre las pruebas admisibles (tablas `gold_icesixuao_factores` y `gold_icesixuao_grupos_factores`):
 
-| Factor (fuente) | % con daño, mínimo y máximo entre categorías | p-valor |
-|---|---|---|
-| Período de construcción (GEM) | 26,7 % a 34,0 % | 0,14 |
-| Estrato (GEM) | 20,0 % a 29,0 % | 0,94 |
-| Uso (GEM) | 28,3 % a 31,8 % | 0,85 |
-| Microzona (GEM) | — | 0,34 |
-| Licuación (GEM) | 20,8 % a 29,1 % | 0,18 |
-| Comuna | — | 0,51 |
+| Factor (fuente) | Edificios con dato | % con daño, mínimo y máximo entre categorías | p sin ajustar | p ajustado (Holm) | V de Cramér |
+|---|---|---|---|---|---|
+| Período de construcción (GEM) | 3.540 | 26,8 % a 34,0 % | 0,215 | 0,485 | 0,040 |
+| Estrato (GEM) | 3.540 | 17,1 % a 29,3 % | 0,374 | — (frecuencias bajas) | 0,039 |
+| Uso (GEM) | 3.540 | 27,9 % a 32,7 % | 0,755 | 0,755 | 0,018 |
+| Microzona (GEM) | 3.569 | 23,2 % a 32,3 % | 0,149 | 0,485 | 0,052 |
+| Licuación (GEM) | 3.569 | 19,4 % a 28,9 % | 0,121 | 0,485 | 0,040 |
+| Comuna | 3.569 | 17,5 % a 35,3 % | 0,054 | 0,268 | 0,059 |
 
-Además, el daño **no se agrupa en el espacio**: los vecinos a menos de 50 m de un edificio con escombros tienen escombros en la misma proporción que los vecinos de uno sin escombros (6,1 % frente a 6,3 %; prueba de permutación, p = 0,62).
+Una prueba de permutación exploratoria anterior (vecinos a 50 m, corrida del 13-nov a las 10:00 con 4.711 edificios) tampoco encontró agrupamiento espacial (p = 0,62); no se repitió sobre oro.
 
-**Lectura:** con estos datos, el daño satelital se comporta como una señal individual, no como un patrón explicable por el suelo, la edad o el uso. Hay dos explicaciones posibles: el daño fue parejo en esta zona, o la clasificación satelital tiene mucho ruido por edificio (la guía advierte que son inferencias, no inspecciones). Ninguna de las dos se puede descartar con estos datos. **Consecuencia práctica:** el dato satelital sirve para marcar edificios a inspeccionar, pero no basta para priorizar. Por eso el índice combina el daño observado con lo que las fuentes externas sí saben de cada edificio (vulnerabilidad, ocupantes, suelo y servicios).
+**Lectura:** con esta muestra no se detecta asociación entre la señal satelital y el suelo, la época, el uso o la comuna; los tamaños de efecto son muy pequeños. Un p alto no prueba que esos factores no influyan. Dos explicaciones posibles: la clasificación satelital tiene ruido por edificio, o no ve el tipo de daño que esos factores producen. La validación externa de abajo apoya la segunda. **Consecuencia práctica:** el dato satelital sirve para marcar edificios a inspeccionar, pero no basta para priorizar; por eso el índice combina el daño observado con vulnerabilidad, ocupantes, suelo y servicios.
+
+## Validación externa del enfoque
+
+| Fuente | Enlace | Qué dice | Qué valida o qué límite marca |
+|---|---|---|---|
+| Javeriana Cali, IEI: "Seis clústeres de afectación del sismo del 10 de agosto de 2026" | [PDF](https://www.javerianacali.edu.co/sites/default/files/2026-08/clu%CC%81steres%20de%20afectacio%CC%81n%20del%20sismo%20del%2010%20de%20agosto%20de%202026.pdf) | Para Cali, un análisis geoestadístico de 682 reportes georreferenciados de la Secretaría de Gestión del Riesgo ubica el mecanismo de daño en la cohorte de 3 a 6 pisos anterior al código de 1984, la microzona 4C y el abanico del Cañaveralejo. Recomienda cruzar microzonificación y esa cohorte para convertir el universo de edificios en "una lista finita de revisión" y reforzarla antes que demolerla. | Valida el peso de la vulnerabilidad y la recomendación de reforzar lo construido hasta 1985. En nuestros datos esa cohorte es el 8,5 % del ranking (303 edificios) pero el 32,4 % de la prioridad muy alta (58 de 179), y el satélite no la distingue (27,1 % con daño visible frente a 28,5 % del resto). **Límite:** la microzona 4C no sube en nuestra prioridad (2,7 % de muy alta frente a 6,4 % fuera de ella); el componente de suelo pesa 10 %. |
+| Mismo documento, sobre Copernicus EMSR916 | (mismo PDF) | El satélite de Copernicus detectó 21 edificaciones afectadas en sus dos polígonos de Cali, frente a 1.538 reportes de la Secretaría de Gestión del Riesgo al 16-ago. En Cali "el daño es interior y estructural, en edificaciones de altura media que se agrietan y colapsan parcialmente sin perder la cubierta, de modo que el sensor no lo ve". | Respalda que "sin cambio aparente" no significa sano y que el daño satelital solo no basta para priorizar. |
+| Alcaldía de Cali vía El País, corte 30-ago-2026 12:00 | [Nota](https://www.elpais.com.co/cali/cali-actualiza-balance-del-terremoto-se-registran-mas-de-32000-familias-damnificadas-y-610-edificaciones-no-habitables-3054.html) | 32.882 familias en el RUD; 1.335 edificaciones con diagnóstico especializado; 398 con colapso parcial verificado, 24 con desplome total, 610 viviendas no habitables y 350 de uso restringido. No desagrega por comuna. | Orden de magnitud: 296 predios con alta probabilidad de escombros en nuestro inventario (5.146 predios, no toda la ciudad) frente a 422 colapsos verificados en toda Cali. No es comparable uno a uno. |
+| OPS, Sitrep 7 (04-sep-2026) | [PDF](https://www.paho.org/sites/default/files/2026/09/sitrep7-colombia-sismo-04092026-es.pdf) | Santiago de Cali con 4 alojamientos temporales activos y 7 cerrados, 765 personas. | Contexto de servicios urbanos; no se cruza por comuna. |
+| Alcaldía de Cali | [Altos de Santa Elena](https://www.cali.gov.co/gobierno/publicaciones/193743/alcaldia-de-cali-despliega-operativo-integral-en-altos-de-santa-elena-para-evaluar-danos-estructurales-tras-el-sismo/) | Operativo de evaluación estructural en Altos de Santa Elena (comuna 18). | La comuna 18 está en el puesto 4 de nuestro ranking. Ninguna fuente oficial consultada publica daño por comuna, así que el ranking completo no se pudo contrastar. |
 
 ## Lista para el correo de entrega
 
