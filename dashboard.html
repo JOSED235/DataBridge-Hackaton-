@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard de oro · icesixuao</title>
+<style>
+  :root { --bg:#0e1013; --panel:#15181d; --line:#262b33; --text:#e8e6e1; --muted:#8b919b;
+          --acento:#ff5a36; --verde:#3ecf8e; --azul:#5aaadc; --mono:ui-monospace,Consolas,monospace; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 system-ui,sans-serif; }
+  .wrap { max-width:1180px; margin:0 auto; padding:28px 24px 60px; }
+  h1 { font-size:24px; margin:0 0 4px; letter-spacing:-.02em; }
+  h1 span { color:var(--acento); }
+  .sub { color:var(--muted); margin:0 0 18px; }
+  h2 { font:600 12px/1 var(--mono); text-transform:uppercase; letter-spacing:.12em;
+       color:var(--muted); margin:34px 0 12px; border-top:1px solid var(--line); padding-top:18px; }
+  .aviso { border-left:3px solid var(--acento); background:#1d1714; color:#d9c9c2;
+           padding:10px 12px; font-size:12.5px; margin-bottom:20px; }
+  .kpis { display:grid; grid-template-columns:repeat(6,1fr); gap:1px; background:var(--line);
+          border:1px solid var(--line); }
+  .kpi { background:var(--panel); padding:12px; }
+  .kpi b { display:block; font:600 24px/1.1 var(--mono); }
+  .kpi small { color:var(--muted); font-size:11.5px; display:block; margin-top:3px; }
+  .kpi.hot b { color:var(--acento); }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .panel { background:var(--panel); border:1px solid var(--line); padding:14px 16px; }
+  .fila-barra { display:grid; grid-template-columns:210px 1fr 320px; gap:10px; align-items:center;
+                padding:5px 0; font-size:12.5px; }
+  .etq { color:var(--text); white-space:nowrap; }
+  .pista { background:#0b0d10; border:1px solid var(--line); height:16px; }
+  .lleno { height:100%; }
+  .val { color:var(--muted); font-size:11.5px; }
+  table { border-collapse:collapse; width:100%; font-size:12.5px; }
+  th { text-align:left; color:var(--muted); font:600 11px var(--mono); text-transform:uppercase;
+       letter-spacing:.08em; border-bottom:1px solid var(--line); padding:6px 8px; }
+  td { border-bottom:1px solid var(--line); padding:6px 8px; vertical-align:top; }
+  td:first-child { color:var(--text); }
+  td { color:#c9cdd3; }
+  .conclusion li { margin:6px 0; }
+  .pie { color:var(--muted); font-size:11.5px; margin-top:34px; border-top:1px solid var(--line);
+         padding-top:14px; }
+  .tag { display:inline-block; background:#1d1714; border:1px solid #5a2a22; color:var(--acento);
+         font:600 11px var(--mono); padding:3px 8px; margin-left:8px; vertical-align:middle; }
+  @media (max-width:900px) { .kpis { grid-template-columns:repeat(3,1fr); }
+    .cols { grid-template-columns:1fr; } .fila-barra { grid-template-columns:130px 1fr; }
+    .fila-barra .val { grid-column:1 / -1; } }
+</style></head><body><div class="wrap">
+
+<h1>Réplicas en Cali: <span>dónde inspeccionar primero</span></h1>
+<p class="sub">DataBridge Hack 2026 · equipo icesixuao: Nicolas Zapato (Universidad Autónoma de Occidente) y
+José David Rodríguez Pinilla (Universidad Icesi) · corrida 13-11-2026 15:10 · mismas cifras que las tablas gold publicadas en Databricks el 13-nov-2026</p>
+<p class="sub">Mapa interactivo: <a href="./" style="color:var(--azul)">visor del equipo</a> ·
+código: <a href="https://github.com/JOSED235/DataBridge-Hackaton-" style="color:var(--azul)">repositorio</a>
+<span class="tag">publicación autorizada por la organización hasta el cierre del evento</span></p>
+<p class="aviso">Los datos de edificios vienen de imágenes satelitales: sirven para priorizar, no para declarar
+una edificación segura o insegura. La vulnerabilidad y la ocupación vienen de modelos (GEM); el cruce es por
+cercanía, no por llave catastral. Las pruebas de asociación son exploratorias y no establecen causalidad. El índice
+es un puntaje relativo de priorización, no una probabilidad de colapso.</p>
+
+<h2>Conclusiones</h2>
+<div class="panel conclusion"><ul>
+<li><b>Dónde ir primero:</b> 179 edificios de prioridad muy alta (69,3 % construidos hasta
+1985; 2.945 ocupantes modelados). Empezar por la comuna 3, la de mayor índice: 65,4 % de sus
+edificios son de 1985 o antes. La comuna 19 concentra la mayor ocupación modelada en edificios dañados.</li>
+<li><b>El daño satelital no muestra un patrón claro:</b> con esta muestra no se detecta asociación con época,
+uso, suelo, licuación ni comuna (ver p ajustado por Holm y V de Cramér en Factores). Un p alto no prueba que no
+influyan. Por eso el índice combina lo observado con lo conocido de cada edificio.</li>
+<li><b>Las fuentes externas cambian la lista:</b> sin ellas, solo el 40 % del top 50 se mantiene. La decisión de
+prioridad depende de las fuentes tanto como del daño: por eso cada cifra se rastrea a su tabla.</li>
+<li><b>Validación externa:</b> un estudio de la Javeriana Cali ubica el daño de Cali en edificios de 3 a 6 pisos
+anteriores a 1984, con daño interior que el satélite casi no ve (Copernicus vio 21 edificaciones; hubo 1.538 reportes
+locales). Ese grupo es el 8,5 % del ranking y el 32,4 % de la prioridad muy alta. No coincide en la
+microzona 4C, que el índice no resalta (el suelo pesa 10 %).</li>
+<li><b>Por qué suma ponderada y no PCA:</b> el primer componente principal explica solo el 26 % de la varianza; las
+siete dimensiones son casi independientes, así que comprimirlas no simplifica y borraría los motivos por edificio.</li>
+<li><b>Verificación en terreno aparte:</b> 435
+edificios sin dato satelital y 1.142
+predios sin construcción registrada no participan en el ranking: van a censo y verificación, no se suponen sanos.</li>
+</ul></div>
+
+<h2>Indicadores maestros</h2>
+<div class="kpis">
+  <div class="kpi"><b>5.146</b><small>edificios y lotes analizados</small></div>
+  <div class="kpi hot"><b>1.354</b><small>con daño visible (26,3 %; 342 son lotes)</small></div>
+  <div class="kpi hot"><b>5.494</b><small>ocupantes modelados en edificios dañados (GEM, sin duplicar; 6.950 por predio)</small></div>
+  <div class="kpi hot"><b>179</b><small>prioridad muy alta</small></div>
+  <div class="kpi"><b>435</b><small>sin dato satelital (8,5 %)</small></div>
+  <div class="kpi"><b>1.234</b><small>lotes sin construcción registrada</small></div>
+</div>
+
+<h2>Ranking de comunas (p90 del índice entre edificios del ranking)</h2>
+<div class="panel"><div class="fila-barra"><span class="etq">C3 · #1</span><div class="pista"><div class="lleno" style="width:100.0%;background:#ff5a36"></div></div><span class="val">p90 0,544 · 611 predios · 111 de prioridad alta o muy alta · 887 ocupantes con daño</span></div><div class="fila-barra"><span class="etq">C9 · #2</span><div class="pista"><div class="lleno" style="width:99.1%;background:#ff5a36"></div></div><span class="val">p90 0,539 · 202 predios · 41 de prioridad alta o muy alta · 220 ocupantes con daño</span></div><div class="fila-barra"><span class="etq">C10 · #3</span><div class="pista"><div class="lleno" style="width:92.4%;background:#ff5a36"></div></div><span class="val">p90 0,502 · 577 predios · 72 de prioridad alta o muy alta · 1.018 ocupantes con daño</span></div><div class="fila-barra"><span class="etq">C18 · #4</span><div class="pista"><div class="lleno" style="width:91.3%;background:#ff5a36"></div></div><span class="val">p90 0,496 · 113 predios · 7 de prioridad alta o muy alta · 116 ocupantes con daño</span></div><div class="fila-barra"><span class="etq">C20 · #5</span><div class="pista"><div class="lleno" style="width:86.4%;background:#ff5a36"></div></div><span class="val">p90 0,470 · 402 predios · 26 de prioridad alta o muy alta · 520 ocupantes con daño</span></div><div class="fila-barra"><span class="etq">C19 · #6</span><div class="pista"><div class="lleno" style="width:86.3%;background:#ff5a36"></div></div><span class="val">p90 0,469 · 3.142 predios · 274 de prioridad alta o muy alta · 4.008 ocupantes con daño</span></div><div class="fila-barra"><span class="etq">C17 · #7</span><div class="pista"><div class="lleno" style="width:80.7%;background:#ff5a36"></div></div><span class="val">p90 0,438 · 99 predios · 5 de prioridad alta o muy alta · 181 ocupantes con daño</span></div></div>
+
+<h2>Tabla por comuna (gold_icesixuao_comunas)</h2>
+<div class="panel" style="overflow-x:auto"><table>
+<tr><th>#</th><th>Comuna</th><th>p90</th><th>Predios</th><th>En ranking</th><th>Muy alta</th><th>Alta</th>
+<th>Daño entre con dato</th><th>Sin dato</th><th>Ocupantes modelados con daño</th><th>Centros de salud</th></tr>
+<tr><td>1</td><td>Comuna 3</td><td>0,544</td><td>611</td><td>410</td><td>49</td><td>62</td><td>31,3 %</td><td>10,0 %</td><td>887</td><td>26</td></tr><tr><td>2</td><td>Comuna 9</td><td>0,539</td><td>202</td><td>150</td><td>19</td><td>22</td><td>32,6 %</td><td>8,9 %</td><td>220</td><td>6</td></tr><tr><td>3</td><td>Comuna 10</td><td>0,502</td><td>577</td><td>408</td><td>28</td><td>44</td><td>26,4 %</td><td>6,2 %</td><td>1.018</td><td>17</td></tr><tr><td>4</td><td>Comuna 18</td><td>0,496</td><td>113</td><td>57</td><td>3</td><td>4</td><td>25,0 %</td><td>15,0 %</td><td>116</td><td>10</td></tr><tr><td>5</td><td>Comuna 20</td><td>0,470</td><td>402</td><td>210</td><td>5</td><td>21</td><td>28,0 %</td><td>14,7 %</td><td>520</td><td>5</td></tr><tr><td>6</td><td>Comuna 19</td><td>0,469</td><td>3.142</td><td>2.269</td><td>75</td><td>199</td><td>28,7 %</td><td>7,4 %</td><td>4.008</td><td>111</td></tr><tr><td>7</td><td>Comuna 17</td><td>0,438</td><td>99</td><td>65</td><td>0</td><td>5</td><td>27,6 %</td><td>12,1 %</td><td>181</td><td>28</td></tr>
+</table>
+<p style="color:var(--muted);font-size:12px;margin:10px 0 0">El p90 mide concentración de puntajes altos; los conteos de
+prioridad miden volumen de trabajo. La comuna 19 tiene más edificios de prioridad muy alta, pero la 3 concentra puntajes
+más altos. Ocupación sumada por predio: puede repetir registros GEM.</p></div>
+
+<div class="cols">
+<div><h2>Servicios urbanos cerca del daño</h2>
+<div class="panel"><table>
+<tr><th>Comuna</th><th>Predios con daño</th><th>A 200 m o menos de salud</th><th>A más de 1 km de urgencias</th><th>Pueden bloquear vía</th></tr>
+<tr><td>C3</td><td>172</td><td>18</td><td>0</td><td>2</td></tr><tr><td>C9</td><td>60</td><td>11</td><td>0</td><td>0</td></tr><tr><td>C10</td><td>143</td><td>49</td><td>118</td><td>0</td></tr><tr><td>C17</td><td>24</td><td>14</td><td>14</td><td>0</td></tr><tr><td>C18</td><td>24</td><td>13</td><td>0</td><td>0</td></tr><tr><td>C19</td><td>835</td><td>511</td><td>211</td><td>3</td></tr><tr><td>C20</td><td>96</td><td>10</td><td>87</td><td>0</td></tr><tr><td>Total</td><td>1.354</td><td>626</td><td>430</td><td>5</td></tr>
+</table>
+<p style="color:var(--muted);font-size:12px;margin:10px 0 0">Distancias euclidianas a sitios de OpenStreetMap; solo 23 de
+439 centros de salud declaran urgencias. Proximidad no es capacidad ni tiempo de viaje.</p></div></div>
+
+<div><h2>Colas de trabajo para brigadas</h2>
+<div class="panel"><div class="fila-barra"><span class="etq">Inspección (ranking)</span><div class="pista"><div class="lleno" style="width:100.0%;background:#ff5a36"></div></div><span class="val">3.569</span></div><div class="fila-barra"><span class="etq">Lotes sin construcción</span><div class="pista"><div class="lleno" style="width:32.0%;background:#5aaadc"></div></div><span class="val">1.142</span></div><div class="fila-barra"><span class="etq">Sin dato satelital</span><div class="pista"><div class="lleno" style="width:12.2%;background:#a06cd5"></div></div><span class="val">435</span></div>
+<p style="color:var(--muted);font-size:12px;margin:10px 0 0">De los predios sin construcción registrada, 342
+muestran daño visible. El visor filtra por cola y comuna y descarga la lista en Excel, ordenada por prioridad.</p></div></div>
+</div>
+
+<h2>Prioridades de inspección (5.146 registros)</h2>
+<div class="panel"><div class="fila-barra"><span class="etq">Baja</span><div class="pista"><div class="lleno" style="width:41.6%;background:#565d68"></div></div><span class="val">2.141 · 41,6 %</span></div><div class="fila-barra"><span class="etq">Sin construcción registrada: verificar</span><div class="pista"><div class="lleno" style="width:22.2%;background:#5aaadc"></div></div><span class="val">1.142 · 22,2 %</span></div><div class="fila-barra"><span class="etq">Media</span><div class="pista"><div class="lleno" style="width:17.3%;background:#e8d44d"></div></div><span class="val">892 · 17,3 %</span></div><div class="fila-barra"><span class="etq">Sin dato: verificar en terreno</span><div class="pista"><div class="lleno" style="width:8.5%;background:#a06cd5"></div></div><span class="val">435 · 8,5 %</span></div><div class="fila-barra"><span class="etq">Alta</span><div class="pista"><div class="lleno" style="width:6.9%;background:#ff9500"></div></div><span class="val">357 · 6,9 %</span></div><div class="fila-barra"><span class="etq">Muy alta</span><div class="pista"><div class="lleno" style="width:3.5%;background:#ff5a36"></div></div><span class="val">179 · 3,5 %</span></div></div>
+
+<h2>Daño satelital por categoría (inventario completo)</h2>
+<div class="panel"><div class="fila-barra"><span class="etq">Alta probabilidad de escombros</span><div class="pista"><div class="lleno" style="width:5.8%;background:#ff5a36"></div></div><span class="val">296 · 5,8 %</span></div><div class="fila-barra"><span class="etq">Posible desaparición de techo</span><div class="pista"><div class="lleno" style="width:20.6%;background:#ff9500"></div></div><span class="val">1.058 · 20,6 %</span></div><div class="fila-barra"><span class="etq">Sin cambio aparente / daño interno</span><div class="pista"><div class="lleno" style="width:65.2%;background:#8b919b"></div></div><span class="val">3.357 · 65,2 %</span></div><div class="fila-barra"><span class="etq">Sin datos satelitales</span><div class="pista"><div class="lleno" style="width:8.5%;background:#a06cd5"></div></div><span class="val">435 · 8,5 %</span></div></div>
+
+<div class="cols">
+<div><h2>¿Qué explica el daño? (exploratorio, no causal)</h2>
+<div class="panel"><table>
+<tr><th>Factor</th><th>n válidos</th><th>p χ²</th><th>p Holm</th><th>V Cramér</th><th>freq. esp. mín.</th><th>prueba</th></tr>
+<tr><td>periodo_construccion</td><td>3.540</td><td>0,215</td><td>0,485</td><td>0,040</td><td>69,2</td><td>válida</td></tr><tr><td>estrato</td><td>3.540</td><td>0,374</td><td>–</td><td>0,039</td><td>2,0</td><td>frecuencias bajas</td></tr><tr><td>uso</td><td>3.540</td><td>0,755</td><td>0,755</td><td>0,018</td><td>13,9</td><td>válida</td></tr><tr><td>microzona</td><td>3.569</td><td>0,149</td><td>0,485</td><td>0,052</td><td>45,7</td><td>válida</td></tr><tr><td>licuacion_cat</td><td>3.569</td><td>0,121</td><td>0,485</td><td>0,040</td><td>15,9</td><td>válida</td></tr><tr><td>comuna</td><td>3.569</td><td>0,054</td><td>0,268</td><td>0,059</td><td>16,2</td><td>válida</td></tr>
+</table>
+<p style="color:var(--muted);font-size:12px;margin:10px 0 0">Ninguna asociación significativa después de Holm;
+la de comuna es la más cercana (p = 0,054).
+Frecuencias esperadas bajas en estrato: sin prueba admisible. Independencia espacial no acreditada.</p></div></div>
+
+<div><h2>¿Cuánto depende del índice de los supuestos?</h2>
+<div class="panel"><div class="fila-barra"><span class="etq">solo_datos_oficiales</span><div class="pista"><div class="lleno" style="width:40.0%;background:#ff9500"></div></div><span class="val">40 % del top 50 · ρ 0,764</span></div><div class="fila-barra"><span class="etq">sin_fuentes_gem</span><div class="pista"><div class="lleno" style="width:56.0%;background:#5aaadc"></div></div><span class="val">56 % del top 50 · ρ 0,876</span></div><div class="fila-barra"><span class="etq">sin_vulnerabilidad_ni_suelo</span><div class="pista"><div class="lleno" style="width:64.0%;background:#5aaadc"></div></div><span class="val">64 % del top 50 · ρ 0,876</span></div><div class="fila-barra"><span class="etq">pesos_iguales</span><div class="pista"><div class="lleno" style="width:64.0%;background:#5aaadc"></div></div><span class="val">64 % del top 50 · ρ 0,918</span></div><div class="fila-barra"><span class="etq">enfasis_poblacion</span><div class="pista"><div class="lleno" style="width:66.0%;background:#5aaadc"></div></div><span class="val">66 % del top 50 · ρ 0,972</span></div><div class="fila-barra"><span class="etq">sin_suelo</span><div class="pista"><div class="lleno" style="width:66.0%;background:#5aaadc"></div></div><span class="val">66 % del top 50 · ρ 0,878</span></div><div class="fila-barra"><span class="etq">enfasis_servicios</span><div class="pista"><div class="lleno" style="width:72.0%;background:#5aaadc"></div></div><span class="val">72 % del top 50 · ρ 0,918</span></div><div class="fila-barra"><span class="etq">base</span><div class="pista"><div class="lleno" style="width:100.0%;background:#3ecf8e"></div></div><span class="val">100 % del top 50 · ρ 1,000</span></div>
+<p style="color:var(--muted);font-size:12px;margin:10px 0 0">Coincidencia del top 50 frente al escenario base
+(ρ = Spearman sobre los 3.569 edificios del ranking). Pesos alternativos mueven
+el orden; quitar las fuentes externas lo cambia: 40 %.</p></div></div>
+</div>
+
+<h2>¿Se puede resumir el índice? PCA de los siete componentes</h2>
+<div class="panel"><div class="fila-barra"><span class="etq">Componente 1</span><div class="pista"><div class="lleno" style="width:100.0%;background:#5aaadc"></div></div><span class="val">26,2 % · acumulado 26,2 %</span></div><div class="fila-barra"><span class="etq">Componente 2</span><div class="pista"><div class="lleno" style="width:61.1%;background:#5aaadc"></div></div><span class="val">16,0 % · acumulado 42,3 %</span></div><div class="fila-barra"><span class="etq">Componente 3</span><div class="pista"><div class="lleno" style="width:58.9%;background:#5aaadc"></div></div><span class="val">15,5 % · acumulado 57,7 %</span></div><div class="fila-barra"><span class="etq">Componente 4</span><div class="pista"><div class="lleno" style="width:50.9%;background:#5aaadc"></div></div><span class="val">13,4 % · acumulado 71,1 %</span></div><div class="fila-barra"><span class="etq">Componente 5</span><div class="pista"><div class="lleno" style="width:49.2%;background:#5aaadc"></div></div><span class="val">12,9 % · acumulado 84,0 %</span></div><div class="fila-barra"><span class="etq">Componente 6</span><div class="pista"><div class="lleno" style="width:35.5%;background:#5aaadc"></div></div><span class="val">9,3 % · acumulado 93,3 %</span></div><div class="fila-barra"><span class="etq">Componente 7</span><div class="pista"><div class="lleno" style="width:25.4%;background:#5aaadc"></div></div><span class="val">6,7 % · acumulado 100,0 %</span></div>
+<p style="color:var(--muted);font-size:12px;margin:10px 0 0">Media de |r| entre componentes: 0,11. No hay una
+dimensión dominante: se combinan de forma aditiva con pesos explícitos para conservar los motivos de cada edificio.</p></div>
+
+<div class="cols">
+<div><h2>Pesos vigentes del índice</h2>
+<div class="panel"><div class="fila-barra"><span class="etq">Daño satelital</span><div class="pista"><div class="lleno" style="width:100.0%;background:#5aaadc"></div></div><span class="val">25 %</span></div><div class="fila-barra"><span class="etq">Vulnerabilidad (tipología GEM)</span><div class="pista"><div class="lleno" style="width:80.0%;background:#5aaadc"></div></div><span class="val">20 %</span></div><div class="fila-barra"><span class="etq">Exposición (ocupantes)</span><div class="pista"><div class="lleno" style="width:60.0%;background:#5aaadc"></div></div><span class="val">15 %</span></div><div class="fila-barra"><span class="etq">Suelo (amplificación)</span><div class="pista"><div class="lleno" style="width:40.0%;background:#5aaadc"></div></div><span class="val">10 %</span></div><div class="fila-barra"><span class="etq">Altura (pisos)</span><div class="pista"><div class="lleno" style="width:40.0%;background:#5aaadc"></div></div><span class="val">10 %</span></div><div class="fila-barra"><span class="etq">Acceso a salud</span><div class="pista"><div class="lleno" style="width:40.0%;background:#5aaadc"></div></div><span class="val">10 %</span></div><div class="fila-barra"><span class="etq">Bloqueo de vía</span><div class="pista"><div class="lleno" style="width:40.0%;background:#5aaadc"></div></div><span class="val">10 %</span></div>
+<p style="color:var(--muted);font-size:12px;margin:10px 0 0">Si un componente falta en un edificio, su peso se
+reparte entre los disponibles; el faltante no castiga ni premia. Solo 8 edificios tienen 11+ pisos:
+la altura no marca tasa de daño medible en esta muestra.</p></div></div>
+
+<div><h2>Calidad y trazabilidad</h2>
+<div class="panel"><table>
+<tr><th>Capa</th><th>Tablas</th><th>Controles</th><th>Verificación</th></tr>
+<tr><td>Silver</td><td>16</td><td>65</td><td>16 huellas SHA-256 de fuentes intactas</td></tr>
+<tr><td>Gold</td><td>13</td><td>43</td><td>huellas de plata revalidadas al consumir; mapa consistente</td></tr>
+</table>
+<p style="color:var(--muted);font-size:12px;margin:10px 0 0">Identidad una fila por OBJECTID; la publicación se detiene
+si una llave se repite. Escrituras Delta individuales: la corrida incompleta no autoriza exportar el mapa.</p></div></div>
+</div>
+
+<h2>El abanico de datos: tomadas, descartadas y pendientes</h2>
+<div class="panel">
+<p style="margin:4px 0 8px"><b>Tomadas</b> — 16 fuentes materializadas en bronze (todo como texto y con huella
+SHA-256), tipadas y cruzadas en silver:</p>
+<table>
+<tr><th>Fuente</th><th>Filas bronze</th><th>Tabla silver de destino</th></tr>
+<tr><td>gem_amplificacion_suelo</td><td>220</td><td>amplificacion</td></tr><tr><td>gem_exposicion</td><td>95.010</td><td>exposicion_gem</td></tr><tr><td>gem_microzonas_grilla</td><td>792</td><td>sitio_grilla</td></tr><tr><td>gem_sitio_licuacion_ladera</td><td>4.166</td><td>sitio_licuacion_ladera</td></tr><tr><td>osm_barrios</td><td>338</td><td>territorios</td></tr><tr><td>osm_comunas</td><td>22</td><td>territorios</td></tr><tr><td>osm_educacion</td><td>287</td><td>servicios</td></tr><tr><td>osm_emergencia</td><td>63</td><td>servicios</td></tr><tr><td>osm_puntos_encuentro</td><td>0</td><td>servicios</td></tr><tr><td>osm_salud</td><td>439</td><td>servicios</td></tr><tr><td>osm_vias_principales</td><td>4.070</td><td>vias</td></tr><tr><td>predios</td><td>5.146</td><td>predios</td></tr><tr><td>usgs_estaciones_cali</td><td>33</td><td>observaciones</td></tr><tr><td>usgs_replicas</td><td>68</td><td>eventos</td></tr><tr><td>usgs_shakemap_cali</td><td>306</td><td>shakemap</td></tr><tr><td>usgs_sismos_2026_08</td><td>76</td><td>eventos</td></tr>
+</table>
+<p style="margin:14px 0 8px"><b>Vistas y descartadas o acotadas</b> — cada exclusión con su razón registrada en la
+bitácora de decisiones:</p>
+<table>
+<tr><th>Se evaluó</th><th>Por qué no entró como estaba</th><th>Qué se hizo en su lugar</th></tr>
+<tr><td>datos.cali.gov.co e IDESC (capas oficiales de Cali)</td><td>fuera de línea desde el 21-oct-2026</td><td>sustituidas por OSM (22 comunas, 338 barrios)</td></tr><tr><td>Vs30 global del USGS</td><td>grilla gruesa y sin microzonas oficiales</td><td>grilla GEM TREQ de la microzonificación INGEOMINAS-DAGMA 2005</td></tr><tr><td>Licuación global del USGS (Zhu 2017)</td><td>ráster de ~1 km, no local</td><td>susceptibilidad local de GEM (4.166 puntos)</td></tr><tr><td>Shape__Area de la fuente</td><td>viene en grados</td><td>área recalculada en m² (EPSG:9377)</td></tr><tr><td>Indice_Escombros como probabilidad</td><td>daño en las dos colas; no es probabilidad</td><td>severidad por categoría: escombros 1,0 · techo 0,7 · sin cambio 0,1</td></tr><tr><td>ShakeMap dentro del índice</td><td>describe el sismo que ya pasó y varía poco (MMI 6,4–7,1)</td><td>se conserva como evidencia, validado con RAC2C (6,9) y DYFI (6,86)</td></tr><tr><td>Ocupantes GEM como censo único</td><td>el cruce es por cercanía: los ocupantes pueden repetirse entre predios</td><td>se publica como ocupación modelada, con reutilización visible</td></tr><tr><td>Educación OSM como albergues</td><td>287 sitios mapeados no acreditan autorización ni capacidad</td><td>no se usan como albergues</td></tr><tr><td>NPISOS = 0 como error de carga</td><td>99,5 % tienen EDIFPRED vacío: son lotes sin construcción registrada</td><td>se conservan 1.234 lotes, fuera del ranking</td></tr><tr><td>Deduplicar contornos repetidos</td><td>9 grupos con categorías distintas: deduplicar inventaría o pierde</td><td>se marcan y se documentan, sin borrar</td></tr><tr><td>Amplificación faltante → factor 1</td><td>inventaría respuesta del suelo</td><td>queda NULL: una capa vacía produce distancia nula, nunca cero</td></tr><tr><td>Pendiente GEM cuantitativa</td><td>unidad del metadato sin confirmar</td><td>solo se conserva como atributo, sin inferencias</td></tr>
+</table>
+<p style="margin:14px 0 8px"><b>Pendientes (no inventadas):</b></p><ul style="margin:0 0 4px 18px;padding:0"><li>Población por manzana del DANE y cifras UNGRD materializadas (hoy citadas solo como contexto)</li><li>Capa vectorial oficial de microzonificación (hoy grilla GEM TREQ de ~750 m)</li><li>Datasets comparables de otras ciudades: el catálogo existe, la comparación no está implementada</li><li>Validación en terreno de una muestra: el satélite prioriza hipótesis, no certifica edificios</li></ul>
+</div>
+
+<p class="pie">Cifras rastreables: gold_icesixuao_{predios, comunas, afectaciones, factores, resumen_sensibilidad,
+fuentes, parametros, calidad} · silver_icesixuao_* (16 tablas) · reporte.json de cada capa. Generado por
+scripts/generar_dashboard.py desde la corrida local de 2026-11-13 15:10, con las mismas cifras que las tablas
+gold publicadas en Databricks (13 tablas, 43 controles aprobados). Priorizar no es declarar seguro.</p>
+
+</div></body></html>
