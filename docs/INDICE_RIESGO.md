@@ -48,7 +48,7 @@ Se usan percentiles (no cortes fijos) porque el objetivo es ordenar a quién ins
 
 ## Por comuna
 
-`gold_icesixuao_comunas` ordena las comunas por el **percentil 90 del índice**, no por el promedio: una comuna con muchos edificios sanos y un grupo muy crítico no debe quedar escondida. Ranking: **3, 9, 18, 10, 20, 19, 17**. La comuna 3 queda primera por su vulnerabilidad: el 66,9 % de sus edificios se construyó antes de 1985. La comuna 19 tiene la mayor cantidad de gente en edificios con daño (4.008 con construcción registrada), pero no encabeza el p90 porque su construcción es más reciente.
+`gold_icesixuao_comunas` ordena las comunas por el **percentil 90 del índice**, no por el promedio: una comuna con muchos edificios sanos y un grupo muy crítico no debe quedar escondida. Ranking: **3, 9, 10, 18, 20, 19, 17** (p90 calculado solo con los edificios del ranking). La comuna 3 queda primera por su vulnerabilidad: el 66,9 % de sus edificios se construyó antes de 1985. La comuna 19 tiene la mayor cantidad de gente en edificios con daño (4.008 con construcción registrada), pero no encabeza el p90 porque su construcción es más reciente.
 
 ## Sensibilidad (datos reales)
 

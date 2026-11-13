@@ -513,7 +513,11 @@ def escribir_plata_local(tablas, reporte, carpeta):
         # Conservar dtypes nullable en Parquet: convertirlos a object perdería el tipo en columnas 100% nulas.
         d = (pd.DataFrame(df.drop(columns="geometry")).assign(geom_wkt=df.geometry.to_wkt(rounding_precision=-1))
              if isinstance(df, gpd.GeoDataFrame) else df)
-        d.to_parquet(carpeta / f"silver_{EQUIPO}_{nombre}.parquet", index=False)
+        try:
+            d.to_parquet(carpeta / f"silver_{EQUIPO}_{nombre}.parquet", index=False)
+        except (ImportError, ValueError):
+            # shortcut: sin motor Parquet usable (p. ej. DLL de pyarrow bloqueada por Windows) se guarda CSV y se pierden dtypes nullable; solo afecta la copia local
+            d.to_csv(carpeta / f"silver_{EQUIPO}_{nombre}.csv", index=False)
     (carpeta / "reporte.json").write_text(json.dumps(reporte, ensure_ascii=False, indent=2), encoding="utf-8")
 
 

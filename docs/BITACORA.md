@@ -163,6 +163,11 @@
 **Por qué:** Publicar ambos trabajos sin sobrescribir los cambios del compañero y resolver el pull abortado por modificaciones locales. Las cifras de la corrida remota previa corresponden al commit consignado en su entrada, no acreditan una nueva ejecución remota de esta plata.
 **Archivos:** `docs/BITACORA.md`, `notebooks/01_bronze.py`, `visor/app.js`, `visor/index.html`; compatibilidad de plata en `3d2fefa`.
 
+### 2026-11-13 12:45 · José David
+**Qué:** Revisión de la capa plata nueva (`00_silver.py`): las 10 pruebas pasan (en Windows con `PYTHONUTF8=1`). Prioridades, ocupantes (6.950), sensibilidad (0,764 / 40 %) y cifras de daño no cambian. Dos ajustes: (1) el p90 de cada comuna se calcula solo con los edificios del ranking (`en_ranking`), porque los lotes, fuera del ranking, subían el p90; el ranking queda 3, 9, 10, 18, 20, 19, 17; (2) el escritor local de plata guarda CSV si no hay motor Parquet (la DLL de pyarrow está bloqueada por Windows en esta máquina), sin afectar Databricks. Se agregó a la diapositiva 2 la distancia a urgencias que trae la plata nueva: 430 edificios dañados a más de 1 km. Mapa y presentación regenerados.
+**Por qué:** El ranking de comunas debe usar los mismos edificios que el ranking de inspección, y las cifras del correo deben coincidir con la versión final del código.
+**Archivos:** `notebooks/00_pipeline.py`, `notebooks/00_silver.py`, `scripts/generar_presentacion.py`, `docs/ENTREGA.md`, `docs/INDICE_RIESGO.md`
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |
@@ -204,3 +209,4 @@
 | 2026-11-13 12:14 | Aplicar el acuerdo de las 11:55 de mantener GEM por cercanía, guardando todas las correspondencias, empates y reutilización | Conservar el criterio del equipo y hacer visible que sumar candidatos reproduciblemente no demuestra identidad ni población única | Retirar GEM de plata; tomar el primer candidato; sumar ocupantes como censo único | Mrsasayo |
 | 2026-11-13 12:14 | Grillas asignadas al vecino del contorno solo dentro de su envolvente convexa, con distancia/empates; funciones faltantes quedan nulas | Evitar extrapolación indefinida y amplificación 1 inventada; la envolvente es cobertura del extracto, no frontera geológica | Vecino sin límite geográfico; un radio arbitrario fijo; reemplazar faltantes por 1 | Mrsasayo |
 | 2026-11-13 12:14 | Plata en tablas por entidad y relaciones; lectura desde bronze y validación antes de publicar | Evitar multiplicar predios y conservar unidades, llaves, faltantes, fuentes y calidad consultables | Una tabla plana sin relaciones ni trazabilidad; cruces directamente desde archivos distintos de bronze en Databricks | Mrsasayo |
+| 2026-11-13 12:45 | Índice de comuna (p90 y promedio) solo con edificios del ranking | Coherente con sacar lotes y sin dato del ranking; con ellos, los lotes inflaban el p90 | p90 sobre todos los predios | José David |

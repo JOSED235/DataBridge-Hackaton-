@@ -297,8 +297,9 @@ def gold_comunas(g, comunas, salud, bomberos):
         pct_alta_escombros=("alta_escombros", lambda s: round(100 * s.mean(), 2)),
         pct_sin_dato=("sin_dato_satelital", lambda s: round(100 * s.mean(), 2)),
         pisos_prom=("pisos", lambda s: round(s.mean(), 2)),
-        indice_prom=("indice_riesgo", lambda s: round(s.mean(), 4)),
-        indice_p90=("indice_riesgo", lambda s: round(s.quantile(0.9), 4)),
+        # Índice de la comuna solo con edificios del ranking: sin dato y lotes tienen categoría propia.
+        indice_prom=("indice_riesgo", lambda s: round(s[g.loc[s.index, "en_ranking"].astype(bool)].mean(), 4)),
+        indice_p90=("indice_riesgo", lambda s: round(s[g.loc[s.index, "en_ranking"].astype(bool)].quantile(0.9), 4)),
         n_prioridad_muy_alta=("prioridad", lambda s: int((s == "Muy alta").sum())),
         n_puede_bloquear_via=("puede_bloquear_via", "sum"),
         dist_salud_prom_m=("dist_salud_m", lambda s: round(s.mean(), 0)),

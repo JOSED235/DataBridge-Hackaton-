@@ -98,7 +98,7 @@ Abajo, una línea por decisión clave con su porqué.
 ### El pantallazo del mapa (debe entenderse en 30 segundos)
 
 - Edificios coloreados por **prioridad**: rojo muy alta, naranja alta, gris el resto, morado sin dato, azul sin construcción registrada.
-- Comunas con borde y su puesto en el ranking: 3, 9, 18, 10, 20, 19, 17.
+- Comunas con borde y su puesto en el ranking: 3, 9, 10, 18, 20, 19, 17.
 - Centros de salud como puntos verdes y vías principales en blanco.
 - Título en la imagen: "Dónde inspeccionar primero ante la próxima réplica".
 - Leyenda visible; fuente de datos en una esquina.
