@@ -1,49 +1,24 @@
-"""Pipeline completo en local con los datos OFICIALES (data/oficiales/, fuera de git).
-
-Mismo código que los notebooks: bronze (texto fiel) -> limpiar -> enriquecer -> suelo -> índice -> gold.
-Sirve para tener las cifras y el mapa aunque falle Databricks, y para revisar los resultados.
-Escribe en data/oficiales/salidas/ y en visor/data/ (ambos ignorados por git: no se redistribuyen).
-
-Uso:  python scripts/correr_local.py
-"""
+"""Pipeline local completo: materializa plata, consume sus tablas para oro y exporta mapa privado."""
 from pathlib import Path
 import json
 from correr_plata import ejecutar_plata_local
+from correr_oro import ejecutar_oro_local, cargar_api
 
-import geopandas as gpd
-
-RAIZ = Path(__file__).resolve().parent.parent
-EXT = RAIZ / "data" / "externos"
-OFI = RAIZ / "data" / "oficiales"
-for nb in ("00_utils_espacial.py", "00_pipeline.py", "00_silver.py"):  # mismo efecto que %run en Databricks
-    exec((RAIZ / "notebooks" / nb).read_text(encoding="utf-8"))
-
-capas = {n: gpd.read_file(EXT / f"osm_{n}.geojson") for n in ("comunas", "barrios", "salud", "emergencia", "vias_principales")}
-bomberos = capas["emergencia"][capas["emergencia"]["amenity"] == "fire_station"]
-
-raw = bronze_desde_geojson(gpd.read_file(OFI / "Datosprediales.json"))
-assert raw.shape == (5146, 21), raw.shape  # la guía: 5.146 filas y 20 propiedades + geometría
-
-tablas_plata, reporte, _ = ejecutar_plata_local()
-g = tablas_plata["predios"]
-g = calcular_indice(g)
-gc = gold_comunas(g, capas["comunas"], capas["salud"], bomberos)
-sens = sensibilidad(g[g["en_ranking"]], ESCENARIOS_SENSIBILIDAD)
-
-assert reporte["valores_estado_sin_mapear"] == [], reporte["valores_estado_sin_mapear"]
-assert g["indice_riesgo"].between(0, 1).all() and g["comuna"].notna().all()
-
-SAL = OFI / "salidas"
-SAL.mkdir(exist_ok=True)
-(SAL / "reporte_limpieza.json").write_text(json.dumps(reporte, ensure_ascii=False, indent=2), encoding="utf-8")
-exportar_visor(g, gc, SAL)
-exportar_visor(g, gc, RAIZ / "visor" / "data")
-(RAIZ / "visor" / "data" / "MUESTRA.txt").unlink(missing_ok=True)
-g.drop(columns="geometry").to_csv(SAL / "gold_edificios.csv", index=False)
-gc.drop(columns="geometry").to_csv(SAL / "gold_comunas.csv", index=False)
-sens.to_csv(SAL / "gold_sensibilidad.csv", index=False)
-
-print("Reporte:", json.dumps(reporte, ensure_ascii=False))
-print(gc.drop(columns="geometry").to_string(index=False))
-print(sens.to_string(index=False))
-print(g["prioridad"].value_counts().to_string())
+RAIZ = Path(__file__).resolve().parents[1]
+if __name__ == "__main__":
+    _, reporte_plata, _ = ejecutar_plata_local()
+    tablas, reporte, _ = ejecutar_oro_local()
+    api = cargar_api()
+    salida = RAIZ / "data/oficiales/salidas"
+    salida.mkdir(parents=True, exist_ok=True)
+    (salida / "reporte_limpieza.json").write_text(json.dumps(reporte_plata, ensure_ascii=False, indent=2), encoding="utf-8")
+    for carpeta in (salida, RAIZ / "visor/data"):
+        api["exportar_visor"](tablas["predios"], tablas["comunas"], carpeta)
+    for nombre, archivo in (("predios", "gold_edificios"), ("comunas", "gold_comunas"), ("resumen_sensibilidad", "gold_sensibilidad")):
+        d = tablas[nombre].drop(columns="geometry", errors="ignore").copy()
+        if nombre == "resumen_sensibilidad":
+            d["top50_coincide_%"] = d.pct_top_coincide
+        d.to_csv(salida / f"{archivo}.csv", index=False)
+    print(json.dumps(reporte, ensure_ascii=False, indent=2))
+    print(tablas["comunas"].drop(columns="geometry").to_string(index=False))
+    print(tablas["resumen_sensibilidad"].to_string(index=False))

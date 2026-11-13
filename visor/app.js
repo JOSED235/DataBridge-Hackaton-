@@ -82,7 +82,7 @@ function capas() {
   if (estado.capas.edificios) {
     const comun = {
       id: 'edificios', pickable: true, onHover: tip, extruded: true,
-      getFillColor: (f) => colorEdificio(f.properties), getElevation: (f) => (f.properties.pisos || 1) * 3,
+      getFillColor: (f) => colorEdificio(f.properties), getElevation: (f) => f.properties.sin_construccion_registrada ? 0 : (f.properties.pisos || 1) * 3,
       updateTriggers: { getFillColor: estado.modo },
     };
     L.push(sonPuntos
@@ -130,9 +130,9 @@ function mostrarTip({ object, x, y, layer }) {
   const p = object.properties;
   let h = '';
   if (layer.id === 'edificios' || layer.id === 'marcas') h = `<b>${p.prioridad}</b> · índice ${fmt(p.indice_riesgo, 2)}<br>Comuna ${p.comuna ?? '–'} · ${p.barrio ?? ''}<br>
-    ${p.pisos} pisos · estado: ${p.estado ?? 'sin dato'}<br>Suelo: microzona ${p.microzona ?? '–'} · amplifica ${fmt(p.amplif_suelo, 2)}×<br>
-    Salud más cercana: ${fmt(p.dist_salud_m)} m${p.puede_bloquear_via ? '<br><b>Sus escombros podrían bloquear una vía principal</b>' : ''}`;
-  else if (layer.id === 'comunas') h = `<b>Comuna ${p.comuna}</b> · puesto ${p.ranking}<br>${fmt(p.n_edificios)} edificios ·
+    ${p.pisos ?? 'sin dato'} pisos (${p.pisos_fuente ?? 'fuente no informada'}) · estado: ${p.estado ?? 'sin dato'}<br>Suelo: microzona ${p.microzona ?? '–'} · amplifica ${fmt(p.amplif_suelo, 2)}×<br>
+    Motivos: ${p.motivos_principales ?? 'consultar tabla oro'}<br>Salud más cercana: ${fmt(p.dist_salud_m)} m${p.puede_bloquear_via ? '<br><b>Sus escombros podrían bloquear una vía principal</b>' : ''}`;
+  else if (layer.id === 'comunas') h = `<b>Comuna ${p.comuna}</b> · puesto ${p.ranking}<br>${fmt(p.n_predios ?? p.n_edificios)} predios ·
     ${fmt(p.pct_alta_escombros, 1)} % alta prob. escombros<br>${fmt(p.pct_sin_dato, 1)} % sin dato satelital<br>
     ${p.n_salud} centros de salud · ${p.n_bomberos} est. de bomberos`;
   else if (layer.id === 'sismos') h = `<b>M${p.mag}</b> · ${new Date(p.time).toLocaleString('es-CO')}<br>${p.place}`;
@@ -150,13 +150,13 @@ function kpis() {
   const alta = cuenta((p) => p.alta_escombros), sd = cuenta((p) => p.sin_dato_satelital);
   const muy = cuenta((p) => p.prioridad === 'Muy alta');
   const gente = ed.reduce((s, f) => { const p = f.properties; return s + (p.sev_estado >= 0.7 && !p.sin_construccion_registrada ? (p.ocupantes_noche || 0) : 0); }, 0);
-  $('ambito').textContent = estado.comuna ? `· comuna ${estado.comuna}` : '· Cali';
+  $('ambito').textContent = estado.comuna ? `· comuna ${estado.comuna}` : '· inventario analizado de Cali';
   $('kpis').innerHTML = [
-    ['', fmt(ed.length), 'edificios analizados'],
+    ['', fmt(ed.length), 'predios analizados'],
     ['hot', `${fmt((100 * alta) / n, 1)} %`, 'alta prob. de escombros'],
     ['', `${fmt((100 * cuenta((p) => p.sev_estado >= 0.7)) / n, 1)} %`, 'con daño visible (escombros o techo)'],
     ['hot', fmt(muy), 'prioridad muy alta'],
-    ['hot', fmt(gente), 'personas en edificios con daño'],
+    ['hot', fmt(gente), 'ocupación GEM asignada con señal de daño (puede repetirse)'],
     ['', `${fmt((100 * sd) / n, 1)} %`, 'sin dato satelital'],
 
   ].map(([c, v, t]) => `<div class="kpi ${c}"><b>${v}</b><small>${t}</small></div>`).join('');

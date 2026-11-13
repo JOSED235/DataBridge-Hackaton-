@@ -52,7 +52,7 @@ El repo es **privado**, así que hay dos caminos. El A es mejor porque luego se 
 
 1. En GitHub: botón **Code → Download ZIP** y descomprimir.
 2. En Databricks: **Workspace** → tu carpeta de usuario → crear una carpeta `databridge` (**Create → Folder**) y hacer clic derecho **sobre esa carpeta** → Import (si se importa desde la raíz sale el error `undefined/... is not absolute`).
-3. Dentro de la carpeta: menú **⋮** (o clic derecho) → **Import** → **File** → arrastrar todos los archivos de `notebooks/`, incluido `00_silver.py`, uno por uno (o un ZIP).
+3. Dentro de la carpeta: menú **⋮** (o clic derecho) → **Import** → **File** → arrastrar todos los archivos de `notebooks/`, incluidos `00_silver.py` y `00_gold.py`, uno por uno (o un ZIP).
 4. Deben quedar **todos en la misma carpeta**, porque `%run ./00_utils_espacial` busca el archivo al lado.
 
 ## 3. Probar que GeoPandas funciona (hoy, 5 min): el riesgo más grande
@@ -129,3 +129,15 @@ Viernes:  01_bronze hasta CREATE VOLUME → subir Datosprediales.json + los 15 d
           → 01_bronze completo → 02_silver → 03_gold → captura del Catalog
           → descargar salidas → mapa → Genie → correo antes de las 5:00 p. m.
 ```
+
+## Actualización de oro desde plata
+
+Importar también `notebooks/00_gold.py`. Después de ejecutar la plata nueva,
+`03_gold.py` consume sus 16 tablas, valida y publica las 13 tablas descritas en
+`docs/ORO.md`. No relee archivos OSM. Revisar calidad, predios, comunas,
+afectaciones, exposición y verificaciones antes de exportar el mapa.
+
+El resumen de sensibilidad está en `gold_icesixuao_resumen_sensibilidad`;
+`gold_icesixuao_sensibilidad` ahora contiene posiciones por predio y escenario.
+Las cifras de corridas anteriores no acreditan esta versión; las escrituras
+Delta son individuales y la publicación remota debe verificarse en el workspace.

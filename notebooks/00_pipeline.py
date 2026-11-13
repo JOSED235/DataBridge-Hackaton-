@@ -343,7 +343,8 @@ def para_spark(gdf):
 COLS_VISOR = ["id", "comuna", "barrio", "estado", "sev_estado", "area_m2", "pisos", "sin_construccion_registrada", "prob_escombros", "alta_escombros", "sin_dato_satelital",
               "dist_salud_m", "dist_via_principal_m", "puede_bloquear_via", "microzona", "amplif_suelo",
               "periodo_construccion", "estrato", "ocupantes_noche", "p_ductilidad_baja", "licuacion_cat", "mmi",
-              "indice_riesgo", "prioridad"]
+              "indice_riesgo", "prioridad", "pisos_observados", "pisos_estimados", "pisos_fuente",
+              "motivos_principales", "peso_base_disponible", "posicion", "cola_trabajo", "gem_ambiguo", "gem_reutilizado"]
 
 
 def exportar_visor(g, gc, carpeta):
@@ -351,7 +352,7 @@ def exportar_visor(g, gc, carpeta):
     import os
     os.makedirs(carpeta, exist_ok=True)
     e = g[[c for c in COLS_VISOR if c in g] + ["geometry"]].to_crs(CRS_GEO).copy()
-    e["pisos"] = e["pisos"].fillna(0).round(0).astype(int)  # 0 = sin construcción registrada
+    e["pisos"] = pd.to_numeric(e["pisos"], errors="coerce").round(0).astype("float64")  # NULL conserva desconocido/lote; ver bandera predial
     e["comuna"] = e["comuna"].astype("float")  # Int64 con nulos no serializa en GeoJSON
     e.to_file(f"{carpeta}/edificios.geojson", driver="GeoJSON", COORDINATE_PRECISION=6)
     gc.to_file(f"{carpeta}/comunas.geojson", driver="GeoJSON", COORDINATE_PRECISION=6)

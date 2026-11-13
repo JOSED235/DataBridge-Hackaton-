@@ -1,3 +1,11 @@
+> Actualización de contrato de oro: ver `docs/ORO.md`. Los pesos siguientes se
+> conservan. Las cifras de esta ficha son de una corrida anterior y deben
+> contrastarse con las tablas vigentes. GEM es un modelo cruzado por cercanía:
+> no acredita atributos físicos de cada predio ni población única afectada.
+> Las pruebas de asociación son exploratorias; un p-valor alto no demuestra
+> ausencia de relación y no establece causalidad. El escenario antiguo sin
+> vulnerabilidad/suelo se conserva con ese nombre; sin GEM excluye además exposición.
+
 # Índice de riesgo ante réplicas
 
 > Versión con los datos oficiales y las fuentes externas (13-nov-2026, 10:55). Si cambian los pesos, la decisión va a la tabla de `BITACORA.md`.
@@ -9,11 +17,11 @@ Para cada edificio, **qué tan urgente es inspeccionarlo antes de la próxima r�
 
 ## Por qué combina daño observado y fuentes externas
 
-El daño satelital no se asocia con ninguna característica conocida: ni la edad, el estrato, el uso, la microzona o la licuación, ni la cercanía a otros edificios dañados (`docs/FUENTES.md`, última sección). Por edificio se comporta como una señal individual con mucho ruido posible. Por eso el índice no depende solo de él: suma lo que las fuentes externas sí saben de cada edificio, que es qué tan frágil es, cuánta gente hay dentro, en qué suelo está y qué servicios afectaría.
+La corrida exploratoria anterior no detectó asociaciones concluyentes con las características evaluadas: ni la edad, el estrato, el uso, la microzona o la licuación, ni la cercanía a otros edificios dañados (`docs/FUENTES.md`, última sección). Por edificio se comporta como una señal individual con mucho ruido posible. Por eso el índice no depende solo de él: suma lo que las fuentes externas sí saben de cada edificio, que es qué tan frágil es, cuánta gente hay dentro, en qué suelo está y qué servicios afectaría.
 
 ## Explicación en 30 segundos (para el jurado)
 
-> "Cada edificio recibe un puntaje de 0 a 1. El satélite dice si se ve dañado, y eso pesa más, pero no basta: el daño satelital no sigue ningún patrón, así que le sumamos lo que sí sabemos de cada edificio. Del modelo de exposición de GEM tomamos qué tan frágil es su tipo de construcción y cuánta gente duerme ahí; de la microzonificación, cuánto amplifica su suelo y si puede licuarse; y de OpenStreetMap, qué tan lejos está del hospital y si sus escombros tapan una vía. Con siete combinaciones de pesos distintas, el ranking se mantiene correlacionado entre 0,76 y 0,97."
+> "Cada edificio recibe un puntaje de 0 a 1. El satélite dice si se ve dañado, y eso pesa más, pero no basta: complementamos la señal satelital con contexto modelado y documentamos sus incertidumbres. Del modelo de exposición de GEM tomamos qué tan frágil es su tipo de construcción y cuánta gente duerme ahí; de la microzonificación, cuánto amplifica su suelo y si puede licuarse; y de OpenStreetMap, qué tan lejos está del hospital y si sus escombros tapan una vía. Con siete combinaciones de pesos distintas, el ranking se mantiene correlacionado entre 0,76 y 0,97."
 
 ## Componentes
 

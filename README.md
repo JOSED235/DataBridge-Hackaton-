@@ -14,6 +14,7 @@ Solución del equipo para la **DataBridge Hack** (IEEE Computer Society, Colombi
 | Análisis exploratorio de bronce | 17 notebooks individuales y una síntesis en `analisis_bronce/`; resultados locales guardados en `.ipynb` y HTML |
 | Fuentes externas (GEM TREQ: exposición, suelo, licuación; USGS: ShakeMap, estaciones, réplicas; OSM) | Descargadas y recortadas en `data/externos/`, con una ficha por fuente en `docs/FUENTES.md` |
 | Capa plata | 16 tablas por entidad y relaciones, control de calidad y validación local; contrato en `docs/PLATA.md` |
+| Capa oro | 13 tablas desde plata: prioridad explicable, denominadores, exposición GEM, sensibilidad y calidad; contrato en `docs/ORO.md` |
 | Funciones espaciales | Listas, con autoprueba |
 | Notebooks bronze/silver/gold | Ajustados a los datos oficiales y a los nombres de la guía (`workspace.default.<capa>_icesixuao_<contenido>`) |
 | Simulación con datos ficticios | Pasa de extremo a extremo |
@@ -32,6 +33,7 @@ docs/
   GUIA_DATABRICKS.md                Paso a paso de Databricks para principiantes
   BITACORA.md                       Aportes y decisiones del equipo (con su razón)
   PLATA.md                          Contrato de tablas, reglas de cruces, calidad y reproducción
+  ORO.md                            Contrato de indicadores, prioridades y validación de oro
   INDICE_RIESGO.md                  Componentes, pesos y justificación del índice
   FUENTES.md                        Fuentes, revisión de las 20 entradas y 38 referencias, cobertura y pendientes
   GUION_PRESENTACION.md             Guion de 5 a 7 min y respuestas al jurado
@@ -41,6 +43,7 @@ notebooks/                Para importar en Databricks (Workspace → Import)
   00_utils_espacial.py    Funciones espaciales + autoprueba
   00_pipeline.py          Configuración y funciones compatibles de silver/gold (COLS, pesos)
   00_silver.py            Contrato de plata, tablas por entidad, cruces auditables y calidad
+  00_gold.py              Transformaciones de oro desde plata, explicación y controles
   01_bronze.py            Carga cruda de edificios y capas externas
   02_silver.py            Tablas bronze → 16 tablas plata tipadas y validadas
   03_gold.py              Índice, ranking, sensibilidad, SQL clave y exportación al visor
@@ -48,6 +51,7 @@ scripts/
   descargar_osm.py        Descarga las capas de OSM a data/externos/
   descargar_externos.py   Descarga y recorta GEM (exposición, licuación) y USGS (ShakeMap, estaciones, réplicas)
   simular_pipeline.py     Corre el pipeline en local con edificios ficticios (no pisa el mapa real)
+  correr_oro.py           Consume Parquet plata y materializa 13 tablas oro privadas
   correr_plata.py         Materializa y valida solo plata en data/oficiales/plata/ (Parquet privado)
   correr_local.py         Plata nueva → gold en data/oficiales/salidas/ y mapa en visor/data/
 analisis_bronce/          EDA independiente del pipeline: notebooks por dataset, ejecutor y soporte
@@ -55,7 +59,8 @@ analisis_bronce/          EDA independiente del pipeline: notebooks por dataset,
   ejecutados/            Notebooks con salidas y HTML para visualizar (fuera de git)
   resultados/            Perfiles JSON, figuras y registro local de ejecución (fuera de git)
 analisis_plata/           Notebook de validación de plata y ejecutor; HTML/IPYNB guardados privados
-tests/test_silver.py      Pruebas del contrato con datos sintéticos y fuentes públicas
+analisis_gold/            Notebook de oro, HTML/IPYNB privados, ejecutor y verificador
+tests/                   Contratos de plata y oro con predios sintéticos y fuentes públicas
 data/
   externos/               Fuentes externas públicas recortadas a Cali: OSM, USGS y GEM (detalle en docs/FUENTES.md)
   oficiales/              Datos del evento (Datosprediales.json): NO se suben (están en .gitignore)
@@ -119,3 +124,19 @@ y estimados se guardan por separado. La ejecución local no publica Delta remoto
 - Los datos de edificios vienen de **imágenes satelitales**: sirven para priorizar, no para declarar una edificación segura o insegura.
 - Los datos oficiales del evento **no se redistribuyen**: van en `data/oficiales/` y nunca se suben al repo, igual que el mapa generado con ellos.
 - Cada aporte y decisión se documenta en `docs/BITACORA.md`.
+
+**Capa oro:** consume exclusivamente plata; conserva pesos y el p90 de elegibles.
+Distingue predios/lotes, pisos observados/estimados y ocupación GEM asignada/de
+candidatos únicos. El puntaje es relativo, no probabilidad de colapso.
+
+```bash
+/home/nicolas/venv_global/bin/python scripts/correr_oro.py
+/home/nicolas/venv_global/bin/python analisis_gold/ejecutar.py
+/home/nicolas/venv_global/bin/python -B analisis_gold/verificar.py
+# Abrir analisis_gold/ejecutados/01_validacion_gold.html
+```
+
+Contrato: `docs/ORO.md`. Tablas privadas: `data/oficiales/oro/`. Databricks debe
+importar también `00_gold.py`; la validación local no acredita publicación remota.
+El resumen de escenarios pasa a `gold_icesixuao_resumen_sensibilidad`;
+`gold_icesixuao_sensibilidad` contiene el detalle por predio y escenario.

@@ -59,6 +59,8 @@ def distancia_epicentro_km(gdf):
 
 def normalizar(s, invertir=False, recorte=(0.01, 0.99)):
     """Min-max a 0..1 recortando percentiles extremos para que un valor atípico no aplaste al resto."""
+    # Los cuantiles de Int64 nullable pueden ser decimales; clip sobre enteros los rechaza.
+    s = s.astype("float64")
     lo, hi = s.quantile(recorte[0]), s.quantile(recorte[1])
     x = ((s.clip(lo, hi) - lo) / (hi - lo)) if hi > lo else s * 0.0
     return 1 - x if invertir else x
