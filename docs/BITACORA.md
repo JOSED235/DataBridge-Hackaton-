@@ -132,16 +132,36 @@
 **Por qué:** Respetar la definición de lote de la organización sin esconder los predios donde el satélite ve daño, y conservar la fuente que sostiene la vulnerabilidad y la población en la respuesta.
 **Archivos:** `notebooks/00_pipeline.py`, `notebooks/03_gold.py`, `scripts/correr_local.py`, `scripts/simular_pipeline.py`, `visor/app.js`, `docs/ENTREGA.md`, `docs/INDICE_RIESGO.md`, `docs/FUENTES.md`
 
+### 2026-11-13 12:00 · José David
+**Qué:** En `01_bronze`, los nombres de columna con caracteres que Delta no acepta (por ejemplo `SA(0.1)` de `gem_amplificacion_suelo.csv`) se guardan con `_`. Solo cambia el nombre de la columna; los valores quedan intactos. La corrida de Databricks con `6203cab` coincidió en todas las cifras con la local.
+**Por qué:** La tabla bronze de amplificación fallaba con `DELTA_INVALID_CHARACTERS_IN_COLUMN_NAMES`. Silver no dependía de ella, pero bronze debe tener todas las fuentes.
+**Archivos:** `notebooks/01_bronze.py`
+
+### 2026-11-13 12:10 · José David
+**Qué:** Corrida final en Databricks (commit `e4af152`): bronze, silver y gold sin celdas fallidas. Bronze tiene 5.146 × 21 filas y columnas, más 15 tablas externas (incluida `bronze_icesixuao_gem_amplificacion_suelo`, 220 × 16). Todas las cifras coinciden con la corrida local: 4 geometrías reparadas, 1.234 predios sin construcción registrada, prioridades 179/357/892/2.141/435/1.142, ranking 3, 9, 18, 10, 20, 19, 17, sensibilidad 0,764 / 40 % y ocupantes 38.565 / 9.134 / 6.950. Desde aquí se congela el código.
+**Por qué:** Las cifras del correo deben salir de las tablas gold de Databricks.
+**Archivos:** tablas `workspace.default.*_icesixuao_*`, `docs/BITACORA.md`
+
 ### 2026-11-13 12:14 · Mrsasayo
 **Qué:** Implementación de la capa plata desde las decisiones vigentes de `6203cab` y `9e14ab3`, revisadas contra el código y `origin/main`. Se conservan los lotes fuera del ranking y GEM como cruce por cercanía con suma de empates y desempate determinista. Se crean 16 tablas de entidades, relaciones, fuentes y calidad; se separan pisos observados/estimados, se conservan originales y discrepancias, y se registran empates y reutilización GEM. `02_silver` lee tablas bronze; el ejecutor local genera Parquet privado con huellas de archivos. Se agrega notebook de validación con salidas HTML/IPYNB privadas. El pipeline completo local usa la misma plata. Se adapta la prioridad a tipos nullable sin cambiar pesos, y la consulta top 20 respeta `en_ranking`. README, guía y estado del EDA actualizados.
 **Por qué:** Materializar las decisiones del EDA y los acuerdos posteriores sin perder registros ni confundir lotes, estimaciones o modelos con observaciones. La población asignada por cercanía puede repetirse entre predios; las relaciones permiten auditarlo. La lectura USGS 3D requería unificar CRS horizontal sin perder profundidad. Los percentiles nullable requerían condiciones booleanas explícitas para NumPy.
 **Verificación:** `python -m pytest -q`: 12 pruebas aprobadas; `analisis_plata/verificar.py`: 16 tablas Parquet, 5.146 predios, 65 controles, 16 huellas de archivo intactas, 7 celdas y 3 figuras sin errores; `scripts/correr_local.py` terminó con código 0. Se comprobó el EDA previo: 18 notebooks y 17 fuentes intactas. Tablas Delta pendientes de ejecución en Databricks; no se publicaron desde esta sesión.
 **Archivos:** `notebooks/00_silver.py`, `notebooks/02_silver.py`, `notebooks/00_pipeline.py`, `notebooks/03_gold.py`, `scripts/correr_plata.py`, `scripts/correr_local.py`, `tests/test_silver.py`, `analisis_plata/`, `.gitignore`, `README.md`, `docs/PLATA.md`, `docs/GUIA_DATABRICKS.md`, `docs/EDA_BRONCE.md`, `analisis_bronce/README.md`, `docs/BITACORA.md`. Tablas, mapa y salidas oficiales se mantienen ignorados.
 
+### 2026-11-13 12:30 · José David
+**Qué:** Mapa listo para el pantallazo. Abre ajustado a los edificios, con comunas rotuladas con su puesto en el ranking ("C3 · #1"), marcadores para prioridad muy alta y alta, vías y salud encendidas, salud más tenue y fuentes actualizadas. Los indicadores ahora son: edificios analizados, % de escombros, % con daño visible, prioridad muy alta, personas en edificios con daño y % sin dato; coinciden con el correo (5.146; 5,8 %; 26,3 %; 179; 6.950; 8,5 %). Se corrigieron dos fallos: geometrías `GeometryCollection` y 2 predios de la fuente con área 0 m² (OBJECTID 1667 y 3686), cuyo polígono se exporta vacío; no se dibujan, pero siguen en los indicadores y en las tablas. Se verificó con una captura del navegador.
+**Por qué:** La diapositiva 3 es el pantallazo del mapa y debe entenderse en 30 segundos.
+**Archivos:** `visor/app.js`, `visor/index.html`
+
 ### 2026-11-13 12:32 · Mrsasayo
 **Qué:** Preparación de la publicación de plata y revisión de los commits remotos `e4af152` y `42b5b5d`. Se adapta la lectura de amplificación para aceptar tanto las columnas originales del CSV (`SA(0.1)`) como sus nombres normalizados en bronze (`SA_0.1`). La prueba de equivalencia incorpora la misma normalización que `01_bronze` y reprodujo el fallo antes de corregirlo. La integración conservará ambos aportes de la bitácora. Datos y resultados oficiales continúan excluidos de Git.
 **Por qué:** El pull manual protegió los cambios locales al encontrar la bitácora modificada; confirmar primero permite integrar sin perder trabajo. La corrección remota de Delta cambia el contrato de nombres que ahora consume plata.
 **Archivos:** `notebooks/00_silver.py`, `tests/test_silver.py`, `docs/PLATA.md`, `docs/BITACORA.md`; integración de `notebooks/01_bronze.py` desde el remoto.
+
+### 2026-11-13 12:33 · Mrsasayo
+**Qué:** Integración del commit de plata `3d2fefa` con los tres avances remotos hasta `3c1bcab`: nombres Delta en bronze, constancia de ejecución previa de Databricks y mejoras del visor. El único conflicto fue la bitácora; se conservaron las cinco entradas de ambos lados en orden temporal. La plata acepta ambos contratos de nombres y su prueba de equivalencia volvió a pasar después de reproducir el fallo.
+**Por qué:** Publicar ambos trabajos sin sobrescribir los cambios del compañero y resolver el pull abortado por modificaciones locales. Las cifras de la corrida remota previa corresponden al commit consignado en su entrada, no acreditan una nueva ejecución remota de esta plata.
+**Archivos:** `docs/BITACORA.md`, `notebooks/01_bronze.py`, `visor/app.js`, `visor/index.html`; compatibilidad de plata en `3d2fefa`.
 
 ## Decisiones
 

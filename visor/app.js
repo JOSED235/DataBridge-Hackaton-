@@ -1,5 +1,5 @@
 // Visor de prioridad de inspección ante réplicas. Datos en ./data (exportados por notebooks/03_gold).
-const { MapboxOverlay, GeoJsonLayer, ColumnLayer, ScatterplotLayer, HeatmapLayer } = deck;
+const { MapboxOverlay, GeoJsonLayer, ColumnLayer, ScatterplotLayer, HeatmapLayer, TextLayer } = deck;
 
 const CALI = { longitude: -76.522, latitude: 3.43, zoom: 11.6, pitch: 0, bearing: 0 };
 const EPICENTRO = [-76.2558, 4.8601];
@@ -15,7 +15,7 @@ const RAMPA = [[38, 70, 83], [42, 157, 143], [233, 196, 106], [244, 162, 97], [2
 
 const estado = {
   modo: 'prioridad', comuna: '', soloAlta: false,
-  capas: { edificios: true, calor: false, comunas: true, vias: false, salud: false, emergencia: false, sismos: false },
+  capas: { edificios: true, calor: false, comunas: true, vias: true, salud: true, emergencia: false, sismos: false },
 };
 const datos = {};
 const $ = (id) => document.getElementById(id);
@@ -46,9 +46,13 @@ async function estiloBase() {
   return ESTILO_OFFLINE;
 }
 
+// 2 predios de la fuente tienen área 0 m² y su polígono se exporta vacío: no se dibujan, pero sí cuentan en los KPI.
+const dibujable = (f) => { const c = f.geometry && f.geometry.coordinates; return Boolean(c && c.length && c[0].length); };
+
 function edificiosFiltrados() {
   return datos.edificios.features.filter((f) => {
     const p = f.properties;
+    if (!dibujable(f)) return false;
     if (estado.comuna && String(p.comuna) !== estado.comuna) return false;
     if (estado.soloAlta && !['Muy alta', 'Alta'].includes(p.prioridad)) return false;
     return true;
@@ -84,12 +88,24 @@ function capas() {
     L.push(sonPuntos
       ? new ColumnLayer({ ...comun, data: ed, diskResolution: 6, radius: 9, elevationScale: 2, getPosition: (f) => f.geometry.coordinates })
       : new GeoJsonLayer({ ...comun, data: ed, stroked: false }));
+    if (estado.modo === 'prioridad') L.push(new ScatterplotLayer({
+      id: 'marcas', data: ed.filter((f) => ['Muy alta', 'Alta'].includes(f.properties.prioridad)), pickable: true, onHover: tip,
+      getPosition: (f) => centro(f), getFillColor: (f) => [...PRIORIDAD[f.properties.prioridad], 230],
+      getRadius: (f) => (f.properties.prioridad === 'Muy alta' ? 5 : 3), radiusUnits: 'pixels',
+      stroked: true, getLineColor: [14, 16, 19], lineWidthUnits: 'pixels', getLineWidth: 1,
+    }));
   }
+  if (estado.capas.comunas) L.push(new TextLayer({
+    id: 'rotulos', data: datos.comunas.features, getPosition: (f) => centro(f),
+    getText: (f) => `C${f.properties.comuna} · #${f.properties.ranking}`, getSize: 15, getColor: [255, 255, 255],
+    fontWeight: 700, outlineWidth: 3, outlineColor: [14, 16, 19], fontSettings: { sdf: true },
+    characterSet: 'auto', billboard: true,
+  }));
   const puntos = (id, data, color, radio) => new ScatterplotLayer({
     id, data: data.features, pickable: true, onHover: tip, getPosition: (f) => centro(f), getFillColor: color,
     getRadius: radio, radiusUnits: 'pixels', stroked: true, getLineColor: [14, 16, 19], lineWidthUnits: 'pixels', getLineWidth: 1,
   });
-  if (estado.capas.salud && datos.salud) L.push(puntos('salud', datos.salud, [62, 207, 142], 5));
+  if (estado.capas.salud && datos.salud) L.push(puntos('salud', datos.salud, [62, 207, 142, 150], 3));
   if (estado.capas.emergencia && datos.emergencia) L.push(puntos('emergencia', datos.emergencia, [90, 160, 255], 5));
   if (estado.capas.sismos && datos.sismos) L.push(new ScatterplotLayer({
     id: 'sismos', data: datos.sismos.features, pickable: true, onHover: tip, getPosition: (f) => f.geometry.coordinates,
@@ -100,7 +116,8 @@ function capas() {
 }
 
 function centro(f) {
-  const g = f.geometry;
+  let g = f.geometry;
+  if (g.type === 'GeometryCollection') g = g.geometries.find((x) => x.type.endsWith('Polygon')) || g.geometries[0];  // polígonos reparados con make_valid
   if (g.type === 'Point') return g.coordinates;
   const anillo = g.type === 'Polygon' ? g.coordinates[0] : g.coordinates[0][0];
   const s = anillo.reduce((a, c) => [a[0] + c[0], a[1] + c[1]], [0, 0]);
@@ -112,7 +129,7 @@ function mostrarTip({ object, x, y, layer }) {
   if (!object) { el.style.display = 'none'; return; }
   const p = object.properties;
   let h = '';
-  if (layer.id === 'edificios') h = `<b>${p.prioridad}</b> · índice ${fmt(p.indice_riesgo, 2)}<br>Comuna ${p.comuna ?? '–'} · ${p.barrio ?? ''}<br>
+  if (layer.id === 'edificios' || layer.id === 'marcas') h = `<b>${p.prioridad}</b> · índice ${fmt(p.indice_riesgo, 2)}<br>Comuna ${p.comuna ?? '–'} · ${p.barrio ?? ''}<br>
     ${p.pisos} pisos · estado: ${p.estado ?? 'sin dato'}<br>Suelo: microzona ${p.microzona ?? '–'} · amplifica ${fmt(p.amplif_suelo, 2)}×<br>
     Salud más cercana: ${fmt(p.dist_salud_m)} m${p.puede_bloquear_via ? '<br><b>Sus escombros podrían bloquear una vía principal</b>' : ''}`;
   else if (layer.id === 'comunas') h = `<b>Comuna ${p.comuna}</b> · puesto ${p.ranking}<br>${fmt(p.n_edificios)} edificios ·
@@ -131,15 +148,17 @@ function kpis() {
   const n = ed.length || 1;
   const cuenta = (fn) => ed.filter((f) => fn(f.properties)).length;
   const alta = cuenta((p) => p.alta_escombros), sd = cuenta((p) => p.sin_dato_satelital);
-  const muy = cuenta((p) => p.prioridad === 'Muy alta'), via = cuenta((p) => p.puede_bloquear_via);
+  const muy = cuenta((p) => p.prioridad === 'Muy alta');
+  const gente = ed.reduce((s, f) => { const p = f.properties; return s + (p.sev_estado >= 0.7 && !p.sin_construccion_registrada ? (p.ocupantes_noche || 0) : 0); }, 0);
   $('ambito').textContent = estado.comuna ? `· comuna ${estado.comuna}` : '· Cali';
   $('kpis').innerHTML = [
     ['', fmt(ed.length), 'edificios analizados'],
     ['hot', `${fmt((100 * alta) / n, 1)} %`, 'alta prob. de escombros'],
+    ['', `${fmt((100 * cuenta((p) => p.sev_estado >= 0.7)) / n, 1)} %`, 'con daño visible (escombros o techo)'],
     ['hot', fmt(muy), 'prioridad muy alta'],
-    ['', fmt(via), 'podrían bloquear vías'],
+    ['hot', fmt(gente), 'personas en edificios con daño'],
     ['', `${fmt((100 * sd) / n, 1)} %`, 'sin dato satelital'],
-    ['', fmt(datos.salud ? datos.salud.features.length : 0), 'centros de salud (OSM)'],
+
   ].map(([c, v, t]) => `<div class="kpi ${c}"><b>${v}</b><small>${t}</small></div>`).join('');
 }
 
@@ -254,5 +273,8 @@ let map, overlay;
   $('btnTour').onclick = () => irPaso(0);
   $('tourNext').onclick = () => (paso < PASOS.length - 1 ? irPaso(paso + 1) : $('tour').classList.remove('on'));
   $('tourPrev').onclick = () => paso > 0 && irPaso(paso - 1);
+  const xs = [], ys = [];
+  edificios.features.filter(dibujable).forEach((f) => { const c = centro(f); xs.push(c[0]); ys.push(c[1]); });
+  map.fitBounds([[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]], { padding: { top: 40, bottom: 90, left: 40, right: 60 }, duration: 0 });
   render();
 })();
