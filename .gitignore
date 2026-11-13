@@ -1,6 +1,11 @@
 # Datos oficiales del evento: no se pueden redistribuir
 data/oficial/
 data/oficiales/
+data/Datosprediales.json
+
+# Análisis ejecutados: incluyen resultados de datos oficiales del evento
+analisis_bronce/ejecutados/
+analisis_bronce/resultados/
 
 # Python
 __pycache__/
