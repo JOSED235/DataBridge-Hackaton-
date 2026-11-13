@@ -30,7 +30,7 @@ def main() -> None:
         html = folder / "ejecutados" / f"{path.stem}.html"
         assert html.stat().st_size > 1000
         if path.stem != "99_seleccion_para_plata":
-            profile = json.loads((folder / "resultados" / f"{path.stem}.json").read_text())
+            profile = json.loads((folder / "resultados" / f"{path.stem}.json").read_text(encoding="utf-8"))
             raw = root / profile["archivo"]
             with raw.open("rb") as stream:
                 digest = hashlib.file_digest(stream, "sha256").hexdigest()
@@ -48,7 +48,7 @@ def main() -> None:
     delivery = root / "data/Datosprediales.json"
     if delivery.exists():
         assert delivery.read_bytes() == source_copy.read_bytes()
-    execution_index = json.loads((folder / "ejecutados/ejecucion.json").read_text())
+    execution_index = json.loads((folder / "ejecutados/ejecucion.json").read_text(encoding="utf-8"))
     assert {row["notebook"] for row in execution_index} == {p.name for p in sources}
     (folder / "resultados" / "verificacion.json").write_text(
         json.dumps(receipt, ensure_ascii=False, indent=2), encoding="utf-8")

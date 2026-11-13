@@ -55,7 +55,7 @@ Por eso los factores que reducen el impacto combinan lo observado con lo conocid
 
 **Límites:** los datos son inferencias satelitales, no inspecciones. La vulnerabilidad y los ocupantes vienen de un modelo (catastro 2021, censo 2018). El índice sirve para priorizar, no para declarar un edificio seguro o inseguro.
 
-> Notas: [`gold_icesixuao_predios`], [`gold_icesixuao_comunas`: `ocupantes_en_edif_con_danio`, `pct_antes_1985`], [`gold_icesixuao_factores`], [`gold_icesixuao_sensibilidad`: `solo_datos_oficiales` 40 %].
+> Notas: [`gold_icesixuao_predios`: `prioridad`, `periodo_construccion`, `ocupantes_asignados_gem`], [`gold_icesixuao_comunas`: `ocupantes_en_edif_con_danio`], [`gold_icesixuao_factores`], [`gold_icesixuao_sensibilidad`: `solo_datos_oficiales` 40 %].
 
 ---
 

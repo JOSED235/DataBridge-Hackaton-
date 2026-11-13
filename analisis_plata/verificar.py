@@ -23,14 +23,14 @@ assert all(c.execution_count is None and not c.outputs for c in nb.cells if c.ce
 celdas = [c for c in ejecutado.cells if c.cell_type == "code"]
 assert all(c.execution_count is not None for c in celdas)
 assert not [o for c in celdas for o in c.outputs if o.output_type == "error"]
-recibo = json.loads((carpeta / "ejecutados/ejecucion.json").read_text())
+recibo = json.loads((carpeta / "ejecutados/ejecucion.json").read_text(encoding="utf-8"))
 assert recibo["sha256_notebook_fuente"] == hashlib.sha256(fuente.read_bytes()).hexdigest()
 assert (carpeta / "ejecutados/01_validacion_plata.html").stat().st_size > 1000
 
 modulo = runpy.run_path(str(RAIZ / "scripts/correr_plata.py"))
 api = modulo["cargar_api"]()
 salida = RAIZ / "data/oficiales/plata"
-reporte = json.loads((salida / "reporte.json").read_text())
+reporte = json.loads((salida / "reporte.json").read_text(encoding="utf-8"))
 geograficas = {"predios", "territorios", "servicios", "vias", "sitio_grilla", "exposicion_gem",
                "sitio_licuacion_ladera", "shakemap", "observaciones", "eventos"}
 tablas = {}

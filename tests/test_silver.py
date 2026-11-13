@@ -15,7 +15,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 def api():
     scope = {"__name__": "prueba_plata"}
     for nombre in ("00_utils_espacial.py", "00_pipeline.py", "00_silver.py"):
-        exec(compile((RAIZ / "notebooks" / nombre).read_text(), nombre, "exec"), scope)
+        exec(compile((RAIZ / "notebooks" / nombre).read_text(encoding="utf-8"), nombre, "exec"), scope)
     return scope
 
 

@@ -13,7 +13,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 def contexto():
     api = {"__name__": "prueba_oro"}
     for nombre in ("00_utils_espacial.py", "00_pipeline.py", "00_silver.py", "00_gold.py"):
-        exec(compile((RAIZ / "notebooks" / nombre).read_text(), nombre, "exec"), api)
+        exec(compile((RAIZ / "notebooks" / nombre).read_text(encoding="utf-8"), nombre, "exec"), api)
     fuentes = api["leer_fuentes_plata"](RAIZ / "data/externos")
     g = gpd.GeoDataFrame({"OBJECTID": ["lote", "sin_dato", "observado", "estimado", "otro"],
                          "NPISOS": ["0", "3", "2", None, "4"], "COMUNA": ["19"] * 5,
@@ -124,7 +124,7 @@ def test_afectacion_usa_denominadores_y_no_cambia_plata(contexto):
 
 def test_normalizacion_entera_nullable_no_trunca_percentiles():
     api = {}
-    exec((RAIZ / 'notebooks/00_utils_espacial.py').read_text(), api)
+    exec((RAIZ / 'notebooks/00_utils_espacial.py').read_text(encoding="utf-8"), api)
     s = pd.Series([None, 3, 2, 1, 4], dtype='Int64')
     antes = s.copy()
     resultado = api['normalizar'](s)
@@ -148,7 +148,7 @@ def test_exportacion_no_convierte_desconocido_en_cero(contexto, tmp_path):
     api, _, oro = contexto
     import json
     api['exportar_visor'](oro['predios'], oro['comunas'], tmp_path)
-    archivo = json.loads((tmp_path / 'edificios.geojson').read_text())
+    archivo = json.loads((tmp_path / 'edificios.geojson').read_text(encoding="utf-8"))
     p = {f['properties']['id']: f['properties'] for f in archivo['features']}
     assert p['lote']['pisos'] is None and p['lote']['sin_construccion_registrada']
     assert p['observado']['pisos'] == 2

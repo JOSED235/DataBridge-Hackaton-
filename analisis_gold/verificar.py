@@ -19,7 +19,7 @@ assert all(c.execution_count is None and not c.outputs for c in nb.cells if c.ce
 celdas = [c for c in ejecutado.cells if c.cell_type == 'code']
 assert all(c.execution_count is not None for c in celdas)
 assert not [o for c in celdas for o in c.outputs if o.output_type == 'error']
-recibo = json.loads((carpeta / 'ejecutados/ejecucion.json').read_text())
+recibo = json.loads((carpeta / 'ejecutados/ejecucion.json').read_text(encoding="utf-8"))
 assert recibo['sha256_notebook_fuente'] == hashlib.sha256(fuente.read_bytes()).hexdigest()
 figuras = sum('image/png' in o.get('data', {}) for c in celdas for o in c.outputs)
 assert figuras == recibo['figuras'] and figuras >= 4
@@ -27,7 +27,7 @@ assert (carpeta / 'ejecutados/01_validacion_gold.html').stat().st_size > 1000
 api = runpy.run_path(str(RAIZ / 'scripts/correr_oro.py'))['cargar_api']()
 plata = api['leer_plata_oro'](RAIZ / 'data/oficiales/plata')
 salida = RAIZ / 'data/oficiales/oro'
-reporte = json.loads((salida / 'reporte.json').read_text())
+reporte = json.loads((salida / 'reporte.json').read_text(encoding="utf-8"))
 tablas = {}
 for nombre, n in reporte['tablas'].items():
     d = pd.read_parquet(salida / f"gold_{api['EQUIPO']}_{nombre}.parquet")
@@ -50,7 +50,7 @@ assert not subprocess.check_output(['git', 'ls-files', '--', *privados], cwd=RAI
 # correr_oro por sí solo no actualiza el mapa, por lo que una exportación vieja falla aquí.
 mapa = RAIZ / 'visor/data/edificios.geojson'
 if mapa.exists():
-    features = json.loads(mapa.read_text())['features']
+    features = json.loads(mapa.read_text(encoding="utf-8"))['features']
     props = pd.DataFrame([f['properties'] for f in features]).set_index('id').sort_index()
     predios = tablas['predios'].set_index('id').sort_index()
     assert props.index.equals(predios.index)
@@ -58,7 +58,7 @@ if mapa.exists():
     assert props.posicion.fillna(-1).astype(int).tolist() == predios.posicion.fillna(-1).astype(int).tolist()
     assert props.pisos.fillna(-1).tolist() == predios.pisos.fillna(-1).tolist()
     assert props.indice_riesgo.tolist() == predios.indice_riesgo.tolist()
-    comunas = json.loads((RAIZ / 'visor/data/comunas.geojson').read_text())['features']
+    comunas = json.loads((RAIZ / 'visor/data/comunas.geojson').read_text(encoding="utf-8"))['features']
     reales = tablas['comunas'].set_index('comuna')
     assert len(comunas) == len(reales)
     for f in comunas:

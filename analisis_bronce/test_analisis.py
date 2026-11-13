@@ -31,7 +31,7 @@ def test_bronce_preserva_precision_y_validez_de_geometria() -> None:
     root = Path(__file__).resolve().parent.parent
     scope = {"__name__": "prueba_bronce"}
     for name in ["00_utils_espacial.py", "00_pipeline.py"]:
-        exec(compile((root / "notebooks" / name).read_text(), name, "exec"), scope)
+        exec(compile((root / "notebooks" / name).read_text(encoding="utf-8"), name, "exec"), scope)
     # El hueco es válido, pero redondear seis decimales lo pega al contorno.
     poly = Polygon([(-76.5, 3.4), (-76.49, 3.4), (-76.49, 3.41), (-76.5, 3.41)],
                    holes=[[(-76.4999999, 3.402), (-76.499, 3.402),

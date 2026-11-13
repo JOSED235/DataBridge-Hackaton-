@@ -189,7 +189,7 @@ filas = [
 y = 1.82
 for nom, cifra, detalle, accion in filas:
     caja(s2, 0.5, y, 1.7, 1.15, color="1E232B", nombre=f"Fila {nom}")
-    texto(s2, 0.62, y, 1.5, 1.15, [(nom, {"tam": 14, "negrita": True})], ancla=MSO_ANCHOR.MIDDLE)
+    texto(s2, 0.62, y, 1.54, 1.15, [(nom, {"tam": 13, "negrita": True})], ancla=MSO_ANCHOR.MIDDLE)
     caja(s2, 2.3, y, 5.0, 1.15)
     texto(s2, 2.45, y + 0.05, 4.75, 1.05, [(cifra, {"despues": 2}), (detalle, {"tam": 11.5, "color": "C9CDD3"})], ancla=MSO_ANCHOR.MIDDLE)
     caja(s2, 7.4, y, 5.43, 1.15)
