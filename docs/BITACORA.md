@@ -98,6 +98,11 @@
 **Por qué:** La entrega es lo único que se presenta el sábado; dejarla escrita con cifras rastreables mientras corre Databricks.
 **Archivos:** `docs/ENTREGA.md`, `README.md`
 
+### 2026-11-13 11:40 · José David
+**Qué:** Dos correcciones después de comparar con la corrida de Databricks (6.850 ocupantes en edificios con daño frente a 6.907 en local). (1) Causa: en 1.669 edificios hay varios registros GEM empatados en distancia y el código tomaba "el primero", cuyo orden cambia entre entornos. Ahora los ocupantes y el valor se suman entre los empatados y los demás atributos salen del registro con más ocupantes (desempate por `id`), así que el resultado es determinista. (2) Los organizadores aclararon que `NPISOS` = 0 es un predio sin edificación registrada en catastro (verificado: el 99,5 % no tiene `EDIFPRED`). Esos 1.234 predios se marcan `sin_construccion_registrada`, quedan sin pisos (no se imputan ni entran al promedio de altura) y se conservan en el análisis de daño, porque el satélite ve daño en 342. Nuevas cifras: 6.968 ocupantes en edificios con construcción registrada y daño; ranking 3, 9, 18, 10, 20, 19, 17; con solo los datos oficiales, el top 50 se mantiene en 8 %. Se actualizaron el correo de entrega y el índice.
+**Por qué:** Las cifras del correo deben coincidir con las tablas gold de Databricks y respetar la definición de los datos que dio la organización.
+**Archivos:** `notebooks/00_pipeline.py`, `notebooks/02_silver.py`, `notebooks/03_gold.py`, `docs/ENTREGA.md`, `docs/INDICE_RIESGO.md`
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |
@@ -126,3 +131,5 @@
 | 2026-11-13 10:55 | Pesos: daño 25, vulnerabilidad 20, ocupantes 15, suelo 10, altura 10, salud 10, vías 10 | El daño sigue siendo lo único observado, pero no sigue ningún patrón; la vulnerabilidad es el factor más sólido de la literatura; el suelo baja porque no explica el daño en esta muestra | Borrador de la mañana (escenario `sin_suelo`), solo datos oficiales (escenario de sensibilidad) | José David |
 | 2026-11-13 10:55 | ShakeMap fuera del índice | Describe el sismo que ya pasó, varía poco en la zona (MMI 6,4 a 7,1) y no se asocia con el daño | Usarlo como componente de sacudida | José David |
 | 2026-11-13 10:55 | Licuación local de GEM en vez del modelo de licuación del USGS | Es local y por unidad geológica; el del USGS es un ráster global de ~1 km y requiere una dependencia nueva (`rasterio`) | USGS *ground-failure* (Zhu 2017) | José David |
+| 2026-11-13 11:40 | `NPISOS` = 0 = predio sin construcción registrada: sin pisos, fuera del promedio de altura, pero dentro del análisis de daño. **Reemplaza** la decisión de las 10:30 y la de tomar esos pisos de GEM | Aclaración de los organizadores, verificada con `EDIFPRED`. Se conservan porque el satélite ve daño en 342 y GEM (catastro 2021) tiene edificio en casi todos: puede haber construcción no registrada | Excluirlos (perdería 342 predios con daño visible), imputar pisos (contradice la definición) | José David |
+| 2026-11-13 11:40 | Empates en el cruce con GEM: sumar ocupantes y valor; atributos del registro con más ocupantes, desempate por `id` | Un predio puede contener varios edificios GEM. "El primero" no era reproducible entre local y Databricks | Tomar el primero (no determinista), promediar (subestima ocupantes) | José David |
