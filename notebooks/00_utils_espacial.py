@@ -80,10 +80,15 @@ def sensibilidad(df, escenarios, top=50, id_col="id"):
     nombres = list(escenarios)
     scores = pd.DataFrame({n: indice_riesgo(df, p) for n, p in escenarios.items()})
     base = scores[nombres[0]]
-    top_base = set(df.loc[base.nlargest(top).index, id_col])
+    ids = df[id_col].astype(str)
+
+    def top_ids(s):  # empates en el corte: se desempata por id para que el resultado no dependa del orden de filas
+        return set(pd.DataFrame({"s": s, "id": ids}).sort_values(["s", "id"], ascending=[False, True], kind="mergesort").head(top)["id"])
+
+    top_base = top_ids(base)
     filas = []
     for n in nombres:
-        top_n = set(df.loc[scores[n].nlargest(top).index, id_col])
+        top_n = top_ids(scores[n])
         filas.append({"escenario": n,
                       "spearman_vs_base": round(base.rank().corr(scores[n].rank()), 3),  # Spearman sin scipy
                       f"top{top}_coincide_%": round(100 * len(top_base & top_n) / top, 1)})

@@ -36,8 +36,8 @@ Todos de 0 a 1 (1 = más urgente). Para que un valor atípico no aplaste al rest
 | Prioridad | Regla | Edificios |
 |---|---|---|
 | Muy alta | 5 % de índice más alto | 253 |
-| Alta | siguiente 10 % | 467 |
-| Media | siguiente 25 % | 1.124 |
+| Alta | siguiente 10 % | 466 |
+| Media | siguiente 25 % | 1.125 |
 | Baja | resto | 2.867 |
 | Sin dato: verificar en terreno | sin información satelital | 435 |
 
@@ -45,7 +45,7 @@ Se usan percentiles (no cortes fijos) porque el objetivo es ordenar a quién ins
 
 ## Por comuna
 
-`gold_icesixuao_comunas` ordena las comunas por el **percentil 90 del índice**, no por el promedio: una comuna con muchos edificios sanos y un grupo muy crítico no debe quedar escondida. Ranking: **3, 9, 18, 10, 20, 19, 17**. La comuna 3 queda primera por su vulnerabilidad: el 66,9 % de sus edificios se construyó antes de 1985. La comuna 19 tiene la mayor cantidad de gente en edificios con daño (4.014 con construcción registrada), pero no encabeza el p90 porque su construcción es más reciente.
+`gold_icesixuao_comunas` ordena las comunas por el **percentil 90 del índice**, no por el promedio: una comuna con muchos edificios sanos y un grupo muy crítico no debe quedar escondida. Ranking: **3, 9, 18, 10, 20, 19, 17**. La comuna 3 queda primera por su vulnerabilidad: el 66,9 % de sus edificios se construyó antes de 1985. La comuna 19 tiene la mayor cantidad de gente en edificios con daño (4.008 con construcción registrada), pero no encabeza el p90 porque su construcción es más reciente.
 
 ## Sensibilidad (datos reales)
 

@@ -122,6 +122,11 @@
 **Por qué:** El remoto avanzó antes del push; integrar ambos trabajos sin sobrescribirlos y evitar que la documentación describa como pendiente una corrección ya incorporada.
 **Archivos:** `docs/BITACORA.md`, `docs/EDA_BRONCE.md`, `analisis_bronce/README.md`, `analisis_bronce/notebooks/99_seleccion_para_plata.ipynb`; demás archivos de la fusión según sus aportes previos.
 
+### 2026-11-13 11:45 · José David
+**Qué:** Se integró la corrección de WKT a precisión completa (geometrías reparadas: 17 → 4, las de la fuente). Se hizo determinista el top 50 de la prueba de sensibilidad (desempate por `id`): Databricks daba 12 % y local 8 % en `solo_datos_oficiales` por empates en el corte. Cifras actualizadas en el correo: 6.950 ocupantes en edificios con construcción registrada y daño (4.008 en la comuna 19), prioridades 253/466/1.125/2.867/435, ranking 3, 9, 18, 10, 20, 19, 17 (sin cambio).
+**Por qué:** Las cifras del correo deben coincidir con las tablas gold de Databricks.
+**Archivos:** `notebooks/00_utils_espacial.py`, `docs/ENTREGA.md`, `docs/INDICE_RIESGO.md`
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |

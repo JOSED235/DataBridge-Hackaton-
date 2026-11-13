@@ -3,7 +3,7 @@
 **Para:** marcelasabogue@ieee.org
 **Asunto:** `databridgehack: icesixuao`
 
-Cifras: corrida con los datos oficiales del 13-nov-2026, 11:40 (después de tratar `NPISOS` = 0 como predio sin construcción registrada y de hacer determinista el cruce con GEM). Cada una se rastrea a una tabla gold (indicada entre corchetes en las notas de cada sección; las notas no van en el correo). Antes de enviar, confirmar que las tablas gold de Databricks dan lo mismo.
+Cifras: corrida con los datos oficiales del 13-nov-2026, 11:45 (WKT a precisión completa) (después de tratar `NPISOS` = 0 como predio sin construcción registrada y de hacer determinista el cruce con GEM). Cada una se rastrea a una tabla gold (indicada entre corchetes en las notas de cada sección; las notas no van en el correo). Antes de enviar, confirmar que las tablas gold de Databricks dan lo mismo.
 
 Checklist del correo:
 
@@ -19,7 +19,7 @@ Checklist del correo:
 
 **Bronze:** copia fiel del GeoJSON (5.146 edificios, 21 columnas) como texto, con los nulos y espacios tal como llegaron, más 15 capas externas sin modificar.
 
-**Silver:** usamos `OBJECTID` como llave, porque `ID_PREDIO` tiene 1.509 nulos. Convertimos los vacíos y los espacios en nulos. Los 1.234 predios con `NPISOS` = 0 no tienen construcción registrada en catastro (organizadores): los conservamos, porque el satélite ve daño en 342, pero sin pisos. Los 11 `NPISOS` nulos se completaron con el modelo de exposición de GEM. Reparamos 17 polígonos inválidos y calculamos el área en m² (EPSG:9377), porque `Shape__Area` viene en grados. No borramos los 435 edificios sin datos satelitales: quedan marcados para verificar en terreno. Como el daño viene por categoría, lo convertimos en severidad: escombros 1,0; techo desaparecido 0,7; sin cambio aparente 0,1, porque no significa sin daño. Cruzamos cada edificio con GEM, el ShakeMap del USGS y OpenStreetMap.
+**Silver:** usamos `OBJECTID` como llave, porque `ID_PREDIO` tiene 1.509 nulos. Convertimos los vacíos y los espacios en nulos. Los 1.234 predios con `NPISOS` = 0 no tienen construcción registrada en catastro (organizadores): los conservamos, porque el satélite ve daño en 342, pero sin pisos. Los 11 `NPISOS` nulos se completaron con el modelo de exposición de GEM. Reparamos los 4 polígonos inválidos de la fuente, guardando la geometría sin redondear para no crear más, y calculamos el área en m² (EPSG:9377), porque `Shape__Area` viene en grados. No borramos los 435 edificios sin datos satelitales: quedan marcados para verificar en terreno. Como el daño viene por categoría, lo convertimos en severidad: escombros 1,0; techo desaparecido 0,7; sin cambio aparente 0,1, porque no significa sin daño. Cruzamos cada edificio con GEM, el ShakeMap del USGS y OpenStreetMap.
 
 **Gold:** un índice de 0 a 1 por edificio que suma daño (25 %), vulnerabilidad (20 %), ocupantes (15 %), suelo, altura, distancia a salud y bloqueo de vías (10 % cada uno), con prioridades por percentil. Por comuna usamos el percentil 90. Probamos siete combinaciones de pesos.
 
@@ -35,9 +35,9 @@ El sismo de M7,4 a 116 km de profundidad sacudió los edificios analizados con i
 
 *Infraestructura.* De 5.146 edificios en 7 comunas, el análisis satelital marca 296 con alta probabilidad de escombros (5,8 %) y 1.058 con posible desaparición de techo (20,6 %). Hay 435 sin datos satelitales (8,5 %), que no deben leerse como sanos.
 
-*Población.* Al cruzar cada edificio con el modelo de exposición de GEM (censo 2018), estimamos que 6.968 personas duermen en edificios con daño visible (4.014 en la comuna 19) y 2.298 en edificios sin dato satelital. Además, 342 predios sin construcción registrada en catastro muestran daño desde el satélite.
+*Población.* Al cruzar cada edificio con el modelo de exposición de GEM (censo 2018), estimamos que 6.950 personas duermen en edificios con daño visible (4.008 en la comuna 19) y 2.298 en edificios sin dato satelital. Además, 342 predios sin construcción registrada en catastro muestran daño desde el satélite.
 
-*Servicios urbanos.* 73 edificios institucionales y 176 comerciales muestran daño. 626 edificios dañados están a menos de 200 m de un centro de salud.
+*Servicios urbanos.* 73 edificios institucionales y 177 comerciales muestran daño. 626 edificios dañados están a menos de 200 m de un centro de salud.
 
 **¿Qué factores reducen el impacto de las réplicas?**
 
@@ -75,7 +75,7 @@ Por eso los factores que reducen el impacto combinan lo observado con lo conocid
 **Diapositiva 1: Arquitectura.** Un diagrama de tres columnas:
 
 - **Bronze:** GeoJSON oficial + 15 capas externas, copia fiel en texto.
-- **Silver:** limpieza (`OBJECTID`, `NPISOS` = 0 → sin construcción registrada, polígonos reparados, área en m², sin dato marcado) + cruces (GEM 98,9 %, ShakeMap, OSM).
+- **Silver:** limpieza (`OBJECTID`, `NPISOS` = 0 → sin construcción registrada, 4 polígonos reparados sin redondear el WKT, área en m², sin dato marcado) + cruces (GEM 98,9 %, ShakeMap, OSM).
 - **Gold:** índice por edificio, ranking por comuna, prueba de factores y sensibilidad.
 
 Abajo, una línea por decisión clave con su porqué.
@@ -84,7 +84,7 @@ Abajo, una línea por decisión clave con su porqué.
 
 - **Izquierda, afectaciones:** tres cifras grandes.
   - 1.354 edificios con daño visible (26 %).
-  - 6.968 personas en los que tienen construcción registrada.
+  - 6.950 personas en los que tienen construcción registrada.
   - 435 edificios sin dato.
 - **Derecha, qué reduce el impacto:** el hallazgo "el daño satelital no sigue ningún patrón → no basta para priorizar" y las 5 acciones en una línea cada una.
 - **Pie:** límites.
