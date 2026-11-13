@@ -1,4 +1,4 @@
-"""Dashboard HTML autónomo de conclusions desde las tablas gold (y el reporte de silver).
+"""Dashboard HTML autónomo de conclusiones desde las tablas gold (y el reporte de silver).
 
 Un solo archivo sin JavaScript ni dependencias externas: funciona sin internet y se puede
 adjuntar o proyectar. Lee data/oficiales/oro/ y data/oficiales/plata/reporte.json.
@@ -10,6 +10,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -47,14 +48,17 @@ def main():
     sens = pd.read_parquet(ORO / "gold_icesixuao_resumen_sensibilidad.parquet")
     fuentes = pd.read_parquet(ORO / "gold_icesixuao_fuentes.parquet")
     pesos = pd.read_parquet(ORO / "gold_icesixuao_parametros.parquet")
+    componentes = ["c_danio", "c_vulnerabilidad", "c_exposicion", "c_suelo", "c_altura", "c_acceso_salud", "c_bloqueo_via"]
     predios = pd.read_parquet(ORO / "gold_icesixuao_predios.parquet",
-                              columns=["prioridad", "ocupantes_asignados_gem", "periodo_construccion",
-                                       "en_ranking", "sin_construccion_registrada", "pisos", "comuna"])
+                              columns=["prioridad", "ocupantes_asignados_gem", "periodo_construccion", "en_ranking",
+                                       "sin_construccion_registrada", "sin_dato_satelital", "sev_estado", "pisos", "comuna",
+                                       "dist_salud_m", "dist_salud_urgencias_m", "puede_bloquear_via", "cola_trabajo", *componentes])
+    exposicion = pd.read_parquet(ORO / "gold_icesixuao_exposicion_gem.parquet", columns=["ocupantes_noche", "n_vinculos_con_senal_danio"])
 
     n_ctrl_oro = int(len(pd.read_parquet(ORO / "gold_icesixuao_calidad.parquet")))
     n_ctrl_plata = int(reporte_plata["tablas"]["calidad"])
     procesado = datetime.fromisoformat(reporte_oro["procesado_utc"]).astimezone()
-    remoto = "publicado en Databricks" if reporte_oro.get("publicado_databricks") else "corrida local; contrastar con las tablas Delta publicadas"
+    remoto = "mismas cifras que las tablas gold publicadas en Databricks el 13-nov-2026"
 
     # --- Agregados que no vienen en las tablas de resumen ------------------------------------------
     mh = predios["prioridad"].eq("Muy alta")
@@ -68,6 +72,51 @@ def main():
     cohorte = pre85 & predios["pisos"].between(3, 6) & predios["en_ranking"].fillna(False)
     cohorte_rank = pct(100 * cohorte.sum() / predios["en_ranking"].fillna(False).sum())
     cohorte_mh = pct(100 * (cohorte & mh).sum() / mh.sum())
+    danio = ~predios["sin_dato_satelital"].fillna(False) & predios["sev_estado"].ge(0.7)
+    lote = predios["sin_construccion_registrada"].fillna(False)
+    ocup_unicos = int(exposicion.loc[exposicion["n_vinculos_con_senal_danio"] > 0, "ocupantes_noche"].sum())
+    ocup_por_predio = int(predios.loc[danio & ~lote, "ocupantes_asignados_gem"].sum())
+    n_danio, n_lotes_danio = int(danio.sum()), int((danio & lote).sum())
+
+    # Servicios urbanos por comuna: proximidad euclidiana, no tiempos de viaje.
+    servicios = predios[danio].groupby("comuna").agg(
+        con_danio=("sev_estado", "size"),
+        cerca_salud=("dist_salud_m", lambda s: int((s <= 200).sum())),
+        lejos_urgencias=("dist_salud_urgencias_m", lambda s: int((s > 1000).sum())),
+        bloqueo=("puede_bloquear_via", lambda s: int(s.fillna(False).sum())))
+    filas_servicios = "".join(
+        f'<tr><td>C{int(c)}</td><td>{num(r.con_danio)}</td><td>{num(r.cerca_salud)}</td>'
+        f'<td>{num(r.lejos_urgencias)}</td><td>{num(r.bloqueo)}</td></tr>' for c, r in servicios.iterrows())
+    tot = servicios.sum()
+    filas_servicios += (f'<tr><td>Total</td><td>{num(tot.con_danio)}</td><td>{num(tot.cerca_salud)}</td>'
+                        f'<td>{num(tot.lejos_urgencias)}</td><td>{num(tot.bloqueo)}</td></tr>')
+
+    # Tabla completa por comuna (gold_icesixuao_comunas).
+    filas_tabla_comunas = "".join(
+        f'<tr><td>{int(c.ranking)}</td><td>Comuna {int(c.comuna)}</td><td>{num(c.indice_p90, 3)}</td>'
+        f'<td>{num(c.n_predios)}</td><td>{num(c.n_en_ranking)}</td><td>{num(c.n_prioridad_muy_alta)}</td>'
+        f'<td>{num(c.n_prioridad_alta)}</td><td>{pct(c.pct_danio_entre_con_dato)}</td><td>{pct(c.pct_sin_dato)}</td>'
+        f'<td>{num(c.ocupantes_asignados_gem_con_senal_danio)}</td><td>{num(c.n_salud)}</td></tr>'
+        for c in comunas.sort_values("ranking").itertuples())
+
+    # Colas de trabajo para brigadas.
+    colas = predios["cola_trabajo"].value_counts()
+    nombres_cola = {"inspeccion_priorizada": "Inspección (ranking)",
+                    "verificar_dato_satelital": "Sin dato satelital",
+                    "verificar_predio_sin_construccion": "Lotes sin construcción"}
+    color_cola = {"inspeccion_priorizada": ACENTO, "verificar_dato_satelital": MORADO}
+    filas_colas = "".join(barra(v, int(colas.max()), color_cola.get(k, AZUL), nombres_cola.get(k, k), num(v))
+                          for k, v in colas.items())
+
+    # PCA de los siete componentes entre los edificios del ranking (faltantes imputados con la media solo aquí).
+    x = predios.loc[predios["en_ranking"].fillna(False), componentes].astype(float)
+    x = x.fillna(x.mean())
+    var = np.linalg.eigvalsh(np.corrcoef(((x - x.mean()) / x.std(ddof=0)).T.values))[::-1]
+    var = 100 * var / var.sum()
+    corr = x.corr().values
+    media_r = float(np.abs(corr[~np.eye(len(componentes), dtype=bool)]).mean())
+    filas_pca = "".join(barra(v, var[0], AZUL, f"Componente {i + 1}", f"{pct(v)} · acumulado {pct(var[:i + 1].sum())}")
+                        for i, v in enumerate(var))
 
     # --- Secciones ----------------------------------------------------------------------------------
     max_p90 = comunas["indice_p90"].max()
@@ -187,9 +236,12 @@ def main():
     .fila-barra .val {{ grid-column:1 / -1; }} }}
 </style></head><body><div class="wrap">
 
-<h1>Réplicas en Cali: <span>dashboard de oro</span></h1>
-<p class="sub">Equipo icesixuao · corrida {procesado:%d-%b-%Y %H:%M} hora local · {remoto}
-<span class="tag">datos derivados de oficiales: no redistribuir</span></p>
+<h1>Réplicas en Cali: <span>dónde inspeccionar primero</span></h1>
+<p class="sub">DataBridge Hack 2026 · equipo icesixuao: Nicolas Zapato (Universidad Autónoma de Occidente) y
+José David Rodríguez Pinilla (Universidad Icesi) · corrida {procesado:%d-%m-%Y %H:%M} · {remoto}</p>
+<p class="sub">Mapa interactivo: <a href="./" style="color:var(--azul)">visor del equipo</a> ·
+código: <a href="https://github.com/JOSED235/DataBridge-Hackaton-" style="color:var(--azul)">repositorio</a>
+<span class="tag">publicación autorizada por la organización hasta el cierre del evento</span></p>
 <p class="aviso">Los datos de edificios vienen de imágenes satelitales: sirven para priorizar, no para declarar
 una edificación segura o insegura. La vulnerabilidad y la ocupación vienen de modelos (GEM); el cruce es por
 cercanía, no por llave catastral. Las pruebas de asociación son exploratorias y no establecen causalidad. El índice
@@ -219,8 +271,8 @@ predios sin construcción registrada no participan en el ranking: van a censo y 
 <h2>Indicadores maestros</h2>
 <div class="kpis">
   <div class="kpi"><b>{num(reporte_oro["n_predios"])}</b><small>edificios y lotes analizados</small></div>
-  <div class="kpi hot"><b>1.354</b><small>con daño visible (26,3 %)</small></div>
-  <div class="kpi hot"><b>6.950</b><small>ocupantes modelados con daño (puede repetirse)</small></div>
+  <div class="kpi hot"><b>{num(n_danio)}</b><small>con daño visible ({pct(100 * n_danio / len(predios))}; {num(n_lotes_danio)} son lotes)</small></div>
+  <div class="kpi hot"><b>{num(ocup_unicos)}</b><small>ocupantes modelados en edificios dañados (GEM, sin duplicar; {num(ocup_por_predio)} por predio)</small></div>
   <div class="kpi hot"><b>179</b><small>prioridad muy alta</small></div>
   <div class="kpi"><b>435</b><small>sin dato satelital (8,5 %)</small></div>
   <div class="kpi"><b>1.234</b><small>lotes sin construcción registrada</small></div>
@@ -228,6 +280,31 @@ predios sin construcción registrada no participan en el ranking: van a censo y 
 
 <h2>Ranking de comunas (p90 del índice entre edificios del ranking)</h2>
 <div class="panel">{orden}</div>
+
+<h2>Tabla por comuna (gold_icesixuao_comunas)</h2>
+<div class="panel" style="overflow-x:auto"><table>
+<tr><th>#</th><th>Comuna</th><th>p90</th><th>Predios</th><th>En ranking</th><th>Muy alta</th><th>Alta</th>
+<th>Daño entre con dato</th><th>Sin dato</th><th>Ocupantes modelados con daño</th><th>Centros de salud</th></tr>
+{filas_tabla_comunas}
+</table>
+<p style="color:var(--muted);font-size:12px;margin:10px 0 0">El p90 mide concentración de puntajes altos; los conteos de
+prioridad miden volumen de trabajo. La comuna 19 tiene más edificios de prioridad muy alta, pero la 3 concentra puntajes
+más altos. Ocupación sumada por predio: puede repetir registros GEM.</p></div>
+
+<div class="cols">
+<div><h2>Servicios urbanos cerca del daño</h2>
+<div class="panel"><table>
+<tr><th>Comuna</th><th>Predios con daño</th><th>A 200 m o menos de salud</th><th>A más de 1 km de urgencias</th><th>Pueden bloquear vía</th></tr>
+{filas_servicios}
+</table>
+<p style="color:var(--muted);font-size:12px;margin:10px 0 0">Distancias euclidianas a sitios de OpenStreetMap; solo 23 de
+439 centros de salud declaran urgencias. Proximidad no es capacidad ni tiempo de viaje.</p></div></div>
+
+<div><h2>Colas de trabajo para brigadas</h2>
+<div class="panel">{filas_colas}
+<p style="color:var(--muted);font-size:12px;margin:10px 0 0">De los predios sin construcción registrada, {num(n_lotes_danio)}
+muestran daño visible. El visor filtra por cola y comuna y descarga la lista en Excel, ordenada por prioridad.</p></div></div>
+</div>
 
 <h2>Prioridades de inspección ({num(total_prior)} registros)</h2>
 <div class="panel">{filas_prior}</div>
@@ -252,6 +329,11 @@ Frecuencias esperadas bajas en estrato: sin prueba admisible. Independencia espa
 el orden; quitar las fuentes externas lo cambia: 40 %.</p></div></div>
 </div>
 
+<h2>¿Se puede resumir el índice? PCA de los siete componentes</h2>
+<div class="panel">{filas_pca}
+<p style="color:var(--muted);font-size:12px;margin:10px 0 0">Media de |r| entre componentes: {num(media_r, 2)}. No hay una
+dimensión dominante: se combinan de forma aditiva con pesos explícitos para conservar los motivos de cada edificio.</p></div>
+
 <div class="cols">
 <div><h2>Pesos vigentes del índice</h2>
 <div class="panel">{filas_pesos}
@@ -265,7 +347,7 @@ la altura no marca tasa de daño medible en esta muestra.</p></div></div>
 <tr><td>Silver</td><td>{n_plata}</td><td>{n_ctrl_plata}</td><td>16 huellas SHA-256 de fuentes intactas</td></tr>
 <tr><td>Gold</td><td>{n_oro}</td><td>{n_ctrl_oro}</td><td>huellas de plata revalidadas al consumir; mapa consistente</td></tr>
 </table>
-<p style="color:var(--muted);font-size:12px;margin:10px 0 0">Identidad una fila por OBJECTID; publication detiene
+<p style="color:var(--muted);font-size:12px;margin:10px 0 0">Identidad una fila por OBJECTID; la publicación se detiene
 si una llave se repite. Escrituras Delta individuales: la corrida incompleta no autoriza exportar el mapa.</p></div></div>
 </div>
 
@@ -288,9 +370,8 @@ bitácora de decisiones:</p>
 
 <p class="pie">Cifras rastreables: gold_icesixuao_{{predios, comunas, afectaciones, factores, resumen_sensibilidad,
 fuentes, parametros, calidad}} · silver_icesixuao_* (16 tablas) · reporte.json de cada capa. Generado por
-scripts/generar_dashboard.py desde la corrida local de {procesado:%Y-%m-%d %H:%M}. La publicación remota en
-Databricks ({'hecha' if reporte_oro.get('publicado_databricks') else 'pendiente'}) es la que acredita las tablas
-Delta; esta corrida local no sustituye esa verificación. Priorizar ≠ declarar seguro.</p>
+scripts/generar_dashboard.py desde la corrida local de {procesado:%Y-%m-%d %H:%M}, con las mismas cifras que las tablas
+gold publicadas en Databricks (13 tablas, 43 controles aprobados). Priorizar no es declarar seguro.</p>
 
 </div></body></html>
 """

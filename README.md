@@ -75,7 +75,7 @@ visor/                    MapLibre GL JS + deck.gl, sin build
 
 ## Cómo correr
 
-**Visor publicado:** https://josed235.github.io/DataBridge-Hackaton-/ (GitHub Pages desde la rama `gh-pages`, que contiene solo `visor/` con sus datos). Publicación temporal autorizada por la organización hasta la sustentación del 14-nov-2026; después se borra la rama `gh-pages`, se desactiva Pages y el repo pasa a privado. Para actualizarlo, copiar `visor/` a esa rama y hacer push.
+**Visor publicado:** https://josed235.github.io/DataBridge-Hackaton-/ y dashboard en https://josed235.github.io/DataBridge-Hackaton-/dashboard.html (GitHub Pages desde la rama `gh-pages`, que contiene solo `visor/` con sus datos y el HTML de `generar_dashboard.py`). Publicación temporal autorizada por la organización hasta la sustentación del 14-nov-2026; después se borra la rama `gh-pages`, se desactiva Pages y el repo pasa a privado. Para actualizarlo, copiar `visor/` a esa rama y hacer push.
 
 **Visor local** (necesita servidor local, no abre con doble clic):
 

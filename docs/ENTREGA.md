@@ -12,7 +12,7 @@ Checklist del correo:
 - [ ] 3. Respuesta a las dos preguntas (≤ 500 palabras)
 - [ ] 4. Lista de fuentes
 - [ ] 5. Presentación de 3 diapositivas (PowerPoint o PDF), la última con el pantallazo del mapa
-- [ ] 6. Enlace al mapa interactivo: https://josed235.github.io/DataBridge-Hackaton-/ (publicado con autorización de la organización hasta el cierre del evento)
+- [ ] 6. Enlace al mapa interactivo: https://josed235.github.io/DataBridge-Hackaton-/ y al dashboard de resultados: https://josed235.github.io/DataBridge-Hackaton-/dashboard.html (publicados con autorización de la organización hasta el cierre del evento)
 
 ---
 

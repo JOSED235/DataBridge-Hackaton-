@@ -268,6 +268,11 @@
 **Por qué:** Cumplir punto por punto el contenido pedido para la entrega.
 **Archivos:** `docs/ENTREGA.md`, `scripts/generar_documento.py`, `scripts/generar_presentacion.py`, `docs/BITACORA.md`; Word, presentación y PDF regenerados en `data/oficiales/salidas/`.
 
+### 2026-11-13 16:47 · José David
+**Qué:** Dashboard de resultados ampliado y publicado junto al mapa (https://josed235.github.io/DataBridge-Hackaton-/dashboard.html), porque el dashboard creado en Databricks no se puede compartir fuera del workspace. Se agregaron: integrantes del equipo y enlaces al mapa y al repositorio; tabla completa por comuna; servicios urbanos cerca del daño por comuna (626 predios dañados a 200 m o menos de salud, 430 a más de 1 km de urgencias, 5 que pueden bloquear vía); colas de trabajo para brigadas; PCA de los siete componentes; indicadores corregidos (5.494 ocupantes modelados sin duplicar, 1.354 con daño de los que 342 son lotes, calculados desde oro); y el estado real de publicación en Databricks. El visor enlaza al dashboard y el Word del correo incluye ambos enlaces.
+**Por qué:** Compartir con la organización y el jurado un tablero completo sin depender de acceso al workspace de Databricks.
+**Archivos:** `scripts/generar_dashboard.py`, `scripts/generar_documento.py`, `visor/index.html`, `docs/ENTREGA.md`, `README.md`, `docs/BITACORA.md`; rama `gh-pages` (`66fba90`).
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |
@@ -329,3 +334,4 @@
 | 2026-11-13 16:07 | XLSX generado con código propio en `visor/lista.js` en vez de SheetJS | El visor funciona sin internet y sin build; SheetJS pesa cerca de 1 MB y su edición comunitaria no aplica estilos ni encabezado fijo. El formato mínimo cabe en unas 100 líneas y se prueba con openpyxl y Excel | SheetJS desde CDN (rompe la demo sin conexión); solo CSV (Excel en español lo abre en una columna o pierde tipos) | José David |
 | 2026-11-13 16:11 | Mantener el índice aditivo con pesos explícitos; no usar PCA ni un modelo supervisado | Los siete componentes son casi independientes (primer componente 26 %, media de abs(r) 0,11): PCA necesitaría 4 o 5 ejes y borraría los motivos por edificio. No hay resultado verificado en terreno para entrenar un modelo | PCA o análisis factorial como índice; modelo supervisado con el daño satelital como objetivo | José David |
 | 2026-11-13 16:27 | Publicar el visor en GitHub Pages desde una rama huérfana `gh-pages`, solo hasta el cierre del evento | La organización autorizó el enlace público hasta la sustentación. La rama aparte evita meter los datos en el historial de `main` y se retira borrando la rama | Subir los GeoJSON a `main` (quedarían en el historial); HTML adjunto al correo (sin enlace para compartir); Pages solo con comunas (pierde los edificios) | José David |
+| 2026-11-13 16:47 | Publicar el dashboard HTML en GitHub Pages en lugar del dashboard de Databricks | El de Databricks no se puede compartir fuera del workspace en esta edición; el HTML usa las mismas tablas oro, no requiere JavaScript y vive junto al mapa autorizado | Pedir acceso al workspace para cada evaluador; solo capturas del dashboard de Databricks | José David |

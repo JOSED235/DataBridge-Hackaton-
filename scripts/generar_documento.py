@@ -114,9 +114,11 @@ def main():
     titulo(doc, "4. Fuentes externas")
     bloques(doc, seccion_md("## 4. Fuentes externas", "---"))
 
-    titulo(doc, "5. Mapa interactivo")
+    titulo(doc, "5. Mapa interactivo y dashboard")
     p = parrafo(doc, "El mapa se puede consultar en ")
     enlace(p, URL_MAPA)
+    p = parrafo(doc, "El dashboard de resultados está en ")
+    enlace(p, URL_MAPA + "dashboard.html")
 
     SALIDA.parent.mkdir(parents=True, exist_ok=True)
     doc.save(SALIDA)
