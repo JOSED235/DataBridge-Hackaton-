@@ -57,7 +57,7 @@ scripts/
   correr_plata.py         Materializa y valida solo plata en data/oficiales/plata/ (Parquet privado)
   correr_local.py         Plata nueva → gold en data/oficiales/salidas/ y mapa en visor/data/
   generar_dashboard.py    Dashboard HTML autónomo de conclusiones desde oro y plata (salida privada)
-  generar_documento.py    Word de sustentación: resumen, decisiones, respuesta, guion, preguntas del jurado, capturas y enlaces (salida privada)
+  generar_documento.py    Word del correo de entrega (Arial 12): capturas del Catalog, decisiones, respuesta, fuentes y enlace al mapa
 analisis_bronce/          EDA independiente del pipeline: notebooks por dataset, ejecutor y soporte
   notebooks/             Notebooks fuente, sin salidas ni registros oficiales
   ejecutados/            Notebooks con salidas y HTML para visualizar (fuera de git)
