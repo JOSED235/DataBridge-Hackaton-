@@ -258,7 +258,7 @@
 **Por qué:** Tener en un solo documento lo que se presenta y se responde, junto a la presentación de 3 diapositivas que se adjunta aparte.
 **Archivos:** `scripts/generar_documento.py` (nuevo), `README.md`, `docs/BITACORA.md`.
 
-### 2026-11-13 16:45 · José David
+### 2026-11-13 16:40 · José David
 **Qué:** El Word de la entrega queda solo con el contenido del correo: capturas del Catalog (45 tablas), decisiones en silver y gold, respuesta a las dos preguntas, fuentes externas y enlace al mapa en GitHub Pages; la presentación se adjunta aparte. Formato Arial 12 en todo el documento, sin negritas ni líneas entre secciones, sin pie de página y con autor "Equipo icesixuao" en las propiedades del archivo. Se retiraron del Word el guion, las preguntas del jurado, el resumen y el pantallazo del mapa. Resultado: 5 páginas y 1.031 palabras, revisado exportado a PDF desde Word.
 **Por qué:** El documento acompaña el correo de entrega y debe contener solo lo que se envía; el guion y las preguntas del jurado son material interno del equipo.
 **Archivos:** `scripts/generar_documento.py`, `README.md`, `docs/BITACORA.md`.
