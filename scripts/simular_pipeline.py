@@ -2,7 +2,7 @@
 
 Genera edificios sintéticos con columnas parecidas a las oficiales, corre limpiar -> enriquecer ->
 índice -> gold, imprime el reporte y la sensibilidad, y deja los GeoJSON de muestra en visor/data/.
-El viernes se reemplazan por los exportados desde Databricks.
+Ya no escribe en visor/data/ si existen datos reales: usar scripts/correr_local.py.
 
 Uso:  python scripts/simular_pipeline.py      (requiere geopandas)
 """
@@ -29,20 +29,22 @@ n = len(pts)
 pisos = np.clip(rng.lognormal(0.7, 0.6, n).round(), 1, 35)
 sesgo_comuna = np.isin(comuna_de, [3, 9, 10, 19, 20]) * 0.15  # zonas ficticias con más daño
 prob = np.clip(rng.beta(2, 5, n) + 0.02 * pisos + sesgo_comuna, 0, 1)
-estado = np.select([prob > 0.85, prob > 0.65, prob > 0.4], ["Daño severo", "Daño moderado", "Daño leve"], "Sin daño aparente")
-estado[rng.random(n) < 0.08] = "Sin dato"
+# Mismas 4 categorías y nombres de columna que Datosprediales.json; puntos en vez de polígonos.
+estado = np.select([prob > 0.85, prob > 0.6], ["Alta probabilidad de escombros", "Posible desaparición de techo"], "Sin cambio aparente / Daño interno")
+estado[rng.random(n) < 0.08] = "Sin datos satelitales"
 raw = pd.DataFrame({
-    "ID": [f"E{i:05d}" for i in range(n)],
+    "OBJECTID": [str(i) for i in range(n)],
     "Estado_Estructural": estado,
     "NPISOS": pisos,
-    "Prob_Escombros": np.where(estado == "Sin dato", np.nan, prob.round(3)),
-    "Comuna": [f"Comuna {c}" if rng.random() > 0.05 else None for c in comuna_de],
+    "Indice_Escombros": np.where(estado == "Sin datos satelitales", np.nan, (prob * 40 - 20).round(3)),
+    "COMUNA": [f"{c:02d}" if rng.random() > 0.05 else " " for c in comuna_de],
     "lon": pts.x.values, "lat": pts.y.values,
 })
+COLS_SIM = {**COLS, "geom_wkt": None, "lon": "lon", "lat": "lat"}
 raw.loc[rng.choice(n, 20, replace=False), "NPISOS"] = 0  # errores de captura
 
 # --- Pipeline ----------------------------------------------------------------------------------
-silver, reporte = limpiar(raw)
+silver, reporte = limpiar(raw, COLS_SIM)
 print("Reporte de limpieza:", reporte)
 g = enriquecer(a_geo(silver), capas["comunas"], capas["barrios"], capas["salud"], bomberos, capas["vias_principales"])
 g = asignar_suelo(g, *leer_suelo(EXT))
@@ -66,12 +68,15 @@ print(sensibilidad(g, ESCENARIOS_SENSIBILIDAD).to_string(index=False))
 
 # --- Datos de muestra para el visor --------------------------------------------------------------
 VIS = RAIZ / "visor" / "data"
-exportar_visor(g, gc, VIS)
+reales = (VIS / "edificios.geojson").exists() and not (VIS / "MUESTRA.txt").exists()
+if not reales:  # nunca pisar el mapa generado con datos oficiales por correr_local.py
+    exportar_visor(g, gc, VIS)
 s = capas["salud"][["name", "amenity", "geometry"]]
 s.to_file(VIS / "salud.geojson", driver="GeoJSON")
 capas["emergencia"][["name", "amenity", "geometry"]].to_file(VIS / "emergencia.geojson", driver="GeoJSON")
 capas["vias_principales"][["name", "highway", "geometry"]].to_file(VIS / "vias.geojson", driver="GeoJSON", COORDINATE_PRECISION=5)
 sis = gpd.read_file(EXT / "usgs_sismos_2026-08.geojson")[["mag", "place", "time", "geometry"]]
 sis.to_file(VIS / "sismos.geojson", driver="GeoJSON")
-(VIS / "MUESTRA.txt").write_text("Edificios ficticios generados por scripts/simular_pipeline.py. Borrar al usar datos reales.\n", encoding="utf-8")
-print(f"Visor: datos de muestra escritos en {VIS}")
+if not reales:
+    (VIS / "MUESTRA.txt").write_text("Edificios ficticios generados por scripts/simular_pipeline.py. Borrar al usar datos reales.\n", encoding="utf-8")
+print(f"Visor: capas escritas en {VIS}" + (" (edificios reales conservados)" if reales else " (edificios ficticios)"))

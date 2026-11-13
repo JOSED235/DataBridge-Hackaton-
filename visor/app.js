@@ -29,7 +29,7 @@ function rampa(t) {
 function colorEdificio(p) {
   if (estado.modo === 'prioridad') return PRIORIDAD[p.prioridad] || [120, 120, 120];
   if (p.sin_dato_satelital) return PRIORIDAD['Sin dato: verificar en terreno'];
-  return rampa(estado.modo === 'indice' ? p.indice_riesgo / maxIndice : p.prob_escombros);
+  return rampa(estado.modo === 'indice' ? p.indice_riesgo / maxIndice : p.sev_estado);
 }
 let maxIndice = 1;
 
@@ -112,7 +112,7 @@ function mostrarTip({ object, x, y, layer }) {
   const p = object.properties;
   let h = '';
   if (layer.id === 'edificios') h = `<b>${p.prioridad}</b> · índice ${fmt(p.indice_riesgo, 2)}<br>Comuna ${p.comuna ?? '–'} · ${p.barrio ?? ''}<br>
-    ${p.pisos} pisos · estado: ${p.estado ?? 'sin dato'}<br>Prob. escombros: ${p.prob_escombros == null ? 'sin dato' : fmt(p.prob_escombros * 100) + ' %'}<br>
+    ${p.pisos} pisos · estado: ${p.estado ?? 'sin dato'}<br>Suelo: microzona ${p.microzona ?? '–'} · amplifica ${fmt(p.amplif_suelo, 2)}×<br>
     Salud más cercana: ${fmt(p.dist_salud_m)} m${p.puede_bloquear_via ? '<br><b>Sus escombros podrían bloquear una vía principal</b>' : ''}`;
   else if (layer.id === 'comunas') h = `<b>Comuna ${p.comuna}</b> · puesto ${p.ranking}<br>${fmt(p.n_edificios)} edificios ·
     ${fmt(p.pct_alta_escombros, 1)} % alta prob. escombros<br>${fmt(p.pct_sin_dato, 1)} % sin dato satelital<br>
@@ -129,7 +129,7 @@ function kpis() {
   const ed = estado.comuna ? datos.edificios.features.filter((f) => String(f.properties.comuna) === estado.comuna) : datos.edificios.features;
   const n = ed.length || 1;
   const cuenta = (fn) => ed.filter((f) => fn(f.properties)).length;
-  const alta = cuenta((p) => p.prob_escombros >= 0.7), sd = cuenta((p) => p.sin_dato_satelital);
+  const alta = cuenta((p) => p.alta_escombros), sd = cuenta((p) => p.sin_dato_satelital);
   const muy = cuenta((p) => p.prioridad === 'Muy alta'), via = cuenta((p) => p.puede_bloquear_via);
   $('ambito').textContent = estado.comuna ? `· comuna ${estado.comuna}` : '· Cali';
   $('kpis').innerHTML = [

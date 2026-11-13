@@ -1,11 +1,11 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 03 · Gold: índice de riesgo ante réplicas, ranking por comuna y exportación al visor
+# MAGIC # 03 · Gold: índice de riesgo ante réplicas, ranking por comuna y exportación al mapa
 # MAGIC
 # MAGIC Índice = suma ponderada de 6 componentes normalizados a 0..1 (justificación en `docs/INDICE_RIESGO.md`):
 # MAGIC daño observado 30 %, amplificación del suelo 15 %, altura 15 %, exposición 15 %, lejanía a salud 10 %, posible bloqueo de vía 15 %.
 # MAGIC
-# MAGIC Salidas: `gold_edificios`, `gold_comunas`, `gold_sensibilidad` y los GeoJSON para el visor en `/Volumes/workspace/databridge/salidas/`.
+# MAGIC Salidas: `gold_icesixuao_predios`, `gold_icesixuao_comunas`, `gold_icesixuao_sensibilidad` y los GeoJSON del mapa en `/Volumes/workspace/default/icesixuao/salidas/`.
 
 # COMMAND ----------
 
@@ -21,11 +21,7 @@
 
 # COMMAND ----------
 
-ESQUEMA = "workspace.databridge"
-VOL_EXT = "/Volumes/workspace/databridge/externos"
-VOL_OUT = "/Volumes/workspace/databridge/salidas"
-
-s = spark.table(f"{ESQUEMA}.silver_edificios").toPandas()
+s = spark.table(tabla("silver", "predios")).toPandas()
 g = gpd.GeoDataFrame(s, geometry=gpd.GeoSeries.from_wkt(s.pop("geom_wkt")), crs=CRS_GEO)
 g["comuna"] = g["comuna"].astype("Int64")
 g = calcular_indice(g)  # para cambiar pesos: calcular_indice(g, {**PESOS, "c_altura": 0.3})
@@ -40,21 +36,23 @@ g["prioridad"].value_counts()
 # COMMAND ----------
 
 sens = sensibilidad(g, ESCENARIOS_SENSIBILIDAD)
-spark.createDataFrame(sens).write.mode("overwrite").option("overwriteSchema", True).saveAsTable(f"{ESQUEMA}.gold_sensibilidad")
+spark.createDataFrame(sens).write.mode("overwrite").option("overwriteSchema", True).saveAsTable(tabla("gold", "sensibilidad"))
 sens
 
 # COMMAND ----------
 
-capas = {n: gpd.read_file(f"{VOL_EXT}/osm_{n}.geojson") for n in ("comunas", "salud", "emergencia")}
+capas = {n: gpd.read_file(f"{VOL}/osm_{n}.geojson") for n in ("comunas", "salud", "emergencia")}
 bomberos = capas["emergencia"][capas["emergencia"]["amenity"] == "fire_station"]
 gc = gold_comunas(g, capas["comunas"], capas["salud"], bomberos)
 
-def guardar(gdf, tabla, comentario):
-    spark.createDataFrame(para_spark(gdf)).write.mode("overwrite").option("overwriteSchema", True).saveAsTable(f"{ESQUEMA}.{tabla}")
-    spark.sql(f"COMMENT ON TABLE {ESQUEMA}.{tabla} IS '{comentario}'")
 
-guardar(g, "gold_edificios", "Edificio con índice de riesgo ante réplicas (0..1) y prioridad de inspección")
-guardar(gc, "gold_comunas", "Indicadores por comuna y ranking por índice p90")
+def guardar(gdf, nombre, comentario):
+    spark.createDataFrame(para_spark(gdf)).write.mode("overwrite").option("overwriteSchema", True).saveAsTable(nombre)
+    spark.sql(f"COMMENT ON TABLE {nombre} IS '{comentario}'")
+
+
+guardar(g, tabla("gold", "predios"), "Edificio con índice de riesgo ante réplicas (0..1) y prioridad de inspección")
+guardar(gc, tabla("gold", "comunas"), "Indicadores por comuna y ranking por índice p90")
 display(gc.drop(columns="geometry"))
 
 # COMMAND ----------
@@ -64,57 +62,54 @@ display(gc.drop(columns="geometry"))
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC -- Top 20 edificios a inspeccionar primero
-# MAGIC SELECT id, comuna, barrio, pisos, round(prob_escombros, 2) AS prob_escombros, puede_bloquear_via, indice_riesgo
-# MAGIC FROM workspace.databridge.gold_edificios
-# MAGIC WHERE NOT sin_dato_satelital
-# MAGIC ORDER BY indice_riesgo DESC LIMIT 20;
+GP = tabla("gold", "predios")
+# Afectaciones: cuántos edificios y cuánta área por categoría (la guía: los sin dato pesan distinto en área)
+display(spark.sql(f"""
+SELECT estado, count(*) AS n, round(100 * count(*) / sum(count(*)) OVER (), 1) AS pct_edificios,
+       round(100 * sum(area_m2) / sum(sum(area_m2)) OVER (), 1) AS pct_area
+FROM {GP} GROUP BY estado ORDER BY n DESC"""))
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC -- Vías principales con más edificios cuyos escombros podrían bloquearlas
-# MAGIC SELECT barrio, comuna, count(*) AS edificios_que_pueden_bloquear
-# MAGIC FROM workspace.databridge.gold_edificios
-# MAGIC WHERE puede_bloquear_via
-# MAGIC GROUP BY barrio, comuna ORDER BY edificios_que_pueden_bloquear DESC LIMIT 15;
+# Top 20 edificios a inspeccionar primero
+display(spark.sql(f"""
+SELECT id, comuna, barrio, estado, pisos, pisos_imputado, microzona, amplif_suelo, puede_bloquear_via, indice_riesgo
+FROM {GP} WHERE NOT sin_dato_satelital ORDER BY indice_riesgo DESC LIMIT 20"""))
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC -- ¿Los edificios altos tienen más probabilidad de escombros? (factor explicativo)
-# MAGIC SELECT CASE WHEN pisos <= 2 THEN '1-2' WHEN pisos <= 5 THEN '3-5' WHEN pisos <= 10 THEN '6-10' ELSE '11+' END AS rango_pisos,
-# MAGIC        count(*) AS n, round(avg(prob_escombros), 3) AS prob_media, round(100 * avg(cast(alta_escombros AS int)), 1) AS pct_alta
-# MAGIC FROM workspace.databridge.gold_edificios WHERE NOT sin_dato_satelital
-# MAGIC GROUP BY 1 ORDER BY min(pisos);
+# ¿Los edificios más altos tienen más daño? (solo pisos reales, sin imputados)
+display(spark.sql(f"""
+SELECT CASE WHEN pisos <= 1 THEN '1' WHEN pisos <= 2 THEN '2' WHEN pisos <= 3 THEN '3' ELSE '4+' END AS rango_pisos,
+       count(*) AS n, round(100 * avg(cast(alta_escombros AS int)), 1) AS pct_escombros,
+       round(100 * avg(cast(sev_estado >= 0.7 AS int)), 1) AS pct_escombros_o_techo
+FROM {GP} WHERE NOT sin_dato_satelital AND NOT pisos_imputado
+GROUP BY 1 ORDER BY 1"""))
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC -- Hipótesis del efecto de sitio (informe, cap. 6.2): ¿hay más daño en las microzonas que más amplifican,
-# MAGIC -- comparando edificios de la misma altura? Si el patrón se sostiene dentro de cada rango de pisos, no es solo densidad o altura.
-# MAGIC SELECT microzona,
-# MAGIC        CASE WHEN pisos <= 3 THEN '1-3' WHEN pisos <= 9 THEN '4-9' ELSE '10+' END AS rango_pisos,
-# MAGIC        count(*) AS n, round(avg(amplif_suelo), 2) AS amplif_media,
-# MAGIC        round(avg(prob_escombros), 3) AS prob_media, round(100 * avg(cast(alta_escombros AS int)), 1) AS pct_alta
-# MAGIC FROM workspace.databridge.gold_edificios WHERE NOT sin_dato_satelital
-# MAGIC GROUP BY 1, 2 HAVING count(*) >= 30 ORDER BY 2, amplif_media DESC;
+# Hipótesis del efecto de sitio (informe, cap. 6.2): ¿hay más daño donde el suelo amplifica más, a igual altura?
+display(spark.sql(f"""
+SELECT microzona, count(*) AS n, round(avg(amplif_suelo), 2) AS amplif_media,
+       round(100 * avg(cast(alta_escombros AS int)), 1) AS pct_escombros,
+       round(100 * avg(cast(sev_estado >= 0.7 AS int)), 1) AS pct_escombros_o_techo
+FROM {GP} WHERE NOT sin_dato_satelital
+GROUP BY 1 HAVING count(*) >= 30 ORDER BY amplif_media"""))
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC -- Resonancia (informe, cap. 8): edificios de 15 a 25 pisos (T ≈ 1,5-2,5 s) donde el suelo amplifica ese período 1,7 veces o más.
-# MAGIC SELECT comuna, microzona, count(*) AS edificios_en_banda, round(avg(prob_escombros), 3) AS prob_media
-# MAGIC FROM workspace.databridge.gold_edificios
-# MAGIC WHERE pisos BETWEEN 15 AND 25 AND amplif_suelo >= 1.7
-# MAGIC GROUP BY 1, 2 ORDER BY edificios_en_banda DESC;
+# Servicios: edificios con escombros cerca de salud y vías principales
+display(spark.sql(f"""
+SELECT comuna, count(*) AS n_escombros,
+       sum(cast(dist_salud_m <= 200 AS int)) AS a_200m_de_salud,
+       sum(cast(puede_bloquear_via AS int)) AS pueden_bloquear_via
+FROM {GP} WHERE alta_escombros GROUP BY comuna ORDER BY n_escombros DESC"""))
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Exportar al visor
-# MAGIC Descargar desde Catalog → databridge → salidas los archivos y copiarlos a `visor/data/` (reemplazan los de muestra).
+# MAGIC ## Exportar al mapa
+# MAGIC Descargar desde Catalog → workspace → default → Volumes → icesixuao → salidas y copiarlos a `visor/data/` (o abrirlos en Kepler.gl).
 
 # COMMAND ----------
 

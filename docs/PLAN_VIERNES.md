@@ -2,6 +2,42 @@
 
 > Este es el archivo a abrir mañana. Todo lo que se pudo adelantar ya está en el repo; el viernes se conectan los datos reales. Buscar `TODO-VIERNES` en el repo para ver cada punto que depende de ellos.
 
+## 0. Actualización 13-nov 10:30: guía oficial y datos reales
+
+Guía completa en `DataBridge_Hack_Guia_Evento_2.md` (raíz). Lo que cambia el plan:
+
+**Entrega (lo único que cuenta).** Hay que enviar un correo a marcelasabogue@ieee.org **antes de las 5:00 p. m.** con el asunto `databridgehack: grupoX`. Debe traer:
+
+1. Una captura del Catalog con las tablas bronze, silver y gold.
+2. Un texto de decisiones en silver y gold (≤ 200 palabras).
+3. La respuesta a las dos preguntas (≤ 500 palabras).
+4. La lista de fuentes.
+5. **3 diapositivas:** arquitectura, respuesta y pantallazo del mapa.
+
+El sábado se sustentan **5 min solo con eso: no hay demo en vivo del visor.** El visor sirve para sacar el pantallazo. El recorrido guiado y el video ya no son prioridad.
+
+**Puntaje:**
+
+| Criterio | Puntos | Qué mira el jurado |
+|---|---|---|
+| Respuesta a la pregunta | 30 | Las dos mitades, conectadas y visibles en el mapa |
+| Datos externos | 25 | Citados, cruzados con los edificios y que aporten valor. Un dato que solo decora no suma; uno falso o una conclusión sin sustento **resta** |
+| Calidad del análisis | 20 | Cifras rastreables a las tablas gold y límites reconocidos |
+| Presentación | 15 | Mapa claro en 30 s, 3 diapositivas |
+| Arquitectura | 10 | Decisiones de cada capa justificadas |
+
+**Nombres.** Todo va en `workspace.default`, con volumen y tablas `<capa>_icesixuao_<contenido>`. Ya está en `00_pipeline` (`EQUIPO`).
+
+**Lo que dicen los datos reales** (corrida local con `scripts/correr_local.py`):
+
+- **Cobertura:** 5.146 edificios, solo de 7 comunas (3, 9, 10, 17, 18, 19 y 20); la comuna 19 tiene el 61 %. No hay edificios del oriente blando (microzona 6), así que el argumento "oriente de Cali" del informe no aplica a esta muestra.
+- **Daño:** 296 con alta probabilidad de escombros (5,8 %), 1.058 con posible desaparición de techo (20,6 %), 3.357 sin cambio aparente (65,2 %) y 435 sin dato (8,5 %).
+- **Altura:** son edificios bajos (mediana de 2 pisos y máximo 13), así que no hay ninguno en la banda de resonancia de 15 a 25 pisos.
+- **Suelo:** **la hipótesis del efecto de sitio no se cumple en esta muestra.** El % de escombros va de 5,4 % a 8,9 % entre microzonas, sin relación con la amplificación, y tampoco cambia con la altura. Se dice así en la entrega; afirmar lo contrario resta puntos. El suelo sigue en el índice porque mide la sacudida *futura* de una réplica, no explica el daño observado. Al mediodía hay que decidir si baja al 10 %.
+- **Área sin dato:** la guía dice que los 435 edificios sin dato suman "cerca del 45 %" del área construida. Nosotros medimos **9,5 %**, tanto en m² (EPSG:9377) como con `Shape__Area`. Anotarlo como discrepancia y no usar el 45 %.
+- **NPISOS:** vale 0 en 1.234 edificios, en proporción pareja entre las 4 categorías (21 % a 29 %). Se imputan con la mediana de la comuna, se marcan con `pisos_imputado` y se excluyen del análisis por altura.
+- **Ranking de comunas por índice p90:** 3, 20, 18, 9, 10, 19 y 17.
+
 ## 1. Estrategia
 
 ### Idea central (la frase que debe quedar en el jurado)

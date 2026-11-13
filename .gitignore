@@ -1,5 +1,6 @@
 # Datos oficiales del evento: no se pueden redistribuir
 data/oficial/
+data/oficiales/
 
 # Python
 __pycache__/
@@ -11,3 +12,7 @@ venv/
 node_modules/
 .DS_Store
 Thumbs.db
+
+# Mapa generado con datos oficiales: no se sube
+visor/data/edificios.geojson
+visor/data/comunas.geojson

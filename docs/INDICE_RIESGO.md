@@ -17,7 +17,7 @@ Todos normalizados a 0..1 (1 = más urgente). Para que un valor atípico no apla
 
 | Componente | Peso | Cómo se calcula | Por qué |
 |---|---|---|---|
-| `c_danio` | 30 % | Promedio de probabilidad de escombros y severidad del `Estado_Estructural` | Es el único dato observado del daño. Va primero porque un edificio ya dañado es el que más puede colapsar con una réplica. |
+| `c_danio` | 30 % | Severidad del `Estado_Estructural`: escombros 1,0, techo desaparecido 0,7, sin cambio aparente 0,1 (los datos no traen probabilidad; `Indice_Escombros` tiene daño en las dos colas) | Es el único dato observado del daño. Va primero porque un edificio ya dañado es el que más puede colapsar con una réplica. |
 | `c_suelo` | 15 % | Factor de amplificación de su microzona (INGEOMINAS-DAGMA 2005, funciones de GEM TREQ) en el período propio del edificio, T ≈ pisos/10 s, leído para 0,23 g en roca | La misma sacudida daña distinto según el suelo. En Cali el suelo amplifica hasta ~2 veces los períodos largos, los de edificios de 15 a 25 pisos (resonancia). Ver `docs/INFORME_SISMO.md`, caps. 5 y 8. |
 | `c_altura` | 15 % | `NPISOS` normalizado | Más pisos = más masa que cae, más ocupantes y mayor alcance de los escombros. |
 | `c_exposicion` | 15 % | Edificios a menos de 100 m (proxy de población) | Sin datos de población por manzana disponibles, la densidad construida aproxima cuántas personas quedan expuestas. |

@@ -8,26 +8,40 @@ import numpy as np
 import pandas as pd
 
 # ---------------------------------------------------------------------------------------------
-# CONFIGURACIÓN. TODO-VIERNES: ajustar al diccionario real de los datos oficiales.
+# CONFIGURACIÓN (datos oficiales: Datosprediales.json, 5.146 edificios, guía del evento)
 # ---------------------------------------------------------------------------------------------
+EQUIPO = "icesixuao"                       # la guía exige el nombre del equipo en tablas y volumen
+ESQUEMA = "workspace.default"              # la guía pide trabajar en workspace.default
+VOL = f"/Volumes/workspace/default/{EQUIPO}"  # volumen del equipo: edificios + capas externas
+VOL_OUT = f"{VOL}/salidas"                 # GeoJSON exportados para el mapa
+
+
+def tabla(capa, contenido):
+    """Nombre completo según la guía: workspace.default.<capa>_<equipo>_<contenido>."""
+    return f"{ESQUEMA}.{capa}_{EQUIPO}_{contenido}"
+
+
 COLS = {                      # nombre estándar -> nombre en los datos oficiales (None si no viene)
-    "id": "ID",
+    "id": "OBJECTID",                  # ID_PREDIO es nulo en 1.509 filas; OBJECTID es único
     "estado": "Estado_Estructural",
     "pisos": "NPISOS",
-    "escombros": "Prob_Escombros",   # puede ser numérica (0..1 o 0..100) o categórica (Alta/Media/Baja)
-    "comuna": "Comuna",
-    "lon": "lon",
-    "lat": "lat",
-    "geom_wkt": None,                # si traen geometría en WKT (polígonos), poner aquí la columna
+    "escombros": None,                 # no hay probabilidad: Indice_Escombros es un puntaje con signo (ver abajo)
+    "indice_escombros": "Indice_Escombros",
+    "comuna": "COMUNA",
+    "barrio_cod": "BARRIO",            # el código se repite entre comunas: solo sirve junto con COMUNA
+    "lon": None,
+    "lat": None,
+    "geom_wkt": "geom_wkt",            # contorno del edificio en WKT (lo crea bronze desde el GeoJSON)
 }
 
-# Severidad 0..1 de cada valor de Estado_Estructural (minúsculas, sin tildes). TODO-VIERNES: valores reales.
+# Severidad 0..1 de cada valor de Estado_Estructural (minúsculas, sin tildes).
+# Indice_Escombros tiene dos colas de daño: > 4,3 escombros y < -10,8 techo desaparecido; por eso se usa la categoría.
 SEVERIDAD_ESTADO = {
-    "colapsado": 1.0, "destruido": 1.0, "dano severo": 0.85, "dano alto": 0.85,
-    "dano moderado": 0.55, "dano medio": 0.55, "dano leve": 0.25, "dano bajo": 0.25,
-    "sin dano": 0.0, "sin dano aparente": 0.0,
+    "alta probabilidad de escombros": 1.0,
+    "posible desaparicion de techo": 0.7,       # falla visible de la cubierta, menos que escombros
+    "sin cambio aparente / dano interno": 0.1,  # la guía: "sin cambio aparente" no significa "sin daño"
 }
-ESTADOS_SIN_DATO = {"sin dato", "sin datos", "sin informacion", "no disponible", "nd", "n/a", ""}
+ESTADOS_SIN_DATO = {"sin datos satelitales", "sin dato", "sin datos", "sin informacion", "no disponible", "nd", "n/a", ""}
 ESCOMBROS_CATEGORIA = {"muy alta": 1.0, "alta": 0.8, "media": 0.5, "moderada": 0.5, "baja": 0.2, "muy baja": 0.05, "nula": 0.0}
 UMBRAL_ALTA_ESCOMBROS = 0.7   # prob >= umbral cuenta como "alta probabilidad de escombros"
 METROS_POR_PISO = 3.0         # altura típica de entrepiso en vivienda colombiana
@@ -67,6 +81,13 @@ def _prob_escombros(s):
     return _texto(s).map(ESCOMBROS_CATEGORIA)    # columna categórica
 
 
+def bronze_desde_geojson(g):
+    """GeoDataFrame -> pandas para bronze: copia fiel, todo como texto, con nulos reales (no 'nan'/'None')
+    y la geometría en WKT. Los tipos se corrigen en silver. Columnas 100 % nulas también pasan (como texto)."""
+    df = pd.DataFrame(g.drop(columns="geometry")).assign(geom_wkt=g.geometry.to_wkt())
+    return df.apply(lambda s: s.map(lambda v: None if v is None or (isinstance(v, float) and np.isnan(v)) else str(v)))
+
+
 def limpiar(raw, cols=COLS):
     """bronze -> silver (sin cruces espaciales). Devuelve (DataFrame estándar, reporte de limpieza)."""
     c = {k: v for k, v in cols.items() if v and v in raw.columns}
@@ -86,10 +107,14 @@ def limpiar(raw, cols=COLS):
         df[k] = pd.to_numeric(raw[c[k]], errors="coerce") if k in c else np.nan
     if "geom_wkt" in c:
         df["geom_wkt"] = raw[c["geom_wkt"]].astype("string")
+    if "indice_escombros" in c:
+        df["indice_escombros"] = pd.to_numeric(raw[c["indice_escombros"]], errors="coerce")
+    if "barrio_cod" in c:  # strip: la guía avisa de valores con solo espacios
+        df["barrio_cod"] = raw[c["barrio_cod"]].astype("string").str.strip().replace("", pd.NA)
 
-    # TODO-VIERNES: confirmar cómo marcan los datos "sin datos satelitales".
+    # Sin dato = categoría "Sin datos satelitales" (o sin estado ni probabilidad). No se borran: se verifican en terreno.
     df["sin_dato_satelital"] = estado_norm.isin(ESTADOS_SIN_DATO).fillna(False) | (df["sev_estado"].isna() & df["prob_escombros"].isna())
-    df["alta_escombros"] = df["prob_escombros"] >= UMBRAL_ALTA_ESCOMBROS
+    df["alta_escombros"] = (df["prob_escombros"] >= UMBRAL_ALTA_ESCOMBROS) | (df["sev_estado"] >= 1.0)
 
     reporte = {"filas_bronze": len(raw)}
     # Pisos fuera de rango físico en Cali (edificio más alto ~ 45 pisos): se anulan, no se borra el edificio.
@@ -113,9 +138,16 @@ def limpiar(raw, cols=COLS):
 
 
 def a_geo(df):
-    if "geom_wkt" in df:
-        return gpd.GeoDataFrame(df, geometry=gpd.GeoSeries.from_wkt(df["geom_wkt"]), crs=CRS_GEO)
-    return a_gdf(df)
+    """Silver a GeoDataFrame. Los polígonos inválidos (autointersecciones) se reparan con make_valid
+    en vez de borrarse, y se agrega el área real en m² (Shape__Area viene en grados)."""
+    if "geom_wkt" not in df:
+        return a_gdf(df)
+    g = gpd.GeoDataFrame(df, geometry=gpd.GeoSeries.from_wkt(df["geom_wkt"]), crs=CRS_GEO)
+    g["geom_reparada"] = ~g.is_valid
+    g.loc[g["geom_reparada"], "geometry"] = g.loc[g["geom_reparada"]].make_valid()
+    g["geom_wkt"] = g.geometry.to_wkt()
+    g["area_m2"] = g.to_crs(CRS_METROS).area.round(1)
+    return g
 
 
 def enriquecer(gdf, comunas, barrios, salud, bomberos, vias):
@@ -191,6 +223,9 @@ def gold_comunas(g, comunas, salud, bomberos):
         amplif_suelo_prom=("amplif_suelo", lambda s: round(s.mean(), 3)),
         microzona_predominante=("microzona", lambda s: s.mode().iat[0]),
     ).reset_index()
+    if "area_m2" in g:  # la guía: los edificios sin dato pesan mucho más en área que en número
+        area = g.groupby("comuna").apply(lambda d: round(100 * d.loc[d["sin_dato_satelital"], "area_m2"].sum() / d["area_m2"].sum(), 2))
+        agg = agg.merge(area.rename("pct_area_sin_dato"), on="comuna", how="left")
     poli = comunas.assign(comuna=comunas["name"].str.extract(r"(\d+)")[0].astype(int))[["comuna", "geometry"]]
     for nombre, capa in (("n_salud", salud), ("n_bomberos", bomberos)):
         j = gpd.sjoin(capa[["geometry"]].to_crs(CRS_GEO), poli, predicate="within")
@@ -198,7 +233,7 @@ def gold_comunas(g, comunas, salud, bomberos):
     agg[["n_salud", "n_bomberos"]] = agg[["n_salud", "n_bomberos"]].fillna(0).astype(int)
     agg["edif_alta_escombros_por_centro_salud"] = (agg["n_alta_escombros"] / agg["n_salud"].replace(0, np.nan)).round(1)
     agg["ranking"] = agg["indice_p90"].rank(ascending=False, method="min").astype(int)
-    out = poli.merge(agg, on="comuna", how="left").sort_values("ranking")
+    out = poli.merge(agg, on="comuna", how="inner").sort_values("ranking")  # solo comunas con edificios
     return gpd.GeoDataFrame(out, geometry="geometry", crs=CRS_GEO)
 
 
@@ -212,7 +247,7 @@ def para_spark(gdf):
     return df
 
 
-COLS_VISOR = ["id", "comuna", "barrio", "estado", "pisos", "prob_escombros", "alta_escombros", "sin_dato_satelital",
+COLS_VISOR = ["id", "comuna", "barrio", "estado", "sev_estado", "area_m2", "pisos", "prob_escombros", "alta_escombros", "sin_dato_satelital",
               "dist_salud_m", "dist_via_principal_m", "puede_bloquear_via", "microzona", "amplif_suelo",
               "indice_riesgo", "prioridad"]
 
@@ -221,7 +256,7 @@ def exportar_visor(g, gc, carpeta):
     """Escribe los GeoJSON que consume visor/ (edificios.geojson y comunas.geojson)."""
     import os
     os.makedirs(carpeta, exist_ok=True)
-    e = g[COLS_VISOR + ["geometry"]].to_crs(CRS_GEO).copy()
+    e = g[[c for c in COLS_VISOR if c in g] + ["geometry"]].to_crs(CRS_GEO).copy()
     e["pisos"] = e["pisos"].round(0).astype(int)
     e["comuna"] = e["comuna"].astype("float")  # Int64 con nulos no serializa en GeoJSON
     e.to_file(f"{carpeta}/edificios.geojson", driver="GeoJSON", COORDINATE_PRECISION=6)
