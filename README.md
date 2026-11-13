@@ -11,6 +11,7 @@ Solución del equipo para la **DataBridge Hack** (IEEE Computer Society, Colombi
 | Parte | Estado |
 |---|---|
 | Fuentes externas (USGS, OSM, suelo de GEM TREQ) | Descargadas en `data/externos/` |
+| Contraste entre ciudades y sismos | Fuentes candidatas revisadas en `docs/FUENTES.md`: 20 entradas de catálogo y 38 referencias, con alcance y pendientes de verificación; integración pendiente |
 | Funciones espaciales | Listas, con autoprueba |
 | Notebooks bronze/silver/gold | Ajustados a los datos oficiales y a los nombres de la guía (`workspace.default.<capa>_icesixuao_<contenido>`) |
 | Simulación con datos ficticios | Pasa de extremo a extremo |
@@ -29,7 +30,7 @@ docs/
   GUIA_DATABRICKS.md                Paso a paso de Databricks para principiantes
   BITACORA.md                       Aportes y decisiones del equipo (con su razón)
   INDICE_RIESGO.md                  Componentes, pesos y justificación del índice
-  FUENTES.md                        Fuentes verificadas, discrepancias y no disponibles
+  FUENTES.md                        Fuentes, revisión de las 20 entradas y 38 referencias, cobertura y pendientes
   GUION_PRESENTACION.md             Guion de 5 a 7 min y respuestas al jurado
   INFORME_SISMO.md                  Informe de investigación previa (suelo, profundidad, Venezuela, casos)
 notebooks/                Para importar en Databricks (Workspace → Import)

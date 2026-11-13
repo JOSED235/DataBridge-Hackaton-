@@ -74,6 +74,16 @@
 **Por qué:** Saber qué sostienen los datos antes de escribir las conclusiones: una conclusión que los datos no sostienen resta puntos.
 **Archivos:** `data/oficiales/salidas/` (fuera de git)
 
+### 2026-11-13 10:47 · Mrsasayo
+**Qué:** Revisión de las 20 entradas del catálogo y las 38 referencias de `INFORME_SISMO.md`, con acceso, formato, cobertura, utilidad para contrastar ciudades y estado de verificación en `FUENTES.md`. Se consultaron API de USGS, metadatos y agregados de UNGRD, catálogo HDX, servicios DANE y recursos GEM. Se identificaron modelos de exposición de Cali, Quito y Santiago de los Caballeros, 13 escenarios de Cali, productos ShakeMap/DYFI/PAGER y un recurso HDX anunciado para 2016–2026 cuyo libro queda sin inspeccionar. Se corrigió el nombre institucional del CPNAA en la bibliografía y se señaló la revisión desde el README. Se consultó la guía oficial incorporada en paralelo y se actualizó el registro para distinguir su contrato de datos de una inspección del inventario, que no se hizo en este aporte.
+**Por qué:** Distinguir conjuntos utilizables de referencias de contexto y no dar por verificadas coberturas, cifras o descargas que todavía están pendientes. Dejar rutas concretas para comparar sacudida, afectación y respuesta, separando datos observados de escenarios modelados. Es una propuesta de incorporación; no modifica los pesos del índice ni adopta nuevas fuentes en el pipeline. La descarga y extracción OSM ya terminadas se toman del resumen del dueño y no se repitieron.
+**Archivos:** `docs/FUENTES.md`, `docs/INFORME_SISMO.md`, `README.md`, `docs/BITACORA.md`
+
+### 2026-11-13 10:51 · Mrsasayo
+**Qué:** Respaldo local de los archivos e índice antes de concluir el pull que estaba detenido. Se resolvió el único conflicto de `.gitignore` conservando las exclusiones del PBF, datos oficiales y mapas derivados. Fusión registrada en `2b383fe`; después, `git pull --no-rebase` respondió que no había cambios remotos adicionales. Los cambios pendientes de la revisión de fuentes se conservaron fuera del commit de fusión.
+**Por qué:** Incorporar los ajustes remotos a los datos oficiales sin perder la extracción OSM local ni la documentación de esta sesión.
+**Archivos:** `.gitignore`, `docs/BITACORA.md` (registro); los demás archivos de la fusión corresponden al aporte remoto ya documentado a las 10:30.
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |
