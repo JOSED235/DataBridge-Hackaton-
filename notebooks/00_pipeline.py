@@ -86,7 +86,8 @@ def _prob_escombros(s):
 def bronze_desde_geojson(g):
     """GeoDataFrame -> pandas para bronze: copia fiel, todo como texto, con nulos reales (no 'nan'/'None')
     y la geometría en WKT. Los tipos se corrigen en silver. Columnas 100 % nulas también pasan (como texto)."""
-    df = pd.DataFrame(g.drop(columns="geometry")).assign(geom_wkt=g.geometry.to_wkt())
+    # Evitar que el redondeo predeterminado cree autointersecciones o pegue anillos.
+    df = pd.DataFrame(g.drop(columns="geometry")).assign(geom_wkt=g.geometry.to_wkt(rounding_precision=-1))
     return df.apply(lambda s: s.map(lambda v: None if v is None or (isinstance(v, float) and np.isnan(v)) else str(v)))
 
 
@@ -147,7 +148,7 @@ def a_geo(df):
     g = gpd.GeoDataFrame(df, geometry=gpd.GeoSeries.from_wkt(df["geom_wkt"]), crs=CRS_GEO)
     g["geom_reparada"] = ~g.is_valid
     g.loc[g["geom_reparada"], "geometry"] = g.loc[g["geom_reparada"]].make_valid()
-    g["geom_wkt"] = g.geometry.to_wkt()
+    g["geom_wkt"] = g.geometry.to_wkt(rounding_precision=-1)
     g["area_m2"] = g.to_crs(CRS_METROS).area.round(1)
     return g
 
@@ -306,7 +307,7 @@ def gold_comunas(g, comunas, salud, bomberos):
 def para_spark(gdf):
     """GeoDataFrame -> pandas listo para spark.createDataFrame: geometría a WKT y pd.NA a None
     (los tipos 'string'/'Int64'/'boolean' de pandas con nulos pueden fallar en la conversión Arrow)."""
-    df = pd.DataFrame(gdf.drop(columns="geometry")).assign(geom_wkt=gdf.geometry.to_wkt()) if "geometry" in gdf else gdf.copy()
+    df = pd.DataFrame(gdf.drop(columns="geometry")).assign(geom_wkt=gdf.geometry.to_wkt(rounding_precision=-1)) if "geometry" in gdf else gdf.copy()
     for c in df.columns:
         if isinstance(df[c].dtype, pd.api.extensions.ExtensionDtype):
             df[c] = df[c].astype(object).where(df[c].notna(), None)

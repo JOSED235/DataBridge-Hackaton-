@@ -1,5 +1,11 @@
 # Fuentes externas
 
+> EDA local del 13-nov-2026: `docs/EDA_BRONCE.md` y `analisis_bronce/notebooks/`
+> perfilan los 17 datasets/contenedores ya materializados, incluidas las cinco
+> nuevas capas externas. Las decisiones para plata y sus restricciones están en
+> el notebook `99_seleccion_para_plata` y en la bitácora. Los estados históricos
+> de disponibilidad de las revisiones anteriores se conservan con su alcance.
+
 > **Regla:** antes de usar o citar una fuente, verificar que existe y dice lo que se afirma. Las cifras oficiales del sismo son preliminares; si dos fuentes no coinciden, se anota la discrepancia y cuál se eligió.
 >
 > **Criterio del jurado (guía oficial):** cada dato externo debe ser **verdadero** (fuente identificable y citada), **tener sentido** (cubre Cali, es reciente y se cruza con los edificios) y **aportar valor** (cambia o enriquece la respuesta). Un dato que solo decora no suma; uno falso o una conclusión sin sustento resta. Cada ficha de abajo responde esas tres pruebas.

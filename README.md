@@ -11,6 +11,7 @@ Solución del equipo para la **DataBridge Hack** (IEEE Computer Society, Colombi
 | Parte | Estado |
 |---|---|
 | Contraste entre ciudades y sismos | Fuentes candidatas revisadas en `docs/FUENTES.md`: 20 entradas de catálogo y 38 referencias, con alcance y pendientes de verificación; integración pendiente |
+| Análisis exploratorio de bronce | 17 notebooks individuales y una síntesis en `analisis_bronce/`; resultados locales guardados en `.ipynb` y HTML |
 | Fuentes externas (GEM TREQ: exposición, suelo, licuación; USGS: ShakeMap, estaciones, réplicas; OSM) | Descargadas y recortadas en `data/externos/`, con una ficha por fuente en `docs/FUENTES.md` |
 | Funciones espaciales | Listas, con autoprueba |
 | Notebooks bronze/silver/gold | Ajustados a los datos oficiales y a los nombres de la guía (`workspace.default.<capa>_icesixuao_<contenido>`) |
@@ -44,6 +45,10 @@ scripts/
   descargar_externos.py   Descarga y recorta GEM (exposición, licuación) y USGS (ShakeMap, estaciones, réplicas)
   simular_pipeline.py     Corre el pipeline en local con edificios ficticios (no pisa el mapa real)
   correr_local.py         Corre el pipeline con los datos oficiales: gold en data/oficiales/salidas/ y mapa en visor/data/
+analisis_bronce/          EDA independiente del pipeline: notebooks por dataset, ejecutor y soporte
+  notebooks/             Notebooks fuente, sin salidas ni registros oficiales
+  ejecutados/            Notebooks con salidas y HTML para visualizar (fuera de git)
+  resultados/            Perfiles JSON, figuras y registro local de ejecución (fuera de git)
 data/
   externos/               Fuentes externas públicas recortadas a Cali: OSM, USGS y GEM (detalle en docs/FUENTES.md)
   oficiales/              Datos del evento (Datosprediales.json): NO se suben (están en .gitignore)
@@ -75,6 +80,20 @@ python scripts/descargar_externos.py    # volver a bajar GEM y USGS (~80 MB)
 ```
 
 **Databricks:** ver `docs/GUIA_DATABRICKS.md` (paso a paso desde cero) y `docs/PLAN_VIERNES.md`.
+
+**Análisis exploratorio de bronce:**
+
+```bash
+/home/nicolas/venv_global/bin/python analisis_bronce/ejecutar.py
+# Un dataset: agregar --solo 04_osm_salud
+# Abrir analisis_bronce/ejecutados/index.html para ver las salidas guardadas.
+```
+
+Usa el kernel Jupyter `venv_global` (puede cambiarse con `--kernel`). Requiere
+GeoPandas, pandas, SciPy, Matplotlib, osmium, nbformat, nbclient y nbconvert.
+El EDA lee `data/oficiales/Datosprediales.json`, cuya huella se conserva en el perfil.
+Si la entrega llega a `data/Datosprediales.json`, se copia a esa ruta privada sin
+transformarla. Ambas rutas están excluidas de Git.
 
 ## Reglas importantes
 

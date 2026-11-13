@@ -9,6 +9,8 @@ import argparse
 import html
 import json
 import sys
+import platform
+from importlib.metadata import version
 from pathlib import Path
 
 import nbformat
@@ -32,6 +34,27 @@ def main() -> None:
             parser.error("No existe ese notebook")
     exporter = HTMLExporter(template_name="lab")
     index = []
+    receipt = output / "ejecucion.json"
+    if args.solo:
+        # Reconstruir desde los archivos, incluso después de una corrida interrumpida.
+        for previous in sorted(output.glob("*.ipynb")):
+            source = folder / "notebooks" / previous.name
+            if not source.exists():
+                continue
+            done = nbformat.read(previous, as_version=4)
+            original = nbformat.read(source, as_version=4)
+            same = [c.source for c in done.cells] == [c.source for c in original.cells]
+            cells = [c for c in done.cells if c.cell_type == "code" and c.source.strip()]
+            errors = [o for c in cells for o in c.outputs if o.output_type == "error"]
+            if same and cells and not errors and all(c.execution_count is not None for c in cells):
+                index.append({"notebook": previous.name, "celdas_ejecutadas": len(cells), "errores": 0})
+    (folder / "resultados").mkdir(exist_ok=True)
+    (folder / "resultados" / "entorno.json").write_text(json.dumps({
+        "python": platform.python_version(), "ejecutable": sys.executable,
+        "paquetes": {name: version(name) for name in [
+            "pandas", "geopandas", "shapely", "pyproj", "numpy", "scipy",
+            "matplotlib", "nbformat", "nbclient", "nbconvert", "osmium"]},
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
     for path in sources:
         print(f"Ejecutando {path.name}...", flush=True)
         nb = nbformat.read(path, as_version=4)
@@ -49,7 +72,9 @@ def main() -> None:
         code = [c for c in nb.cells if c.cell_type == "code" and c.source.strip()]
         errors = [o for c in code for o in c.outputs if o.output_type == "error"]
         assert not errors and all(c.execution_count is not None for c in code)
+        index = [row for row in index if row["notebook"] != path.name]
         index.append({"notebook": path.name, "celdas_ejecutadas": len(code), "errores": len(errors)})
+        receipt.write_text(json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"Guardado: {path.stem}.ipynb y .html; {len(code)} celdas, 0 errores", flush=True)
     # El índice incluye también ejecuciones anteriores cuando se usa --solo.
     links = []
