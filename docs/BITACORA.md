@@ -278,6 +278,11 @@
 **Por qué:** El dashboard es parte de la entrega y debe mostrar lo que se hizo y por qué; los trabajos futuros quedan en `docs/FUENTES.md` y en la bitácora.
 **Archivos:** `scripts/generar_dashboard.py`, `docs/BITACORA.md`; rama `gh-pages`.
 
+### 2026-11-13 16:56 · José David
+**Qué:** Leyenda completa del mapa, por recomendación de la organización. En el pantallazo de la diapositiva 3 (`scripts/leyenda_mapa.py` genera `mapa_leyenda.png`) y en el visor publicado (recuadro fijo abajo a la derecha): edificios por prioridad (6 colores), centro de salud, bomberos y policía, vía principal, concentración de riesgo, relleno de comuna por p90 y rótulo de comuna con su puesto. Antes el mapa solo explicaba los colores de prioridad; el resto estaba en el texto de la diapositiva. Presentación y PDF regenerados; `generar_presentacion.py` usa la imagen con leyenda cuando existe.
+**Por qué:** La organización recomendó que la imagen del mapa incluya la leyenda de cada color, punto, línea y capa.
+**Archivos:** `scripts/leyenda_mapa.py` (nuevo), `scripts/generar_presentacion.py`, `visor/index.html`, `README.md`, `docs/BITACORA.md`; rama `gh-pages`.
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |

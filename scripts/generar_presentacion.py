@@ -16,7 +16,9 @@ from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
 from pptx.util import Inches, Pt
 
 RAIZ = Path(__file__).resolve().parent.parent
-MAPA = Path(sys.argv[1]) if len(sys.argv) > 1 else RAIZ / "data" / "oficiales" / "salidas" / "mapa.png"
+_SALIDAS = RAIZ / "data" / "oficiales" / "salidas"
+MAPA = Path(sys.argv[1]) if len(sys.argv) > 1 else next(
+    (p for p in (_SALIDAS / "mapa_leyenda.png", _SALIDAS / "mapa.png") if p.exists()), _SALIDAS / "mapa.png")  # leyenda: scripts/leyenda_mapa.py
 SALIDA = RAIZ / "data" / "oficiales" / "salidas" / "presentacion_icesixuao.pptx"
 
 FONDO, PANEL, LINEA = "0E1013", "171B21", "2A3039"
