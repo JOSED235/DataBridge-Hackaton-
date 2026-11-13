@@ -1,0 +1,13 @@
+# Datos oficiales del evento: no se pueden redistribuir
+data/oficial/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node / sistema
+node_modules/
+.DS_Store
+Thumbs.db

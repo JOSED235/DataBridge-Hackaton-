@@ -1,0 +1,1 @@
+Edificios ficticios generados por scripts/simular_pipeline.py. Borrar al usar datos reales.
