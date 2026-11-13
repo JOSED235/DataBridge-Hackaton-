@@ -211,6 +211,16 @@
 **Por qué:** El correo pide la captura del Catalog con las tres capas, y la diapositiva 3 debe mostrar el mapa vigente.
 **Archivos:** `capturas/`, `docs/BITACORA.md`; `mapa.png`, `Mapanuevo.png` y `presentacion_icesixuao.pptx` en `data/oficiales/salidas/` (ignorados).
 
+### 2026-11-13 15:49 · José David
+**Qué:** Dashboard AI/BI de Databricks `Réplicas Cali · icesixuao`, publicado en el workspace. Usa solo tablas `gold_icesixuao_*` mediante cuatro vistas de métricas, sin modificar tablas. Tiene un encabezado con las advertencias (priorización relativa, no probabilidad de colapso, "ocupantes modelados"); 4 indicadores (5.146 predios, 179 de prioridad muy alta, 5,8 % con alta probabilidad de escombros, 8,5 % sin dato satelital); barras de comunas por `indice_p90` en orden de ranking (3, 9, 10, 18, 20, 19, 17) con los edificios de prioridad muy alta como etiqueta (49, 19, 28, 3, 5, 75, 0); barras por prioridad (179/357/892/2.141/435/1.142); tabla de sensibilidad (8 escenarios, Spearman 0,764 a 1) y tabla de factores (menor p ajustado por Holm 0,268). Cada widget se contrastó con las cifras esperadas antes de publicar.
+**Por qué:** Responder la pregunta desde la plataforma del evento y no solo desde notebooks; el jurado puede ver los mismos números que el correo y el visor.
+**Archivos:** `README.md`, `docs/BITACORA.md`; dashboard en el workspace de Databricks.
+
+### 2026-11-13 15:55 · José David
+**Qué:** Comentarios aplicados en Databricks y espacio de Genie creado. El repo del workspace quedó en `b75e233` sin cambios locales. `comentar_oro_spark` se ejecutó solo, sin reconstruir oro: 13 tablas y 57 columnas, confirmadas por `information_schema` (57 columnas gold con comentario). Espacio `Réplicas Cali · icesixuao` con las 9 tablas, las instrucciones generales y los 7 SQL de ejemplo de `docs/GENIE.md`. Se probaron las 8 preguntas: 6 coinciden (prioridades, top 10, 5.494 ocupantes modelados sin duplicar, sensibilidad, 430 predios lejos de urgencias por comuna y factores con menor p de Holm 0,268); en comunas el SQL devuelve las 7 pero el texto nombra 5, y en la comuna 19 la explicación es correcta pero incompleta.
+**Por qué:** Genie permite responder preguntas del jurado en vivo, y los comentarios hacen que use las columnas correctas (por ejemplo, la ocupación sin duplicar).
+**Archivos:** `docs/GENIE.md`, `docs/BITACORA.md`; comentarios y espacio de Genie en el workspace de Databricks.
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |
@@ -267,3 +277,4 @@
 | 2026-11-13 15:14 | Reportar las pruebas de asociación como "no se detecta asociación con esta muestra", con p ajustado por Holm y V de Cramér | Un p alto no prueba ausencia de efecto; así lo decidió el contrato de oro | "Ningún factor cambia la tasa de daño" (afirma ausencia de relación); retirar el hallazgo (pierde el argumento de por qué el daño solo no basta) | José David |
 | 2026-11-13 15:25 | Genie con 9 tablas oro; sin `sensibilidad` de detalle ni tablas silver | El detalle por predio y escenario (28.552 filas) y plata duplican conceptos y llevan a Genie a sumar ocupación repetida o filas de escenarios; los resúmenes responden las preguntas del jurado | Todas las tablas gold y silver; solo predios y comunas (pierde sensibilidad, factores y ocupación sin duplicar) | José David |
 | 2026-11-13 15:25 | Comentarios de oro definidos en `00_gold.py` y probados contra el esquema publicado | Un comentario sobre una columna que no existe haría fallar la publicación en Databricks; la prueba lo detecta en local | Comentarios escritos solo en el notebook, sin prueba | José David |
+| 2026-11-13 15:49 | Dashboard nativo AI/BI de Databricks además del HTML autónomo | Con oro ya publicado en Delta desaparece la razón del descarte de las 14:33; muestra el uso de la plataforma ante el jurado. El HTML sigue como respaldo sin conexión | Solo el HTML autónomo; dashboard sobre tablas silver | José David |

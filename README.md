@@ -15,6 +15,7 @@ Solución del equipo para la **DataBridge Hack** (IEEE Computer Society, Colombi
 | Fuentes externas (GEM TREQ: exposición, suelo, licuación; USGS: ShakeMap, estaciones, réplicas; OSM) | Descargadas y recortadas en `data/externos/`, con una ficha por fuente en `docs/FUENTES.md` |
 | Capa plata | 16 tablas por entidad y relaciones, control de calidad y validación local; contrato en `docs/PLATA.md` |
 | Capa oro | 13 tablas desde plata: prioridad explicable, denominadores, exposición GEM, sensibilidad y calidad; contrato en `docs/ORO.md` |
+| Dashboard Databricks (AI/BI) | `Réplicas Cali · icesixuao`, publicado en el workspace sobre las tablas `gold_icesixuao_*`: 4 indicadores, comunas por p90, prioridades, sensibilidad y factores |
 | Funciones espaciales | Listas, con autoprueba |
 | Notebooks bronze/silver/gold | Ajustados a los datos oficiales y a los nombres de la guía (`workspace.default.<capa>_icesixuao_<contenido>`) |
 | Simulación con datos ficticios | Pasa de extremo a extremo |

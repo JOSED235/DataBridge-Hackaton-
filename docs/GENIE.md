@@ -77,8 +77,15 @@ SELECT factor, estado_prueba, round(p_ajustado_holm, 3) AS p_holm, round(v_crame
 FROM workspace.default.gold_icesixuao_factores ORDER BY p_holm;
 ```
 
+## Verificación del espacio (13-nov-2026)
+
+Espacio creado en el workspace con las 9 tablas, las instrucciones y los 7 SQL de ejemplo. Se hicieron las 8 preguntas:
+6 coinciden con la respuesta esperada. En "¿qué comunas inspeccionar primero?" el SQL devuelve las 7 comunas, pero el
+texto de Genie solo nombra las 5 primeras. En "¿por qué la 19 no es la primera?" la respuesta es correcta, pero no
+menciona el volumen de la 19 (2.269 edificios en ranking).
+
 ## Demo ante el jurado
 
 Hacer dos preguntas en vivo: "¿qué comunas inspeccionar primero?" y "¿cuántos ocupantes modelados hay en edificios
-con daño visible?". La segunda muestra que el espacio sabe distinguir ocupación modelada de población. Tener abierta
-esta tabla para comparar.
+con daño visible?". La segunda muestra que el espacio sabe distinguir ocupación modelada de población. En la primera,
+mostrar la tabla de resultado (trae las 7 comunas) y no solo el texto. Tener abierta esta tabla para comparar.
