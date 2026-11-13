@@ -44,6 +44,21 @@
 **Por qué:** El equipo casi no tiene experiencia con Databricks y el viernes no hay tiempo para aprender la plataforma sobre la marcha.
 **Archivos:** `docs/GUIA_DATABRICKS.md`, `docs/PLAN_VIERNES.md`, `README.md`
 
+### 2026-11-13 09:36 · Mrsasayo
+**Qué:** Informe de investigación previa (44 páginas): parámetros oficiales del sismo, comparación con el doblete de Venezuela de junio de 2026, catálogo de fuentes oficiales, efecto del suelo y de la profundidad, banco de 19 terremotos comparables, física de ondas, historia del código sismorresistente, corrupción constructiva y propuesta de flujo bronze/silver/gold.
+**Por qué:** Sustentar el "por qué pasó" y los factores que reducen el impacto de las réplicas con evidencia citada.
+**Archivos:** `docs/Informe_Sismo_10Agosto2026_DatosOficiales_Cali.pdf` (luego convertido a `docs/INFORME_SISMO.md`)
+
+### 2026-11-13 09:45 · José David
+**Qué:** Conversión del informe a Markdown (texto y 8 tablas completas; las 6 figuras quedan como leyenda) y retiro del PDF del repo, recuperable desde el commit `5cbd157`.
+**Por qué:** El Markdown se lee y se busca más rápido durante el evento, se ve en GitHub y sus cambios se pueden revisar línea por línea.
+**Archivos:** `docs/INFORME_SISMO.md`, `docs/Informe_Sismo_10Agosto2026_DatosOficiales_Cali.pdf` (eliminado), `README.md`
+
+### 2026-11-13 09:50 · José David
+**Qué:** Factor de suelo en el pipeline y en el índice. Se descargó de GEM TREQ la grilla de microzonas de Cali y las funciones de amplificación. Cada edificio toma la microzona del punto más cercano de la grilla y la amplificación de esa microzona en su período propio (T ≈ pisos/10 s). Nuevo componente `c_suelo` (15 %), escenario de sensibilidad `sin_suelo`, columnas de suelo en `gold_comunas` y el visor, y dos SQL en `03_gold`: daño por microzona dentro de cada rango de pisos (prueba del efecto de sitio) y edificios de 15 a 25 pisos sobre suelo que amplifica su período (resonancia). Simulación de extremo a extremo aprobada.
+**Por qué:** El informe muestra que el suelo blando de Cali amplifica hasta unas 2 veces los períodos largos y que es el factor que explica el daño a 160 km del epicentro. El índice no lo tenía porque la capa oficial está caída.
+**Archivos:** `notebooks/00_pipeline.py`, `notebooks/01_bronze.py`, `notebooks/02_silver.py`, `notebooks/03_gold.py`, `scripts/simular_pipeline.py`, `data/externos/gem_microzonas_grilla.csv`, `data/externos/gem_amplificacion_suelo.csv`, `docs/INDICE_RIESGO.md`, `docs/FUENTES.md`, `docs/GUION_PRESENTACION.md`, `docs/GUIA_DATABRICKS.md`, `docs/PLAN_VIERNES.md`, `README.md`
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |
@@ -57,3 +72,6 @@
 | 2026-11-13 00:10 | Ranking de comunas por percentil 90 del índice | El promedio esconde grupos críticos dentro de comunas mayormente sanas | Promedio, conteo absoluto | José David |
 | 2026-11-13 00:10 | Población aproximada por densidad de edificios a 100 m | Sin datos de población por manzana disponibles a tiempo | Población DANE por manzana (por verificar) | José David |
 | 2026-11-13 00:25 | Visor propio con MapLibre + deck.gl, Kepler.gl como plan B | Diferenciación y narrativa guiada; el plan B evita que la demo dependa del visor | Solo Kepler.gl, QGIS | José David |
+| 2026-11-13 09:50 | Suelo desde la grilla de GEM TREQ (punto más cercano, ~750 m) | Es la microzonificación oficial de 2005 en formato abierto; la capa vectorial de la IDESC sigue caída | Vs30 global del USGS (más grueso y sin microzonas), mapa PDF de la Alcaldía (habría que digitalizarlo), dejar el suelo fuera | José David |
+| 2026-11-13 09:50 | Amplificación en el período propio del edificio (T ≈ pisos/10 s), leída para 0,23 g en roca | Captura la resonancia: el mismo suelo castiga distinto a una casa y a un edificio de 20 pisos. 0,23 g es un nivel fuerte pero no extremo del modelo | Un solo factor por microzona (ignora la resonancia), Vs30 de la grilla (vale 800 dentro de las microzonas porque allí manda la función de amplificación), PGA (en suelo blando desamplifica) | José David |
+| 2026-11-13 09:50 | Pesos: daño 30 %, suelo 15 %, altura 15 %, exposición 15 %, salud 10 %, vías 15 % (confirmar al mediodía) | El daño sigue mandando; el suelo entra al nivel de los demás factores de contexto; la salud baja porque OSM la mide de forma optimista | Mantener el borrador sin suelo (queda como escenario `sin_suelo`), suelo al 20 % | José David |

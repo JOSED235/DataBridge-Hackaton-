@@ -34,14 +34,18 @@ METROS_POR_PISO = 3.0         # altura típica de entrepiso en vivienda colombia
 
 # Pesos del índice de riesgo ante réplicas (se re-escalan a suma 1). Justificación en docs/INDICE_RIESGO.md
 PESOS = {
-    "c_danio": 0.35,        # daño observado (prob. de escombros + estado estructural)
-    "c_altura": 0.20,       # más pisos = más masa que puede caer y más ocupantes
+    "c_danio": 0.30,        # daño observado (prob. de escombros + estado estructural)
+    "c_suelo": 0.15,        # amplificación del suelo en el período propio del edificio (GEM TREQ)
+    "c_altura": 0.15,       # más pisos = más masa que puede caer y más ocupantes
     "c_exposicion": 0.15,   # densidad de edificios alrededor (proxy de población expuesta)
-    "c_acceso_salud": 0.15, # lejanía al centro de salud más cercano
+    "c_acceso_salud": 0.10, # lejanía al centro de salud más cercano (OSM, la medida menos confiable)
     "c_bloqueo_via": 0.15,  # sus escombros podrían bloquear una vía principal
 }
+# Borrador anterior, sin suelo: queda como escenario para mostrar cuánto cambia el ranking al agregarlo.
+PESOS_SIN_SUELO = {"c_danio": 0.35, "c_altura": 0.20, "c_exposicion": 0.15, "c_acceso_salud": 0.15, "c_bloqueo_via": 0.15}
 ESCENARIOS_SENSIBILIDAD = {
     "base": PESOS,
+    "sin_suelo": PESOS_SIN_SUELO,
     "pesos_iguales": {k: 1 for k in PESOS},
     "solo_danio_altura": {"c_danio": 0.6, "c_altura": 0.4},
     "enfasis_servicios": {**PESOS, "c_acceso_salud": 0.3, "c_bloqueo_via": 0.3},
@@ -130,9 +134,37 @@ def enriquecer(gdf, comunas, barrios, salud, bomberos, vias):
     return gdf
 
 
+# Suelo: microzonificación INGEOMINAS-DAGMA (2005) con las funciones de amplificación de GEM TREQ.
+NIVEL_AF = 0.2267   # aceleración en roca (g) con la que se lee la función de amplificación (fila del CSV de GEM)
+PERIODOS_AF = np.array([0.1, 0.2, 0.3, 0.6, 1.0, 2.0])  # períodos (s) que trae el CSV de GEM
+
+
+def leer_suelo(carpeta):
+    """(grilla de microzonas como GeoDataFrame, funciones de amplificación) desde los CSV de GEM en `carpeta`."""
+    grilla = pd.read_csv(f"{carpeta}/gem_microzonas_grilla.csv", dtype={"ampcode": str})
+    amplif = pd.read_csv(f"{carpeta}/gem_amplificacion_suelo.csv", comment="#", dtype={"ampcode": str})
+    return a_gdf(grilla), amplif
+
+
+def asignar_suelo(gdf, grilla, amplif):
+    """Agrega `microzona` (punto más cercano de la grilla GEM, ~750 m), `periodo_s` (período propio del
+    edificio, T ≈ pisos/10 s) y `amplif_suelo`: cuánto amplifica su microzona justo en ese período.
+    Fuera de la microzonificación ('noaf') el factor es 1, como en el modelo de GEM."""
+    j = gpd.sjoin_nearest(gdf[["geometry"]].to_crs(CRS_METROS), grilla[["ampcode", "geometry"]].to_crs(CRS_METROS), how="left")
+    out = gdf.copy()
+    out["microzona"] = j.groupby(level=0)["ampcode"].first().reindex(gdf.index).astype(str)
+    t = (out["pisos"] / 10).to_numpy()[:, None]
+    out["periodo_s"] = PERIODOS_AF[np.abs(t - PERIODOS_AF).argmin(axis=1)]
+    fila = amplif[np.isclose(amplif["level"], NIVEL_AF)]
+    af = {(str(r["ampcode"]), p): r[f"SA({p})"] for _, r in fila.iterrows() for p in PERIODOS_AF}
+    out["amplif_suelo"] = [round(af.get((z, p), 1.0), 3) for z, p in zip(out["microzona"], out["periodo_s"])]
+    return out
+
+
 def calcular_indice(gdf, pesos=PESOS):
     g = gdf.copy()
     g["c_danio"] = g[["prob_escombros", "sev_estado"]].mean(axis=1, skipna=True)  # NaN si no hay ninguno
+    g["c_suelo"] = normalizar(g["amplif_suelo"]) if "amplif_suelo" in g else np.nan  # sin capa de suelo: su peso se reparte
     g["c_altura"] = normalizar(g["pisos"])
     g["c_exposicion"] = normalizar(g["n_edif_100m"])
     g["c_acceso_salud"] = normalizar(g["dist_salud_m"])
@@ -156,6 +188,8 @@ def gold_comunas(g, comunas, salud, bomberos):
         n_prioridad_muy_alta=("prioridad", lambda s: int((s == "Muy alta").sum())),
         n_puede_bloquear_via=("puede_bloquear_via", "sum"),
         dist_salud_prom_m=("dist_salud_m", lambda s: round(s.mean(), 0)),
+        amplif_suelo_prom=("amplif_suelo", lambda s: round(s.mean(), 3)),
+        microzona_predominante=("microzona", lambda s: s.mode().iat[0]),
     ).reset_index()
     poli = comunas.assign(comuna=comunas["name"].str.extract(r"(\d+)")[0].astype(int))[["comuna", "geometry"]]
     for nombre, capa in (("n_salud", salud), ("n_bomberos", bomberos)):
@@ -179,7 +213,8 @@ def para_spark(gdf):
 
 
 COLS_VISOR = ["id", "comuna", "barrio", "estado", "pisos", "prob_escombros", "alta_escombros", "sin_dato_satelital",
-              "dist_salud_m", "dist_via_principal_m", "puede_bloquear_via", "indice_riesgo", "prioridad"]
+              "dist_salud_m", "dist_via_principal_m", "puede_bloquear_via", "microzona", "amplif_suelo",
+              "indice_riesgo", "prioridad"]
 
 
 def exportar_visor(g, gc, carpeta):

@@ -25,6 +25,13 @@ Licencia OSM: ODbL, citar "© colaboradores de OpenStreetMap".
 | Infobae | [Nota](https://www.infobae.com/colombia/2026/08/12/nuevo-temblor-en-choco-se-sintio-con-fuerza-en-cali-y-genero-nuevas-afectaciones-en-la-infraestructura/) | Réplica del 12-ago con nuevas afectaciones en Cali | Útil para el argumento "las réplicas siguen causando daño" |
 | NTN24 | [Nota](https://www.ntn24.com/noticias-actualidad/nuevo-sismo-sacudio-la-region-de-choco-en-colombia-reportan-que-se-sintio-tambien-en-cali-651737) | Secuencia de más de 130 réplicas | El USGS registra menos porque su umbral es M ≥ 2,5 |
 
+### Suelo (agregado el 13-nov-2026)
+
+| Fuente | Enlace | Dato | Nota |
+|---|---|---|---|
+| GEM, proyecto TREQ (riesgo urbano de Cali) | [github.com/gem/treq-riesgo-urbano](https://github.com/gem/treq-riesgo-urbano/tree/master/Cali/Condiciones_Sitio) | Grilla de 792 puntos con la microzona sísmica (INGEOMINAS-DAGMA 2005) y funciones de amplificación del suelo por microzona, período y nivel de sacudida | Licencia CC BY-SA 4.0 (citar a GEM). Originales `site_model_uniform_grid_ampcodes.csv` y `soil_amplification_model_20210825_sigaf03.csv`, guardados como `data/externos/gem_microzonas_grilla.csv` y `gem_amplificacion_suelo.csv`. Verificado el 13-nov-2026. Dentro de las microzonas la columna `vs30` vale 800 (roca de referencia), por eso se usa el factor de amplificación y no el Vs30. |
+| Informe de investigación previa del equipo | `docs/INFORME_SISMO.md` | Parámetros oficiales, comparación con Venezuela, banco de 19 casos, suelo, ondas, código y corrupción constructiva | Cada cifra cita fuente y fecha de corte; verificarla contra su fuente antes de ponerla en una diapositiva. **Discrepancia:** el informe da SGC ≈ 103 km de profundidad; arriba se anotó 96 km del boletín del SGC. Seguimos con USGS 116 km. |
+
 **TODO-VIERNES:** si hay tiempo, buscar el balance oficial más reciente de UNGRD y SGC para la diapositiva de contexto.
 
 ## No disponibles (y por qué)
@@ -32,8 +39,8 @@ Licencia OSM: ODbL, citar "© colaboradores de OpenStreetMap".
 | Fuente | Enlace | Problema | Alternativa |
 |---|---|---|---|
 | Datos abiertos Cali | [datos.cali.gov.co](https://datos.cali.gov.co/) | Fuera de línea desde el 21-oct-2026 por "medidas de seguridad" (comunicado de la Alcaldía) | Comunas y barrios desde OSM |
-| IDESC (geovisor y WFS) | [idesc.cali.gov.co](https://idesc.cali.gov.co/) | Redirige al portal de la Alcaldía; el WFS responde 404 | Sin alternativa para la microzonificación |
-| Microzonificación sísmica de Cali | [Alcaldía](https://www.cali.gov.co/dagma/publicaciones/1099/microzonificacion-sismica-cali/) | Solo como mapa (PDF); la capa vectorial vivía en la IDESC | Mencionar como limitación; si reabre el portal, agregar como `c_suelo` |
+| IDESC (geovisor y WFS) | [idesc.cali.gov.co](https://idesc.cali.gov.co/) | Redirige al portal de la Alcaldía; el WFS responde 404 | Microzonificación desde GEM TREQ (ver Suelo) |
+| Microzonificación sísmica de Cali (capa vectorial) | [Alcaldía](https://www.cali.gov.co/dagma/publicaciones/1099/microzonificacion-sismica-cali/) | Solo como mapa (PDF); la capa vectorial vivía en la IDESC | Grilla de GEM TREQ con la microzona por punto (~750 m), usada como `c_suelo` |
 | Población por manzana (DANE CNPV 2018) | geoportal del DANE | Por verificar | Densidad de edificios como proxy |
 
 Este hallazgo sirve en la presentación: la ciudad perdió su infraestructura de datos abiertos justo cuando más se necesita, y el pipeline se armó con fuentes abiertas alternativas.

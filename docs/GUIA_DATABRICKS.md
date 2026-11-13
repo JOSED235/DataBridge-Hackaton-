@@ -77,7 +77,7 @@ El repo es **privado**, así que hay dos caminos. El A es mejor porque luego se 
    - los volúmenes `externos` (entradas) y `salidas` (GeoJSON para el visor).
 2. Menú **Catalog** → `workspace` → `databridge` → **Volumes** → `externos` → botón **Upload to this volume**.
    Si no lo ven, refrescar el Catalog (ícono de flecha circular).
-3. Arrastrar los 7 archivos de `data/externos/` del repo (descargados de GitHub o del portátil): `osm_comunas`, `osm_barrios`, `osm_salud`, `osm_emergencia`, `osm_educacion`, `osm_vias_principales`, `usgs_sismos_2026-08` (todos `.geojson`).
+3. Arrastrar los 9 archivos de `data/externos/` del repo (descargados de GitHub o del portátil): `osm_comunas`, `osm_barrios`, `osm_salud`, `osm_emergencia`, `osm_educacion`, `osm_vias_principales`, `usgs_sismos_2026-08` (`.geojson`) y `gem_microzonas_grilla`, `gem_amplificacion_suelo` (`.csv`).
 
 ## 5. Viernes: cargar los edificios (bronze)
 

@@ -4,13 +4,13 @@ Solución del equipo para la **DataBridge Hack** (IEEE Computer Society, Colombi
 
 > **Pregunta:** ¿Qué afectaciones generó el sismo del 10 de agosto en Cali y qué factores contribuyen a reducir el impacto de las réplicas sobre la población, la infraestructura y los servicios urbanos?
 
-**Enfoque:** pipeline bronze/silver/gold en Databricks, cruces espaciales con OpenStreetMap y USGS, un índice de riesgo ante réplicas explicable y con prueba de sensibilidad, y un visor web propio con recorrido guiado.
+**Enfoque:** pipeline bronze/silver/gold en Databricks, cruces espaciales con OpenStreetMap, USGS y la microzonificación sísmica (GEM TREQ), un índice de riesgo ante réplicas explicable y con prueba de sensibilidad, y un visor web propio con recorrido guiado.
 
 ## Estado
 
 | Parte | Estado |
 |---|---|
-| Fuentes externas (USGS, OSM) | Descargadas en `data/externos/` |
+| Fuentes externas (USGS, OSM, suelo de GEM TREQ) | Descargadas en `data/externos/` |
 | Funciones espaciales | Listas, con autoprueba |
 | Notebooks bronze/silver/gold | Listos; falta ajustar columnas reales (`TODO-VIERNES`) |
 | Simulación con datos ficticios | Pasa de extremo a extremo |
@@ -29,6 +29,7 @@ docs/
   INDICE_RIESGO.md                  Componentes, pesos y justificación del índice
   FUENTES.md                        Fuentes verificadas, discrepancias y no disponibles
   GUION_PRESENTACION.md             Guion de 5 a 7 min y respuestas al jurado
+  INFORME_SISMO.md                  Informe de investigación previa (suelo, profundidad, Venezuela, casos)
 notebooks/                Para importar en Databricks (Workspace → Import)
   00_utils_espacial.py    Funciones espaciales + autoprueba
   00_pipeline.py          Lógica silver/gold y configuración (COLS, pesos)
@@ -39,7 +40,7 @@ scripts/
   descargar_osm.py        Descarga las capas de OSM a data/externos/
   simular_pipeline.py     Corre el pipeline en local con edificios ficticios y llena visor/data/
 data/
-  externos/               Capas públicas (OSM, USGS) en GeoJSON
+  externos/               Capas públicas: OSM y USGS (GeoJSON), microzonas y amplificación del suelo de GEM (CSV)
   oficial/                Datos del evento: NO se suben (están en .gitignore)
 visor/                    MapLibre GL JS + deck.gl, sin build
   data/                   GeoJSON que lee el visor (hoy: muestra ficticia)

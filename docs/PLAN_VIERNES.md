@@ -14,15 +14,26 @@ La pregunta tiene dos mitades y tres dimensiones. Cada celda tiene un entregable
 
 | | (a) Afectaciones: qué pasó | (b) Factores que reducen el impacto de réplicas |
 |---|---|---|
-| **Infraestructura** | Edificios con alta prob. de escombros y su estado, por comuna (`gold_comunas`, mapa de calor) | Altura y densidad como factores: tasa de alta prob. de escombros por rango de pisos (SQL en `03_gold`). Si los datos traen material, año o uso, se agregan a ese análisis |
+| **Infraestructura** | Edificios con alta prob. de escombros y su estado, por comuna (`gold_comunas`, mapa de calor) | Suelo, altura y densidad como factores: daño por microzona dentro de cada rango de pisos y edificios de 15 a 25 pisos sobre suelo que amplifica su período (SQL en `03_gold`). Si los datos traen material, año o uso, se agregan a ese análisis |
 | **Población** | Edificios dañados en zonas densas (`n_edif_100m`), % sin dato satelital por comuna | Inspeccionar primero los de prioridad muy alta en zonas densas; verificar en terreno los edificios sin dato |
 | **Servicios urbanos** | Edificios que podrían bloquear vías principales; carga sobre salud (edificios dañados por centro de salud) | Despejar y vigilar esas vías; reforzar salud y albergues (colegios de OSM) donde hay más daño y menos cobertura |
 
 La mitad (b) es donde la mayoría de equipos se va a quedar corta. Ahí está nuestra ventaja: el índice, el bloqueo de vías y la carga sobre salud son "factores que reducen el impacto" medibles, no solo opiniones.
 
+### Qué cambió con el informe de investigación (13-nov, `docs/INFORME_SISMO.md`)
+
+La estrategia se mantiene: el informe llega a la misma propuesta (bronze/silver/gold, índice por comuna, priorizar inspección). Cambian cuatro cosas:
+
+1. **El suelo entra al índice como `c_suelo` (15 %).** La capa oficial sigue caída, pero GEM TREQ publica la microzonificación de 2005 como grilla con funciones de amplificación. Cada edificio toma la amplificación de su microzona en su propio período (T ≈ pisos/10 s), así que el índice captura la resonancia. Los nuevos pesos son daño 30 %, suelo 15 %, altura 15 %, exposición 15 %, salud 10 % y vías 15 %; se confirman al mediodía.
+2. **Hay una hipótesis que probar con datos:** si el daño sube con la amplificación del suelo **dentro del mismo rango de pisos**, el efecto de sitio queda demostrado dentro de Cali. Es el hallazgo más fuerte posible para la mitad (b), y el SQL ya está en `03_gold`. Si no se cumple, se dice así: el peso recae en la tipología constructiva.
+3. **La narrativa del "por qué pasó" se apoya en el contraste con Venezuela 2026:** con magnitud casi igual, Venezuela tuvo un sismo 11,6 veces más somero y 36,7 veces más mortalidad por habitante. Bucharest 1977 es el paralelo de Cali: un sismo intermedio y lejano que hizo daño por resonancia sobre sedimentos. Basta con una diapositiva; no hay que convertir la charla en una clase de sismología.
+4. **Las recomendaciones ganan sustento:** los edificios dañados son la principal víctima de las réplicas (el doblete de 39 s), hay que proteger primero hospitales (el HUV tuvo colapso parcial) y el siguiente paso de política es reforzar lo existente, no hacer otra norma (Japón y Chile).
+
+Lo que **no** cambia: no se buscan más fuentes hoy. Corrupción constructiva, año frente al código e Índice de Percepción de la Corrupción solo entran si los datos oficiales traen año o tipología.
+
 ### Qué nos diferencia
 
-1. **Índice propio, explicable en 30 s y con prueba de sensibilidad** (`docs/INDICE_RIESGO.md`).
+1. **Índice propio, explicable en 30 s y con prueba de sensibilidad** (`docs/INDICE_RIESGO.md`), que incluye la amplificación del suelo en el período de cada edificio.
 2. **Servicios urbanos medidos de verdad:** bloqueo de vías y acceso a salud con OSM.
 3. **Honestidad visible:** aviso de datos satelitales, edificios sin dato tratados aparte, discrepancias de fuentes documentadas.
 4. **Visor propio con recorrido guiado**, no un mapa suelto.
@@ -87,7 +98,7 @@ Ambos: revisar juntos el índice al mediodía y ensayar al final. Cada uno anota
 
 1. En Databricks: **Workspace → Import** y subir los 5 archivos de `notebooks/` (se importan como notebooks).
 2. Correr la primera celda de `01_bronze` (crea esquema `workspace.databridge` y los volúmenes).
-3. **Catalog → workspace → databridge → externos → Upload to this volume:** subir los 7 `.geojson` de `data/externos/`.
+3. **Catalog → workspace → databridge → externos → Upload to this volume:** subir los 9 archivos de `data/externos/` (7 `.geojson` y 2 `.csv` de suelo).
 4. Cargar los edificios según el paso a paso oficial. Poner la tabla o archivo en `TABLA_ORIGEN` o `ARCHIVO_ORIGEN` de `01_bronze` y correrlo completo.
 5. Con la "Primera revisión" de `01_bronze`, anotar en la bitácora: columnas reales, % de nulos, valores de `Estado_Estructural`, si hay coordenadas o polígonos y en qué CRS.
 6. Guardar una copia local de los datos en `data/oficial/` (está en `.gitignore`: **nunca se sube**).
@@ -101,7 +112,7 @@ Ambos: revisar juntos el índice al mediodía y ensayar al final. Cada uno anota
 
 ### Mediodía: decidir
 
-- Mirar los 3 SQL de `03_gold` y la distribución del índice.
+- Mirar los 5 SQL de `03_gold` (sobre todo el de daño por microzona dentro de cada rango de pisos) y la distribución del índice.
 - Decidir pesos finales (o confirmar los del borrador) y anotarlos con su razón en la tabla de decisiones.
 - Elegir los 3 hallazgos principales para el guion.
 

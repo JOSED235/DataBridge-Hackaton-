@@ -3,11 +3,11 @@
 # MAGIC # 01 · Bronze: datos crudos tal como llegan
 # MAGIC
 # MAGIC - **Edificios** (datos oficiales del evento, satelitales, no redistribuibles).
-# MAGIC - **Capas externas** (`data/externos/` del repo): comunas, barrios, salud, bomberos/policía, vías (OpenStreetMap) y sismos (USGS).
+# MAGIC - **Capas externas** (`data/externos/` del repo): comunas, barrios, salud, bomberos/policía, vías (OpenStreetMap), sismos (USGS) y microzonas sísmicas con amplificación del suelo (GEM TREQ).
 # MAGIC
 # MAGIC Bronze no corrige nada: guarda una copia fiel para poder rehacer silver/gold si algo sale mal.
 # MAGIC
-# MAGIC **Antes de correr:** subir los `.geojson` de `data/externos/` al volumen `/Volumes/workspace/databridge/externos/` (Catalog → workspace → databridge → externos → *Upload to this volume*).
+# MAGIC **Antes de correr:** subir los `.geojson` y `.csv` de `data/externos/` al volumen `/Volumes/workspace/databridge/externos/` (Catalog → workspace → databridge → externos → *Upload to this volume*).
 
 # COMMAND ----------
 

@@ -2,8 +2,8 @@
 # MAGIC %md
 # MAGIC # 03 · Gold: índice de riesgo ante réplicas, ranking por comuna y exportación al visor
 # MAGIC
-# MAGIC Índice = suma ponderada de 5 componentes normalizados a 0..1 (justificación en `docs/INDICE_RIESGO.md`):
-# MAGIC daño observado 35 %, altura 20 %, exposición 15 %, lejanía a salud 15 %, posible bloqueo de vía 15 %.
+# MAGIC Índice = suma ponderada de 6 componentes normalizados a 0..1 (justificación en `docs/INDICE_RIESGO.md`):
+# MAGIC daño observado 30 %, amplificación del suelo 15 %, altura 15 %, exposición 15 %, lejanía a salud 10 %, posible bloqueo de vía 15 %.
 # MAGIC
 # MAGIC Salidas: `gold_edificios`, `gold_comunas`, `gold_sensibilidad` y los GeoJSON para el visor en `/Volumes/workspace/databridge/salidas/`.
 
@@ -88,6 +88,27 @@ display(gc.drop(columns="geometry"))
 # MAGIC        count(*) AS n, round(avg(prob_escombros), 3) AS prob_media, round(100 * avg(cast(alta_escombros AS int)), 1) AS pct_alta
 # MAGIC FROM workspace.databridge.gold_edificios WHERE NOT sin_dato_satelital
 # MAGIC GROUP BY 1 ORDER BY min(pisos);
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC -- Hipótesis del efecto de sitio (informe, cap. 6.2): ¿hay más daño en las microzonas que más amplifican,
+# MAGIC -- comparando edificios de la misma altura? Si el patrón se sostiene dentro de cada rango de pisos, no es solo densidad o altura.
+# MAGIC SELECT microzona,
+# MAGIC        CASE WHEN pisos <= 3 THEN '1-3' WHEN pisos <= 9 THEN '4-9' ELSE '10+' END AS rango_pisos,
+# MAGIC        count(*) AS n, round(avg(amplif_suelo), 2) AS amplif_media,
+# MAGIC        round(avg(prob_escombros), 3) AS prob_media, round(100 * avg(cast(alta_escombros AS int)), 1) AS pct_alta
+# MAGIC FROM workspace.databridge.gold_edificios WHERE NOT sin_dato_satelital
+# MAGIC GROUP BY 1, 2 HAVING count(*) >= 30 ORDER BY 2, amplif_media DESC;
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC -- Resonancia (informe, cap. 8): edificios de 15 a 25 pisos (T ≈ 1,5-2,5 s) donde el suelo amplifica ese período 1,7 veces o más.
+# MAGIC SELECT comuna, microzona, count(*) AS edificios_en_banda, round(avg(prob_escombros), 3) AS prob_media
+# MAGIC FROM workspace.databridge.gold_edificios
+# MAGIC WHERE pisos BETWEEN 15 AND 25 AND amplif_suelo >= 1.7
+# MAGIC GROUP BY 1, 2 ORDER BY edificios_en_banda DESC;
 
 # COMMAND ----------
 

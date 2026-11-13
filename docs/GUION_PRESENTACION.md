@@ -37,7 +37,7 @@
 
 ## 5 · Limitaciones (30 s)
 
-Datos satelitales, sin microzonificación (portal caído), población aproximada, cifras oficiales preliminares y discordantes.
+Datos satelitales, microzonificación con resolución de ~750 m (la capa oficial está caída; usamos la grilla de GEM), población aproximada, cifras oficiales preliminares y discordantes.
 
 ## 6 · Cierre (15 s)
 
@@ -56,5 +56,5 @@ Datos satelitales, sin microzonificación (portal caído), población aproximada
 | ¿Por qué OSM y no datos oficiales? | El portal de datos abiertos de Cali y la IDESC están fuera de línea desde el 21-oct-2026. OSM es abierto, verificable y cubre las 22 comunas. |
 | ¿Por qué el percentil 90 por comuna y no el promedio? | El promedio esconde grupos críticos dentro de comunas con muchos edificios sanos. |
 | ¿Por qué pisos × 3 m para el bloqueo de vías? | Regla práctica: los escombros caen hasta una distancia del orden de la altura. Es conservadora y explicable; un modelo de caída sería el siguiente paso. |
-| ¿Qué falta para usarlo de verdad? | Microzonificación sísmica (tipo de suelo), población por manzana del DANE y validación en terreno de una muestra. |
+| ¿Qué falta para usarlo de verdad? | La capa vectorial oficial de microzonificación (hoy usamos una grilla de ~750 m), población por manzana del DANE, año de construcción frente al código (1984, 1998, 2010) y validación en terreno de una muestra. |
 | ¿Por qué Databricks bronze/silver/gold? | Bronze guarda lo crudo para poder rehacer todo; silver limpia y cruza; gold queda listo para decidir y para el visor. Cada paso está documentado en la tabla y en la bitácora. |

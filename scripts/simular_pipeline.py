@@ -45,6 +45,7 @@ raw.loc[rng.choice(n, 20, replace=False), "NPISOS"] = 0  # errores de captura
 silver, reporte = limpiar(raw)
 print("Reporte de limpieza:", reporte)
 g = enriquecer(a_geo(silver), capas["comunas"], capas["barrios"], capas["salud"], bomberos, capas["vias_principales"])
+g = asignar_suelo(g, *leer_suelo(EXT))
 g = calcular_indice(g)
 gc = gold_comunas(g, capas["comunas"], capas["salud"], bomberos)
 
@@ -52,6 +53,7 @@ assert g["comuna"].notna().mean() > 0.99, "la unión espacial no completó las c
 assert g["indice_riesgo"].between(0, 1).all()
 assert (g.loc[g["sin_dato_satelital"], "prioridad"] == "Sin dato: verificar en terreno").all()
 assert len(gc) == 22
+assert g["amplif_suelo"].between(0.3, 4).all() and (g["microzona"] != "noaf").mean() > 0.8, "cruce con microzonas falló"
 try:  # misma conversión Arrow que hace spark.createDataFrame
     import pyarrow as pa
     pa.Table.from_pandas(para_spark(g)); pa.Table.from_pandas(para_spark(gc))
