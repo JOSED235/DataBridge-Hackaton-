@@ -283,6 +283,11 @@
 **Por qué:** La organización recomendó que la imagen del mapa incluya la leyenda de cada color, punto, línea y capa.
 **Archivos:** `scripts/leyenda_mapa.py` (nuevo), `scripts/generar_presentacion.py`, `visor/index.html`, `README.md`, `docs/BITACORA.md`; rama `gh-pages`.
 
+### 2026-11-13 17:00 · José David
+**Qué:** Correo de entrega enviado (Word y presentación de 3 diapositivas); checklist de `ENTREGA.md` marcado. Guía de sustentación en `docs/SUSTENTACION.md` para preparar a los dos integrantes: logística y pestañas, reparto propuesto entre Nicolas Zapata y José David Rodríguez Pinilla, guion por diapositiva con tiempos, pasos exactos de la demo del mapa (recorrido guiado, comuna 3, ficha, descarga en Excel), cifras de memoria, frases a evitar, 12 preguntas adicionales con respuesta, plan B sin internet y lista de verificación para esta noche, mañana y el retiro del sitio publicado.
+**Por qué:** La sustentación del sábado es lo que evalúa el jurado en vivo; los dos deben dar las mismas cifras y responder sin contradecir lo enviado.
+**Archivos:** `docs/SUSTENTACION.md` (nuevo), `docs/ENTREGA.md`, `README.md`, `docs/BITACORA.md`.
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |

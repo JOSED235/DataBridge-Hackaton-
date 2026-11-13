@@ -1,5 +1,7 @@
 # Entrega: correo del viernes 13 antes de las 5:00 p. m.
 
+> Enviado el 13-nov-2026 con el Word (`scripts/generar_documento.py`) y la presentación de 3 diapositivas.
+
 **Para:** marcelasabogue@ieee.org
 **Asunto:** `databridgehack: icesixuao`
 
@@ -7,12 +9,12 @@ Cifras: capa oro publicada en Databricks el 13-nov-2026 (commit `41c9e0b`, 43 co
 
 Checklist del correo:
 
-- [ ] 1. Captura del Catalog (`workspace.default`) con `bronze_icesixuao_*`, `silver_icesixuao_*` y `gold_icesixuao_*`: lista en `capturas/primeracatalog.png`, `segundacatalog.png` y `terceracatalog.png` (45 tablas)
-- [ ] 2. Texto de decisiones (≤ 200 palabras)
-- [ ] 3. Respuesta a las dos preguntas (≤ 500 palabras)
-- [ ] 4. Lista de fuentes
-- [ ] 5. Presentación de 3 diapositivas (PowerPoint o PDF), la última con el pantallazo del mapa
-- [ ] 6. Enlace al mapa interactivo: https://josed235.github.io/DataBridge-Hackaton-/ y al dashboard de resultados: https://josed235.github.io/DataBridge-Hackaton-/dashboard.html (publicados con autorización de la organización hasta el cierre del evento)
+- [x] 1. Captura del Catalog (`workspace.default`) con `bronze_icesixuao_*`, `silver_icesixuao_*` y `gold_icesixuao_*`: lista en `capturas/primeracatalog.png`, `segundacatalog.png` y `terceracatalog.png` (45 tablas)
+- [x] 2. Texto de decisiones (≤ 200 palabras)
+- [x] 3. Respuesta a las dos preguntas (≤ 500 palabras)
+- [x] 4. Lista de fuentes
+- [x] 5. Presentación de 3 diapositivas (PowerPoint o PDF), la última con el pantallazo del mapa
+- [x] 6. Enlace al mapa interactivo: https://josed235.github.io/DataBridge-Hackaton-/ y al dashboard de resultados: https://josed235.github.io/DataBridge-Hackaton-/dashboard.html (publicados con autorización de la organización hasta el cierre del evento)
 
 ---
 
