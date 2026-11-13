@@ -175,7 +175,7 @@
 **Archivos:** `notebooks/00_gold.py`, `notebooks/03_gold.py`, `notebooks/00_pipeline.py`, `notebooks/00_utils_espacial.py`, `scripts/correr_oro.py`, `scripts/correr_local.py`, `tests/test_gold.py`, `analisis_gold/`, `visor/app.js`, `visor/index.html`, `.gitignore`, `README.md`, `docs/ORO.md`, `docs/GUIA_DATABRICKS.md`, `docs/INDICE_RIESGO.md`, `docs/BITACORA.md`.
 
 ### 2026-11-13 13:11 · Mrsasayo
-**Qué:** Preparación del commit y publicación de la capa oro, su notebook fuente, pruebas, documentación y adaptación del visor. Se revisan las huellas de plata, resultados guardados y exclusión de datos oficiales antes de publicar.
+**Qué:** Preparación del commit y publicación de la capa oro, su notebook fuente, pruebas, documentación y adaptación del visor. Se verificaron las huellas de plata, resultados guardados y exclusión de datos oficiales: 24 pruebas aprobadas (51,68 s), 43 controles y mapa consistente. Se integra la captura remota `20b116e` sin conflictos ni sobrescrituras; implementación de oro en `ee4eb14`.
 **Por qué:** Compartir la implementación reproducible con el equipo sin redistribuir datos ni resultados privados. La publicación Git no acredita ejecución de oro en Databricks.
 **Archivos:** implementación y documentación de oro del aporte anterior; `docs/BITACORA.md`.
 
