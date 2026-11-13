@@ -54,7 +54,7 @@ def main():
     n_ctrl_oro = int(len(pd.read_parquet(ORO / "gold_icesixuao_calidad.parquet")))
     n_ctrl_plata = int(reporte_plata["tablas"]["calidad"])
     procesado = datetime.fromisoformat(reporte_oro["procesado_utc"]).astimezone()
-    remoto = "publicado en Databricks" if reporte_oro.get("publicado_databricks") else "corrida local; Delta remoto pendiente"
+    remoto = "publicado en Databricks" if reporte_oro.get("publicado_databricks") else "corrida local; contrastar con las tablas Delta publicadas"
 
     # --- Agregados que no vienen en las tablas de resumen ------------------------------------------
     mh = predios["prioridad"].eq("Muy alta")
@@ -64,6 +64,10 @@ def main():
     n_altos = int((predios["pisos"] >= 11).sum())
     pre85_c3 = predios["comuna"].eq(3) & ~predios["sin_construccion_registrada"].fillna(False)
     c3_pre85 = pct(100 * (pre85 & pre85_c3).sum() / pre85_c3.sum())
+    # Cohorte que señala la Javeriana Cali: 3 a 6 pisos, construida hasta 1985 (docs/FUENTES.md).
+    cohorte = pre85 & predios["pisos"].between(3, 6) & predios["en_ranking"].fillna(False)
+    cohorte_rank = pct(100 * cohorte.sum() / predios["en_ranking"].fillna(False).sum())
+    cohorte_mh = pct(100 * (cohorte & mh).sum() / mh.sum())
 
     # --- Secciones ----------------------------------------------------------------------------------
     max_p90 = comunas["indice_p90"].max()
@@ -201,6 +205,12 @@ uso, suelo, licuación ni comuna (ver p ajustado por Holm y V de Cramér en Fact
 influyan. Por eso el índice combina lo observado con lo conocido de cada edificio.</li>
 <li><b>Las fuentes externas cambian la lista:</b> sin ellas, solo el 40 % del top 50 se mantiene. La decisión de
 prioridad depende de las fuentes tanto como del daño: por eso cada cifra se rastrea a su tabla.</li>
+<li><b>Validación externa:</b> un estudio de la Javeriana Cali ubica el daño de Cali en edificios de 3 a 6 pisos
+anteriores a 1984, con daño interior que el satélite casi no ve (Copernicus vio 21 edificaciones; hubo 1.538 reportes
+locales). Ese grupo es el {cohorte_rank} del ranking y el {cohorte_mh} de la prioridad muy alta. No coincide en la
+microzona 4C, que el índice no resalta (el suelo pesa 10 %).</li>
+<li><b>Por qué suma ponderada y no PCA:</b> el primer componente principal explica solo el 26 % de la varianza; las
+siete dimensiones son casi independientes, así que comprimirlas no simplifica y borraría los motivos por edificio.</li>
 <li><b>Verificación en terreno aparte:</b> {num(int(reporte_oro["prioridades"].get("Sin dato: verificar en terreno", 0)))}
 edificios sin dato satelital y {num(int(reporte_oro["prioridades"].get("Sin construcción registrada: verificar", 0)))}
 predios sin construcción registrada no participan en el ranking: van a censo y verificación, no se suponen sanos.</li>

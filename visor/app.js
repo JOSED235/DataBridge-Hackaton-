@@ -60,18 +60,31 @@ function cumpleFiltros(p) {
 const edificiosFiltrados = () => datos.edificios.features.filter((f) => dibujable(f) && cumpleFiltros(f.properties));
 
 // Lista para brigadas: incluye los predios sin polígono dibujable y se ordena por posición del ranking.
-function descargarCSV() {
-  const cols = ['posicion', 'id', 'comuna', 'barrio', 'prioridad', 'indice_riesgo', 'cola_trabajo', 'motivos_principales',
-    'estado', 'pisos', 'pisos_fuente', 'dist_salud_m', 'puede_bloquear_via', 'lon', 'lat'];
-  const filas = datos.edificios.features.filter((f) => cumpleFiltros(f.properties)).map((f) => {
+function descargarLista(formato) {
+  const predios = datos.edificios.features.filter((f) => cumpleFiltros(f.properties)).map((f) => {
     const [lon, lat] = dibujable(f) ? centro(f) : [null, null];
-    return { ...f.properties, lon: lon && lon.toFixed(6), lat: lat && lat.toFixed(6) };
+    return { ...f.properties, lon, lat };
   }).sort((a, b) => (a.posicion ?? Infinity) - (b.posicion ?? Infinity) || String(a.id).localeCompare(String(b.id)));
-  const celda = (v) => (v == null ? '' : /[",;\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
-  const csv = [cols.join(','), ...filas.map((p) => cols.map((c) => celda(p[c])).join(','))].join('\n');
+  const cola = $('selCola').selectedOptions[0].textContent;
+  const notas = [
+    ['Generado', new Date().toLocaleString('es-CO')],
+    ['Comuna', estado.comuna ? `Comuna ${estado.comuna}` : 'Todas'],
+    ['Prioridad', estado.soloAlta ? 'Solo alta y muy alta' : 'Todas'],
+    ['Cola de trabajo', cola],
+    ['Predios en la lista', predios.length],
+    ['Orden', 'Posición en el ranking de inspección (1 = primero); los predios fuera del ranking van al final'],
+    ['Advertencia', 'Datos satelitales: sirven para priorizar inspecciones, no para declarar un edificio seguro o inseguro. Sin dato no significa sano.'],
+    ['Índice de riesgo', 'Priorización relativa de 0 a 1, no probabilidad de colapso.'],
+    ['Distancias', 'Euclidianas en metros al centro de salud de OpenStreetMap más cercano; no son tiempos de viaje.'],
+    ['Fuente', 'workspace.default.gold_icesixuao_predios (equipo icesixuao, DataBridge Hack 2026)'],
+  ];
+  const base = `inspeccion_${estado.comuna ? `comuna_${estado.comuna}` : 'cali'}${estado.cola ? `_${estado.cola}` : ''}`;
+  const blob = formato === 'xlsx'
+    ? new Blob([Lista.xlsx(predios, notas)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    : new Blob([Lista.csv(predios)], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['﻿', csv], { type: 'text/csv;charset=utf-8' }));  // BOM: Excel abre las tildes bien
-  a.download = `inspeccion_${estado.comuna ? `comuna_${estado.comuna}` : 'cali'}${estado.cola ? `_${estado.cola}` : ''}.csv`;
+  a.href = URL.createObjectURL(blob);
+  a.download = `${base}.${formato}`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
@@ -232,7 +245,7 @@ const PASOS = [
     vista: { ...CALI, zoom: 13, pitch: 55, bearing: -20 }, s: { modo: 'indice', capas: { edificios: true, comunas: false, vias: true, salud: true }, comuna: '', soloAlta: false },
   },
   {
-    t: '4 · Qué hacer ante réplicas', p: () => `Inspeccionar primero los edificios de prioridad muy alta, empezando por la comuna ${top1()}, y despejar las vías que sus escombros podrían bloquear. Los edificios sin dato satelital van a verificación en terreno.`,
+    t: '4 · Qué hacer ante réplicas', p: () => `Inspeccionar primero los edificios de prioridad muy alta, empezando por la comuna ${top1()}, y despejar las vías que sus escombros podrían bloquear. Los edificios sin dato satelital van a verificación en terreno. La lista de cada comuna y cola de trabajo se descarga en Excel desde el panel.`,
     vista: null, s: { modo: 'prioridad', capas: { edificios: true, comunas: true, vias: true, salud: true }, soloAlta: true },
     al: () => { estado.comuna = String(top1()); irAComuna(top1()); },
   },
@@ -280,7 +293,8 @@ let map, overlay;
   $('selComuna').onchange = (e) => { estado.comuna = e.target.value; if (estado.comuna) irAComuna(estado.comuna); render(); };
   $('soloAlta').onchange = (e) => { estado.soloAlta = e.target.checked; render(); };
   $('selCola').onchange = (e) => { estado.cola = e.target.value; render(); };
-  $('btnCsv').onclick = descargarCSV;
+  $('btnCsv').onclick = () => descargarLista('csv');
+  $('btnXlsx').onclick = () => descargarLista('xlsx');
   document.querySelectorAll('[data-capa]').forEach((el) => { el.onchange = () => { estado.capas[el.dataset.capa] = el.checked; render(); }; });
   document.querySelectorAll('#modo button').forEach((b) => { b.onclick = () => { estado.modo = b.dataset.v; render(); }; });
   $('ranking').onclick = (e) => {

@@ -114,8 +114,9 @@ capas = [
     ("GOLD", "Responder la pregunta", ACENTO, [
         "Índice 0–1 por edificio y prioridad por percentil",
         "Ranking de comunas por percentil 90",
-        "Chi-cuadrado con ajuste Holm: ¿qué se asocia con el daño?",
-        "Sensibilidad: 7 escenarios frente al base",
+        "Chi-cuadrado (Holm) y validación externa",
+        "Sensibilidad y PCA: 7 ejes casi independientes",
+        "Tablas comentadas, Genie y dashboard",
     ]),
 ]
 x0, ancho, sep = 0.5, 3.95, 0.225
@@ -159,7 +160,9 @@ s1.notes_slide.notes_text_frame.text = (
     "Abajo está lo que aporta cada fuente: el modelo de exposición de GEM nos dice quién vive en cada edificio y qué tan frágil es; "
     "la microzonificación, cómo responde el suelo; el ShakeMap del USGS, cuánto se sacudió, y lo validamos con el acelerógrafo del "
     "Servicio Geológico Colombiano en Cali; el catálogo de réplicas muestra que la amenaza sigue; y OpenStreetMap nos da los servicios.\n"
-    "En gold calculamos el índice por edificio, el ranking de comunas y dos pruebas: qué explica el daño y qué tan estable es el ranking."
+    "En gold calculamos el índice por edificio, el ranking de comunas y dos pruebas: qué explica el daño y qué tan estable es el ranking. "
+    "Probamos también un PCA: el primer eje solo explica el 26 %, las siete dimensiones son casi independientes, así que las sumamos con pesos "
+    "explícitos y cada edificio conserva sus motivos. Todo quedó publicado en Databricks con las tablas comentadas, un espacio de Genie y un dashboard."
 )
 
 # ------------------------------------------------------------------------------------------------
@@ -201,8 +204,8 @@ caja(s2, 0.5, 5.65, 7.7, 1.25, color="22191A", borde="5A2A22", nombre="Hallazgo"
 texto(s2, 0.7, 5.72, 7.35, 1.15, [
     ("HALLAZGO", {"tam": 11, "negrita": True, "color": ACENTO, "despues": 3}),
     ([("El daño satelital no muestra un patrón claro: ", {"negrita": True}),
-      ("con esta muestra no detectamos asociación con época, uso, suelo, licuación ni comuna (menor p ajustado por Holm 0,27; V de Cramér ≤ 0,06). No prueba que no influyan, pero la señal sola no basta para priorizar.", {})],
-     {"tam": 12.5}),
+      ("no se detecta asociación con época, uso, suelo ni comuna (Holm p ≥ 0,27). Un estudio de la Javeriana Cali explica por qué: el daño fue interior, en edificios de 3 a 6 pisos anteriores a 1984, y el satélite lo ve poco (Copernicus: 21 edificios frente a 1.538 reportes). El índice los recupera: son el 8,5 % del ranking y el 32 % de la prioridad muy alta.", {})],
+     {"tam": 11}),
 ], ancla=MSO_ANCHOR.MIDDLE)
 caja(s2, 8.4, 5.65, 4.43, 1.25, nombre="Evidencia")
 texto(s2, 8.6, 5.72, 4.1, 1.15, [
@@ -218,7 +221,9 @@ s2.notes_slide.notes_text_frame.text = (
     "más de la mitad en la comuna 19. Es un modelo, no un conteo de personas: un registro GEM puede quedar cerca de varios predios.\n"
     "Servicios: 626 predios dañados están a menos de 200 metros de un centro de salud.\n"
     "Antes de recomendar, probamos qué se asocia con el daño, y con esta muestra no detectamos asociación con la época, el suelo ni la comuna. "
-    "No decimos que no influyan, pero el daño satelital no muestra un patrón claro, así que no basta para decidir a quién inspeccionar primero. Por eso el índice combina el daño "
+    "No decimos que no influyan. Un estudio de la Javeriana Cali explica por qué: en Cali el daño fue interior, en edificios de 3 a 6 pisos anteriores al código de 1984, "
+    "que se agrietan sin perder el techo, y el satélite casi no lo ve: Copernicus detectó 21 edificaciones en Cali frente a 1.538 reportes locales. "
+    "Nuestro índice recupera ese grupo: es el 8,5 % del ranking pero el 32 % de la prioridad muy alta. Por eso el índice combina el daño "
     "observado con lo que sí sabemos de cada edificio: qué tan frágil es, cuánta gente tiene, su suelo y su cercanía a salud y vías.\n"
     "De ahí salen las acciones de la columna verde: 179 edificios de prioridad muy alta, casi todos dañados y construidos hasta 1985; "
     "empezar por la comuna 3; verificar en terreno los que no tienen dato; y proteger el acceso a salud y vías.\n"
@@ -246,13 +251,13 @@ bloques = [
     ("QUÉ MUESTRA", [
         [("Color = prioridad del índice: ", {"negrita": True}), ("rojo muy alta, naranja alta, amarillo media, gris baja; morado sin dato y azul sin construcción registrada", {})],
         [("Rótulo = comuna y su puesto: ", {"negrita": True}), ("C3 · #1 es la más urgente", {})],
-        [("Puntos verdes = salud; líneas = vías principales", {"negrita": True})],
+        [("Puntos verdes = salud; azules = bomberos y policía; halos = concentración de riesgo; líneas = vías principales", {"negrita": True})],
     ]),
     ("POR QUÉ ASÍ", [
         [("Une las dos respuestas en una vista: dónde hubo daño y a quién inspeccionar primero, junto a los servicios que una réplica pondría en riesgo", {})],
     ]),
     ("CÓMO SE HIZO", [
-        [("gold_icesixuao_predios y _comunas → GeoJSON (EPSG:4326) → visor propio con MapLibre GL + deck.gl. Al pasar el cursor, cada edificio muestra su ficha: daño, pisos, suelo, índice", {})],
+        [("gold_icesixuao_predios y _comunas → GeoJSON → visor propio con MapLibre GL + deck.gl. Cada edificio muestra su ficha y motivos; la lista filtrada por comuna y cola de trabajo se descarga en Excel para las brigadas", {})],
     ]),
 ]
 yb = 1.55
@@ -270,7 +275,7 @@ s3.notes_slide.notes_text_frame.text = (
     "construcción de 1985 o antes. En la 19 está la mayor ocupación modelada en edificios dañados.\n"
     "Encima van los centros de salud y las vías principales, que son los servicios que una réplica pondría en riesgo.\n"
     "Lo construimos desde las tablas gold, exportadas a GeoJSON, en un visor propio con MapLibre y deck.gl; cada edificio muestra su ficha "
-    "al pasar el cursor.\n"
+    "al pasar el cursor. Para las brigadas, el visor filtra por cola de trabajo (inspección, sin dato satelital, lotes con daño) y descarga la lista en Excel, ordenada por prioridad.\n"
     "Cierre: no podemos evitar la próxima réplica, pero sí decidir dónde llegar primero."
 )
 

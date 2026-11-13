@@ -20,7 +20,7 @@ Solución del equipo para la **DataBridge Hack** (IEEE Computer Society, Colombi
 | Notebooks bronze/silver/gold | Ajustados a los datos oficiales y a los nombres de la guía (`workspace.default.<capa>_icesixuao_<contenido>`) |
 | Simulación con datos ficticios | Pasa de extremo a extremo |
 | Corrida local con datos oficiales | Pasa (`scripts/correr_local.py`) |
-| Visor | Lee los GeoJSON generados con datos reales (no se suben al repo); filtra por comuna, prioridad y cola de trabajo (inspección priorizada, sin dato satelital, lotes con daño) y descarga la lista filtrada en CSV para brigadas |
+| Visor | Lee los GeoJSON generados con datos reales (no se suben al repo); filtra por comuna, prioridad y cola de trabajo (inspección priorizada, sin dato satelital, lotes con daño) y descarga la lista filtrada para brigadas en Excel (.xlsx, con hoja de notas) o CSV (`;` y coma decimal, para Excel en español); generador en `visor/lista.js`, sin dependencias |
 | Guion y preguntas del jurado | Borrador con cifras por llenar |
 
 ## Estructura
@@ -57,6 +57,7 @@ scripts/
   correr_plata.py         Materializa y valida solo plata en data/oficiales/plata/ (Parquet privado)
   correr_local.py         Plata nueva → gold en data/oficiales/salidas/ y mapa en visor/data/
   generar_dashboard.py    Dashboard HTML autónomo de conclusiones desde oro y plata (salida privada)
+  generar_documento.py    Word de sustentación: resumen, decisiones, respuesta, guion, preguntas del jurado, capturas y enlaces (salida privada)
 analisis_bronce/          EDA independiente del pipeline: notebooks por dataset, ejecutor y soporte
   notebooks/             Notebooks fuente, sin salidas ni registros oficiales
   ejecutados/            Notebooks con salidas y HTML para visualizar (fuera de git)
@@ -74,7 +75,9 @@ visor/                    MapLibre GL JS + deck.gl, sin build
 
 ## Cómo correr
 
-**Visor** (necesita servidor local, no abre con doble clic):
+**Visor publicado:** https://josed235.github.io/DataBridge-Hackaton-/ (GitHub Pages desde la rama `gh-pages`, que contiene solo `visor/` con sus datos). Publicación temporal autorizada por la organización hasta la sustentación del 14-nov-2026; después se borra la rama `gh-pages`, se desactiva Pages y el repo pasa a privado. Para actualizarlo, copiar `visor/` a esa rama y hacer push.
+
+**Visor local** (necesita servidor local, no abre con doble clic):
 
 ```bash
 cd visor

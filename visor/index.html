@@ -43,7 +43,7 @@
   ol.rank .bar { height: 4px; background: var(--accent); margin-top: 3px; }
   ol.rank .val { font: 12px var(--mono); color: var(--muted); }
   #tour { position: absolute; left: 20px; bottom: 24px; width: min(420px, calc(100% - 40px)); background: rgba(21,24,29,.94);
-          border: 1px solid var(--line); padding: 14px 16px; display: none; }
+          border: 1px solid var(--line); padding: 14px 16px; display: none; z-index: 4; }
   #tour.on { display: block; }
   #tour h3 { margin: 0 0 6px; font-size: 16px; }
   #tour p { margin: 0 0 10px; color: #c9cdd3; }
@@ -90,7 +90,11 @@
       <option value="verificar_dato_satelital">Verificar en terreno: sin dato satelital</option>
       <option value="lote_con_danio">Verificar: lotes con daño visible</option>
     </select>
-    <button class="btn ghost" id="btnCsv" style="margin-top:8px;width:100%">Descargar lista filtrada (CSV)</button>
+    <p class="fuente" style="margin:10px 0 4px">Descargar la lista filtrada</p>
+    <div style="display:flex;gap:6px">
+      <button class="btn ghost" id="btnXlsx" style="flex:1">Excel (.xlsx)</button>
+      <button class="btn ghost" id="btnCsv" style="flex:1">CSV</button>
+    </div>
 
     <h2>Capas</h2>
     <label class="row"><input type="checkbox" data-capa="edificios" checked> Edificios (3D por pisos)</label>
@@ -116,6 +120,7 @@
 </div>
 <script src="vendor/maplibre-gl.js"></script>
 <script src="vendor/deck.gl.min.js"></script>
+<script src="lista.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

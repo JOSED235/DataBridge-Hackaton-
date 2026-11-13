@@ -72,6 +72,27 @@ Se usan percentiles (no cortes fijos) porque el objetivo es ordenar a quién ins
 
 **Lectura:** el orden general es estable (Spearman ≥ 0,87 en todos los escenarios con fuentes externas; sensibilidad calculada sobre los edificios en ranking). **Lo que más cambia el top 50 es quitar las fuentes externas:** con solo los datos oficiales, solo el 40 % del top se mantiene. Esa es la prueba de que las fuentes externas cambian la respuesta, no solo la decoran.
 
+## ¿Por qué no PCA, análisis factorial o un modelo?
+
+Se probó si los siete componentes se podían resumir en menos dimensiones con un análisis de componentes principales (PCA) sobre los 3.569 edificios del ranking (`gold_icesixuao_predios`, columnas `c_*` estandarizadas; los 29 sin dato GEM se imputaron con la media solo para esta prueba; con los 3.540 completos las cifras cambian a lo sumo una décima).
+
+| Componente principal | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|---|
+| Varianza explicada | 26,2 % | 16,0 % | 15,5 % | 13,4 % | 12,9 % | 9,3 % | 6,7 % |
+| Acumulada | 26,2 % | 42,2 % | 57,7 % | 71,1 % | 84,0 % | 93,3 % | 100 % |
+
+No hay una dimensión dominante: hacen falta 4 o 5 componentes para llegar al 71-84 %. La razón está en las correlaciones entre componentes: la media de |r| fuera de la diagonal es 0,11.
+
+| Par | r | Lectura |
+|---|---|---|
+| Suelo y altura | 0,43 | La más alta, y en parte por construcción: la amplificación del suelo se lee en el período del edificio (T ≈ pisos/10) |
+| Vulnerabilidad y ocupantes | -0,32 | Los edificios de tipología más frágil tienen menos ocupantes modelados |
+| Altura y ocupantes | 0,31 | Más pisos, más ocupantes modelados |
+| Altura y vulnerabilidad | -0,26 | Los edificios con más pisos tienen tipologías menos frágiles según GEM |
+| Daño observado con cualquier otro | ≤ 0,09 | El daño satelital va casi por su cuenta, coherente con la prueba de factores |
+
+**Lectura:** las siete dimensiones son casi independientes (daño observado, fragilidad, gente, suelo, masa, acceso a salud y vía), por eso se combinan de forma aditiva con pesos explícitos y no con una síntesis automática. Comprimirlas con PCA no simplificaría nada (se necesitan 4 o 5 ejes) y destruiría la explicabilidad: hoy cada edificio dice sus motivos ("daño, vulnerabilidad, bloqueo de vía") y cada peso se puede discutir. Un modelo supervisado tampoco es viable: no hay una variable de resultado verificada en terreno por edificio para entrenarlo; usar el daño satelital como objetivo enseñaría al modelo a reproducir una señal que, con esta muestra, no se asocia con los demás factores.
+
 ## Limitaciones a decir en voz alta
 
 - Datos satelitales: priorizan, no certifican seguridad.
