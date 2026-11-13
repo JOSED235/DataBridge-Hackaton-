@@ -80,3 +80,7 @@ primero: no se suman sus filas para contar sismos.
 
 Resumen de hallazgos: `docs/EDA_BRONCE.md`. Selecciones y razones registradas
 también en `docs/BITACORA.md`.
+
+Implementación posterior de plata: `docs/PLATA.md` y `analisis_plata/`. Mantiene
+GEM por cercanía según la decisión del equipo de las 11:55, con empates y
+reutilización explícitos. Este directorio conserva el análisis previo de bronce.

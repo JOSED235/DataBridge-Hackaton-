@@ -282,7 +282,9 @@ def calcular_indice(gdf, pesos=PESOS):
     lote = g["sin_construccion_registrada"] if "sin_construccion_registrada" in g else False
     g["en_ranking"] = ~g["sin_dato_satelital"] & ~lote
     q = g.loc[g["en_ranking"], "indice_riesgo"].rank(pct=True).reindex(g.index)
-    g["prioridad"] = np.select([q > 0.95, q > 0.85, q > 0.60], ["Muy alta", "Alta", "Media"], "Baja")
+    # Plata usa tipos nullable: NumPy requiere booleanos puros y no acepta pd.NA en condiciones.
+    condiciones = [(q > corte).to_numpy(dtype=bool, na_value=False) for corte in (0.95, 0.85, 0.60)]
+    g["prioridad"] = np.select(condiciones, ["Muy alta", "Alta", "Media"], "Baja")
     g.loc[g["en_ranking"].eq(False) & lote, "prioridad"] = "Sin construcción registrada: verificar"
     g.loc[g["sin_dato_satelital"], "prioridad"] = "Sin dato: verificar en terreno"
     return g

@@ -13,6 +13,7 @@ Solución del equipo para la **DataBridge Hack** (IEEE Computer Society, Colombi
 | Contraste entre ciudades y sismos | Fuentes candidatas revisadas en `docs/FUENTES.md`: 20 entradas de catálogo y 38 referencias, con alcance y pendientes de verificación; integración pendiente |
 | Análisis exploratorio de bronce | 17 notebooks individuales y una síntesis en `analisis_bronce/`; resultados locales guardados en `.ipynb` y HTML |
 | Fuentes externas (GEM TREQ: exposición, suelo, licuación; USGS: ShakeMap, estaciones, réplicas; OSM) | Descargadas y recortadas en `data/externos/`, con una ficha por fuente en `docs/FUENTES.md` |
+| Capa plata | 16 tablas por entidad y relaciones, control de calidad y validación local; contrato en `docs/PLATA.md` |
 | Funciones espaciales | Listas, con autoprueba |
 | Notebooks bronze/silver/gold | Ajustados a los datos oficiales y a los nombres de la guía (`workspace.default.<capa>_icesixuao_<contenido>`) |
 | Simulación con datos ficticios | Pasa de extremo a extremo |
@@ -30,6 +31,7 @@ docs/
   PLAN_VIERNES.md                   EMPEZAR AQUÍ: estrategia, pendientes y paso a paso del viernes
   GUIA_DATABRICKS.md                Paso a paso de Databricks para principiantes
   BITACORA.md                       Aportes y decisiones del equipo (con su razón)
+  PLATA.md                          Contrato de tablas, reglas de cruces, calidad y reproducción
   INDICE_RIESGO.md                  Componentes, pesos y justificación del índice
   FUENTES.md                        Fuentes, revisión de las 20 entradas y 38 referencias, cobertura y pendientes
   GUION_PRESENTACION.md             Guion de 5 a 7 min y respuestas al jurado
@@ -37,19 +39,23 @@ docs/
   INFORME_SISMO.md                  Informe de investigación previa (suelo, profundidad, Venezuela, casos)
 notebooks/                Para importar en Databricks (Workspace → Import)
   00_utils_espacial.py    Funciones espaciales + autoprueba
-  00_pipeline.py          Lógica silver/gold y configuración (COLS, pesos)
+  00_pipeline.py          Configuración y funciones compatibles de silver/gold (COLS, pesos)
+  00_silver.py            Contrato de plata, tablas por entidad, cruces auditables y calidad
   01_bronze.py            Carga cruda de edificios y capas externas
-  02_silver.py            Limpieza y cruces espaciales
+  02_silver.py            Tablas bronze → 16 tablas plata tipadas y validadas
   03_gold.py              Índice, ranking, sensibilidad, SQL clave y exportación al visor
 scripts/
   descargar_osm.py        Descarga las capas de OSM a data/externos/
   descargar_externos.py   Descarga y recorta GEM (exposición, licuación) y USGS (ShakeMap, estaciones, réplicas)
   simular_pipeline.py     Corre el pipeline en local con edificios ficticios (no pisa el mapa real)
-  correr_local.py         Corre el pipeline con los datos oficiales: gold en data/oficiales/salidas/ y mapa en visor/data/
+  correr_plata.py         Materializa y valida solo plata en data/oficiales/plata/ (Parquet privado)
+  correr_local.py         Plata nueva → gold en data/oficiales/salidas/ y mapa en visor/data/
 analisis_bronce/          EDA independiente del pipeline: notebooks por dataset, ejecutor y soporte
   notebooks/             Notebooks fuente, sin salidas ni registros oficiales
   ejecutados/            Notebooks con salidas y HTML para visualizar (fuera de git)
   resultados/            Perfiles JSON, figuras y registro local de ejecución (fuera de git)
+analisis_plata/           Notebook de validación de plata y ejecutor; HTML/IPYNB guardados privados
+tests/test_silver.py      Pruebas del contrato con datos sintéticos y fuentes públicas
 data/
   externos/               Fuentes externas públicas recortadas a Cali: OSM, USGS y GEM (detalle en docs/FUENTES.md)
   oficiales/              Datos del evento (Datosprediales.json): NO se suben (están en .gitignore)
@@ -75,7 +81,8 @@ Sin internet funciona igual, con fondo plano en lugar del mapa base.
 ```bash
 python notebooks/00_utils_espacial.py   # autoprueba de funciones espaciales
 python scripts/simular_pipeline.py      # pipeline completo con datos ficticios
-python scripts/correr_local.py          # pipeline con los datos oficiales de data/oficiales/
+python scripts/correr_plata.py          # solo plata: tablas y reporte en data/oficiales/plata/
+python scripts/correr_local.py          # plata + gold con datos oficiales de data/oficiales/
 python scripts/descargar_osm.py         # volver a bajar capas de OSM (borra antes el archivo a actualizar)
 python scripts/descargar_externos.py    # volver a bajar GEM y USGS (~80 MB)
 ```
@@ -95,6 +102,17 @@ GeoPandas, pandas, SciPy, Matplotlib, osmium, nbformat, nbclient y nbconvert.
 El EDA lee `data/oficiales/Datosprediales.json`, cuya huella se conserva en el perfil.
 Si la entrega llega a `data/Datosprediales.json`, se copia a esa ruta privada sin
 transformarla. Ambas rutas están excluidas de Git.
+
+**Capa plata:** contrato en `docs/PLATA.md`. Conserva lotes sin imputación y GEM
+como cruce por cercanía según la decisión del equipo, con empates y reutilización
+visibles. Ocupantes asignados no equivalen a población única. Pisos observados
+y estimados se guardan por separado. La ejecución local no publica Delta remoto.
+
+```bash
+/home/nicolas/venv_global/bin/python analisis_plata/ejecutar.py
+# Abrir analisis_plata/ejecutados/01_validacion_plata.html
+/home/nicolas/venv_global/bin/python -m pytest tests/test_silver.py analisis_bronce/test_analisis.py -q
+```
 
 ## Reglas importantes
 

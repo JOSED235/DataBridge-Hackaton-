@@ -2,6 +2,11 @@
 
 Fecha: 13-nov-2026. Responsable: Mrsasayo.
 
+Actualización posterior: la implementación de plata y sus validaciones están en
+`docs/PLATA.md` y `analisis_plata/`. Se conserva este EDA como evidencia del
+análisis previo. La decisión del equipo de las 11:55 mantiene GEM por cercanía,
+con sus ambigüedades explícitas, y sustituye su exclusión condicionada propuesta aquí.
+
 ## Alcance y evidencia
 
 Se ejecutaron análisis independientes de los **17 datasets/contenedores locales**

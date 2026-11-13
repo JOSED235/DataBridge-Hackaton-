@@ -8,13 +8,14 @@ Uso:  python scripts/correr_local.py
 """
 from pathlib import Path
 import json
+from correr_plata import ejecutar_plata_local
 
 import geopandas as gpd
 
 RAIZ = Path(__file__).resolve().parent.parent
 EXT = RAIZ / "data" / "externos"
 OFI = RAIZ / "data" / "oficiales"
-for nb in ("00_utils_espacial.py", "00_pipeline.py"):  # mismo efecto que %run en Databricks
+for nb in ("00_utils_espacial.py", "00_pipeline.py", "00_silver.py"):  # mismo efecto que %run en Databricks
     exec((RAIZ / "notebooks" / nb).read_text(encoding="utf-8"))
 
 capas = {n: gpd.read_file(EXT / f"osm_{n}.geojson") for n in ("comunas", "barrios", "salud", "emergencia", "vias_principales")}
@@ -23,11 +24,8 @@ bomberos = capas["emergencia"][capas["emergencia"]["amenity"] == "fire_station"]
 raw = bronze_desde_geojson(gpd.read_file(OFI / "Datosprediales.json"))
 assert raw.shape == (5146, 21), raw.shape  # la guía: 5.146 filas y 20 propiedades + geometría
 
-silver, reporte = limpiar(raw)
-g = enriquecer(cruzar_externos(a_geo(silver), EXT), capas["comunas"], capas["barrios"], capas["salud"], bomberos, capas["vias_principales"])
-g = asignar_suelo(g, *leer_suelo(EXT))
-reporte["geometrias_reparadas"] = int(g["geom_reparada"].sum())
-reporte["comuna_completada_con_osm"] = int(silver["comuna"].isna().sum())
+tablas_plata, reporte, _ = ejecutar_plata_local()
+g = tablas_plata["predios"]
 g = calcular_indice(g)
 gc = gold_comunas(g, capas["comunas"], capas["salud"], bomberos)
 sens = sensibilidad(g[g["en_ranking"]], ESCENARIOS_SENSIBILIDAD)

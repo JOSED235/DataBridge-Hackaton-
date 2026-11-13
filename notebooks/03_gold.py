@@ -74,7 +74,7 @@ FROM {GP} GROUP BY estado ORDER BY n DESC"""))
 # Top 20 edificios a inspeccionar primero
 display(spark.sql(f"""
 SELECT id, comuna, barrio, estado, pisos, pisos_imputado, microzona, amplif_suelo, puede_bloquear_via, indice_riesgo
-FROM {GP} WHERE NOT sin_dato_satelital ORDER BY indice_riesgo DESC LIMIT 20"""))
+FROM {GP} WHERE en_ranking ORDER BY indice_riesgo DESC, id ASC LIMIT 20"""))
 
 # COMMAND ----------
 

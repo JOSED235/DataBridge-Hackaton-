@@ -1,16 +1,18 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 02 · Silver: limpieza y cruces espaciales
+# MAGIC # 02 · Silver: entidades tipadas, cruces y calidad
 # MAGIC
-# MAGIC 1. Tipos y categorías normalizadas (espacios y vacíos a nulo), NPISOS = 0 o nulo imputado con la mediana de la comuna y marcado, polígonos inválidos reparados, área real en m². Todo queda contado en el reporte.
-# MAGIC 2. Marca `sin_dato_satelital`: esos edificios **no se borran**; se marcan para verificación en terreno.
-# MAGIC 3. Cruces con OSM: comuna faltante, barrio, distancia a salud, bomberos y vía principal, densidad de edificios a 100 m y si sus escombros podrían bloquear una vía.
-# MAGIC 4. Cruce con la microzonificación sísmica (GEM TREQ): microzona y amplificación del suelo en el período propio del edificio.
-# MAGIC 5. Cruce con el modelo de exposición de GEM (edificio por edificio: año, estrato, uso, pisos, ocupantes, vulnerabilidad), la susceptibilidad a licuación y pendiente (GEM) y el ShakeMap del USGS. NPISOS = 0 se completa con los pisos de GEM.
+# MAGIC Lee las tablas bronze, valida todas las salidas antes de escribir y conserva los predios.
+# MAGIC NPISOS=0 identifica lotes: no se imputa. Pisos observados, estimados y método van separados.
+# MAGIC GEM se mantiene como cruce por cercanía a ≤15 m según la decisión del equipo:
+# MAGIC ocupantes/valor se suman entre empates; atributos del mayor número de ocupantes y luego ID.
+# MAGIC Las relaciones explicitan empates y reutilización; no acreditan identidad catastral ni población única.
+# MAGIC ShakeMap y amplificación se conservan separados. Proximidad no equivale a capacidad o tiempo de viaje.
+# MAGIC Contrato y límites: docs/PLATA.md. Los pesos y el ranking se calculan en 03_gold.
 
 # COMMAND ----------
 
-# MAGIC %pip install geopandas --quiet
+# MAGIC %pip install geopandas pyarrow --quiet
 
 # COMMAND ----------
 
@@ -22,55 +24,53 @@
 
 # COMMAND ----------
 
-raw = spark.table(tabla("bronze", "predios")).toPandas()  # ~5 MB: cabe de sobra en memoria
-silver, reporte = limpiar(raw)
-reporte  # copiar a la bitácora: es la justificación de cada paso de limpieza
+# MAGIC %run ./00_silver
 
 # COMMAND ----------
 
-capas = {n: gpd.read_file(f"{VOL}/osm_{n}.geojson") for n in ("comunas", "barrios", "salud", "emergencia", "vias_principales")}
-bomberos = capas["emergencia"][capas["emergencia"]["amenity"] == "fire_station"]
-g = enriquecer(cruzar_externos(a_geo(silver), VOL), capas["comunas"], capas["barrios"], capas["salud"], bomberos, capas["vias_principales"])
-g = asignar_suelo(g, *leer_suelo(VOL))  # microzona y amplificación del suelo (GEM TREQ)
-reporte["geometrias_reparadas"] = int(g["geom_reparada"].sum())
-reporte["comuna_completada_con_osm"] = int(silver["comuna"].isna().sum())
-print(reporte, "| fuera de microzonas:", int((g["microzona"] == "noaf").sum()))
-g.drop(columns="geometry").describe()
+raw = spark.table(tabla("bronze", "predios")).toPandas()
+fuentes = {nombre: spark.table(tabla("bronze", nombre)).toPandas() for nombre in ARCHIVOS_PLATA}
+tablas_plata, reporte = construir_plata(raw, fuentes)
+tablas_plata["fuentes"]["modo_lectura"] = "tabla_bronze_databricks"
+tablas_plata["fuentes"]["tabla_origen"] = tablas_plata["fuentes"].fuente.map(lambda n: tabla("bronze", n))
+print(reporte)
+display(tablas_plata["calidad"])
 
 # COMMAND ----------
 
-(spark.createDataFrame(para_spark(g)).write.mode("overwrite").option("overwriteSchema", True)
-     .saveAsTable(tabla("silver", "predios")))
+# MAGIC %md
+# MAGIC ## Publicación
+# MAGIC Si falla una puerta de calidad, la transformación lanza un error antes de escribir tablas.
+# MAGIC Las tablas se escriben individualmente en Delta; el conjunto no es una transacción entre tablas.
+# MAGIC No ejecutar gold hasta que termine esta celda. Las columnas nulas tienen esquema explícito.
+
+# COMMAND ----------
+
+guardar_plata_spark(spark, tablas_plata)
+spark.sql(f"COMMENT ON TABLE {tabla('silver', 'predios')} IS 'Inventario predial satelital con cruces por cercanía y calidad. No certifica seguridad. GEM no acredita identidad catastral ni población única.'")
 
 comentarios = {
-    "sin_dato_satelital": "True si Estado_Estructural es Sin datos satelitales. No significa sin daño",
-    "sev_estado": "Severidad 0..1: escombros 1, techo desaparecido 0,7, sin cambio aparente 0,1 (puede haber daño interno)",
-    "indice_escombros": "Indice_Escombros original: puntaje con signo; > 4,3 escombros y < -10,8 techo desaparecido",
-    "alta_escombros": "True si Estado_Estructural es Alta probabilidad de escombros",
-    "pisos_imputado": "True si NPISOS era nulo y se imputó (GEM o mediana de la comuna)",
-    "sin_construccion_registrada": "True si NPISOS = 0: predio sin edificación registrada en catastro (organizadores); pisos queda nulo",
-    "ocupantes_noche": "Ocupantes nocturnos de GEM (censo 2018); si varios registros GEM empatan, se suman",
-    "area_m2": "Área del contorno en m² (EPSG:9377); Shape__Area original está en grados",
-    "geom_reparada": "True si el polígono era inválido y se reparó con make_valid",
-    "barrio_cod": "Código de barrio original; solo identifica un barrio junto con la comuna",
-    "dist_salud_m": "Metros al hospital o clínica más cercano (OSM)",
-    "dist_via_principal_m": "Metros a la vía principal más cercana (OSM: motorway, trunk, primary, secondary)",
-    "n_edif_100m": "Edificios a menos de 100 m (proxy de población expuesta)",
-    "puede_bloquear_via": "Alta prob. de escombros y distancia a vía principal <= altura estimada (pisos x 3 m)",
-    "microzona": "Microzona sísmica INGEOMINAS-DAGMA 2005 (grilla GEM TREQ); noaf = fuera de la microzonificación",
-    "periodo_s": "Período propio estimado del edificio, T = pisos/10 s, redondeado a los períodos del modelo GEM",
-    "amplif_suelo": "Factor de amplificación del suelo de su microzona en su período propio (GEM TREQ, roca 0,23 g)",
-    "dist_gem_m": "Metros al edificio del modelo de exposición GEM usado (0 = dentro del polígono; nulo si > 15 m)",
-    "periodo_construccion": "Período de construcción según GEM (catastro 2021); hitos del código: 1984, 1998, 2010",
-    "estrato": "Estrato socioeconómico según GEM",
-    "p_ductilidad_baja": "Probabilidad de ductilidad baja o nula de su tipología (GEM, esquema de expertos MEAN)",
-    "p_mamposteria_no_reforzada": "Probabilidad de mampostería no reforzada o adobe de su tipología (GEM)",
-    "pisos_fuente": "oficial = NPISOS; gem = NPISOS era 0 o nulo y se tomó de GEM; mediana_comuna = sin dato en ambos",
-    "licuacion_cat": "Susceptibilidad a licuación del sitio más cercano (GEM): vh, h, m, l, vl, n",
-    "pendiente_grados": "Pendiente del terreno en el sitio más cercano (GEM)",
-    "mmi": "Intensidad Mercalli del sismo principal en su nodo del ShakeMap v11 del USGS (~1 km)",
-    "pga_g": "Aceleración pico del suelo (g) en su nodo del ShakeMap del USGS",
+    "npisos_original": "Valor NPISOS entregado por la organización, incluido cero y NULL",
+    "pisos_observados": "Pisos oficiales positivos válidos; lotes y desconocidos quedan nulos",
+    "pisos_estimados": "Solo para pisos desconocidos; estimación GEM o mediana identificada en pisos_fuente",
+    "pisos": "Pisos efectivos para modelar: observados o estimados; lotes siempre nulos",
+    "sin_construccion_registrada": "NPISOS=0: predio sin edificación registrada; se conserva y no se imputa",
+    "ocupantes_noche": "Estimación GEM por cercanía, suma entre empates; puede repetirse entre predios. No sumar como población única",
+    "gem_ambiguo": "Varios registros GEM empatan en distancia mínima al contorno",
+    "gem_reutilizado": "Algún candidato GEM está asociado también a otros predios; ver cruces_gem",
+    "dist_salud_m": "Distancia euclidiana entre contorno y sitio OSM, EPSG:9377; no tiempo ni capacidad",
+    "dist_salud_urgencias_m": "Distancia a OSM con urgencias=yes; desconocido no equivale a no",
+    "periodo_s": "Estimación pisos/10 discretizada a períodos GEM; sin período en lotes o pisos no disponibles",
+    "amplif_suelo": "Factor del escenario GEM a 0.2267g en roca; separado de ShakeMap; sin fallback a 1",
+    "n_edif_100m": "Registros no marcados como lote a 100m del contorno, incluye el propio; no población",
+    "pga_g": "PGA del nodo ShakeMap cercano, convertida desde porcentaje de g dividiendo por 100",
+    "pendiente_grados": "Alias heredado de pendiente_original; unidad etiquetada por extractor, pendiente de confirmar en origen",
 }
-for col, txt in comentarios.items():
-    spark.sql(f"ALTER TABLE {tabla('silver', 'predios')} ALTER COLUMN {col} COMMENT '{txt}'")
-spark.sql(f"COMMENT ON TABLE {tabla('silver', 'predios')} IS 'Edificios limpios y enriquecidos con OSM. Base satelital: sirve para priorizar, no para declarar seguridad.'")
+for columna, comentario in comentarios.items():
+    spark.sql(f"ALTER TABLE {tabla('silver', 'predios')} ALTER COLUMN {columna} COMMENT '{comentario}'")
+
+# COMMAND ----------
+
+display(tablas_plata["predios"].drop(columns="geometry").describe(include="number"))
+display(tablas_plata["predios"].groupby("estado_predial").size().rename("predios").reset_index())
+display(tablas_plata["observaciones"].groupby("tipo_observacion").size().rename("observaciones").reset_index())

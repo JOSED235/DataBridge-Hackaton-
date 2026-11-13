@@ -52,8 +52,8 @@ El repo es **privado**, así que hay dos caminos. El A es mejor porque luego se 
 
 1. En GitHub: botón **Code → Download ZIP** y descomprimir.
 2. En Databricks: **Workspace** → tu carpeta de usuario → crear una carpeta `databridge` (**Create → Folder**) y hacer clic derecho **sobre esa carpeta** → Import (si se importa desde la raíz sale el error `undefined/... is not absolute`).
-3. Dentro de la carpeta: menú **⋮** (o clic derecho) → **Import** → **File** → arrastrar los 5 archivos de `notebooks/` uno por uno (o un ZIP con los 5).
-4. Deben quedar **los 5 en la misma carpeta**, porque `%run ./00_utils_espacial` busca el archivo al lado.
+3. Dentro de la carpeta: menú **⋮** (o clic derecho) → **Import** → **File** → arrastrar todos los archivos de `notebooks/`, incluido `00_silver.py`, uno por uno (o un ZIP).
+4. Deben quedar **todos en la misma carpeta**, porque `%run ./00_utils_espacial` busca el archivo al lado.
 
 ## 3. Probar que GeoPandas funciona (hoy, 5 min): el riesgo más grande
 
@@ -86,9 +86,11 @@ La configuración de `00_pipeline` (`COLS`, `SEVERIDAD_ESTADO`) ya está ajustad
 
 ## 6. Viernes: silver y gold
 
-1. `02_silver` → **Run all**. Revisar el `reporte`: `valores_estado_sin_mapear` debe salir `[]`, 1.245 pisos imputados (1.234 con 0 y 11 nulos), 17 geometrías reparadas y 2 comunas completadas con OSM.
+1. `02_silver` → **Run all**, incluyendo `%run ./00_silver`. Lee las tablas bronze y escribe 16 tablas plata. Revisar `reporte` y `calidad`: con las entradas analizadas deben conservarse 5.146 predios, 1.234 lotes sin imputación, 11 pisos originalmente desconocidos, 4 geometrías reparadas y 2 comunas completadas con OSM. `valores_estado_sin_mapear` debe ser `[]`. Contrato: `docs/PLATA.md`. Los ocupantes GEM se asignan por cercanía y pueden repetirse entre predios; no son población única.
 2. `03_gold` → **Run all**. Revisar la sensibilidad y las 5 consultas: son las cifras del correo y de las diapositivas.
-3. Para la captura del correo: **Catalog → workspace → default** con las tablas `bronze_icesixuao_*`, `silver_icesixuao_predios` y `gold_icesixuao_*` a la vista.
+3. Para la captura del correo: **Catalog → workspace → default** con las tablas `bronze_icesixuao_*`, `silver_icesixuao_*` y `gold_icesixuao_*` a la vista.
+
+La ejecución local de plata no publica Delta remoto. Para revisar solo plata: `python scripts/correr_plata.py`; salidas privadas en `data/oficiales/plata/`. HTML/IPYNB de validación: `python analisis_plata/ejecutar.py`.
 
 Plan B si Databricks falla: `python scripts/correr_local.py` da las mismas tablas gold en `data/oficiales/salidas/` y el mapa en `visor/data/`.
 
@@ -103,7 +105,7 @@ Plan B si Databricks falla: `python scripts/correr_local.py` da las mismas tabla
 1. Menú izquierdo → **Genie** → **New**.
 2. Elegir tablas: `workspace.default.gold_icesixuao_predios` y `workspace.default.gold_icesixuao_comunas`.
 3. En las instrucciones del espacio pegar:
-   > "Los datos vienen de imágenes satelitales. `indice_riesgo` va de 0 a 1 (más alto = inspeccionar primero). `prioridad` puede ser Muy alta, Alta, Media, Baja o 'Sin dato: verificar en terreno'. `puede_bloquear_via` indica edificios cuyos escombros podrían bloquear una vía principal."
+   > "Los datos vienen de imágenes satelitales. `indice_riesgo` va de 0 a 1 (más alto = inspeccionar primero). `prioridad` puede ser Muy alta, Alta, Media, Baja, 'Sin dato: verificar en terreno' o 'Sin construcción registrada: verificar'; los lotes no participan en el ranking. `puede_bloquear_via` indica edificios cuyos escombros podrían bloquear una vía principal."
 4. Probar con las preguntas de la guía oficial. **Siempre abrir "Show code" y revisar el SQL** antes de creer el resultado.
 
 ## 9. Problemas comunes
