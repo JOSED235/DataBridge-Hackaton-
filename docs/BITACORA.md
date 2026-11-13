@@ -137,6 +137,11 @@
 **Por qué:** La tabla bronze de amplificación fallaba con `DELTA_INVALID_CHARACTERS_IN_COLUMN_NAMES`. Silver no dependía de ella, pero bronze debe tener todas las fuentes.
 **Archivos:** `notebooks/01_bronze.py`
 
+### 2026-11-13 12:10 · José David
+**Qué:** Corrida final en Databricks (commit `e4af152`): bronze, silver y gold sin celdas fallidas. Bronze tiene 5.146 × 21 filas y columnas, más 15 tablas externas (incluida `bronze_icesixuao_gem_amplificacion_suelo`, 220 × 16). Todas las cifras coinciden con la corrida local: 4 geometrías reparadas, 1.234 predios sin construcción registrada, prioridades 179/357/892/2.141/435/1.142, ranking 3, 9, 18, 10, 20, 19, 17, sensibilidad 0,764 / 40 % y ocupantes 38.565 / 9.134 / 6.950. Desde aquí se congela el código.
+**Por qué:** Las cifras del correo deben salir de las tablas gold de Databricks.
+**Archivos:** tablas `workspace.default.*_icesixuao_*`, `docs/BITACORA.md`
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |
