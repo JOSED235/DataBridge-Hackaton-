@@ -2,64 +2,64 @@
 # MAGIC %md
 # MAGIC # 01 · Bronze: datos crudos tal como llegan
 # MAGIC
-# MAGIC - **Edificios** (datos oficiales del evento, satelitales, no redistribuibles).
+# MAGIC - **Edificios**: `Datosprediales.json` de la organización (5.146 edificios, 20 propiedades + geometría; análisis satelital, no redistribuible).
 # MAGIC - **Capas externas** (`data/externos/` del repo): comunas, barrios, salud, bomberos/policía, vías (OpenStreetMap), sismos (USGS) y microzonas sísmicas con amplificación del suelo (GEM TREQ).
 # MAGIC
-# MAGIC Bronze no corrige nada: guarda una copia fiel para poder rehacer silver/gold si algo sale mal.
+# MAGIC Bronze no corrige nada: guarda una copia fiel, **todo como texto y con los nulos tal como vienen**, para poder rehacer silver/gold si algo sale mal. Los tipos se corrigen en silver.
 # MAGIC
-# MAGIC **Antes de correr:** subir los `.geojson` y `.csv` de `data/externos/` al volumen `/Volumes/workspace/databridge/externos/` (Catalog → workspace → databridge → externos → *Upload to this volume*).
+# MAGIC **Antes de correr:** correr la celda que crea el volumen y subir a él `Datosprediales.json` y los `.geojson` y `.csv` de `data/externos/` (Catalog → workspace → default → Volumes → icesixuao → *Upload to this volume*).
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC CREATE SCHEMA IF NOT EXISTS workspace.databridge COMMENT 'DataBridge Hack: sismo 10-ago-2026, Cali';
-# MAGIC CREATE VOLUME IF NOT EXISTS workspace.databridge.externos COMMENT 'Capas externas (OSM, USGS) en GeoJSON';
-# MAGIC CREATE VOLUME IF NOT EXISTS workspace.databridge.salidas COMMENT 'GeoJSON exportados para el visor';
+# MAGIC %pip install geopandas --quiet
 
 # COMMAND ----------
 
-# TODO-VIERNES: completar según el paso a paso de carga de los organizadores.
-# Opción A: ya crearon una tabla -> poner su nombre completo en TABLA_ORIGEN.
-# Opción B: subimos un archivo a un volumen -> poner su ruta en ARCHIVO_ORIGEN (csv o geojson).
-TABLA_ORIGEN = ""        # ej. "workspace.default.edificios"
-ARCHIVO_ORIGEN = ""      # ej. "/Volumes/workspace/databridge/externos/edificios.csv"
-ESQUEMA = "workspace.databridge"
-VOL_EXT = "/Volumes/workspace/databridge/externos"
+# MAGIC %run ./00_utils_espacial
 
 # COMMAND ----------
 
-if TABLA_ORIGEN:
-    df = spark.table(TABLA_ORIGEN)
-elif ARCHIVO_ORIGEN.lower().endswith(".csv"):
-    df = spark.read.option("header", True).option("inferSchema", False).csv(ARCHIVO_ORIGEN)  # todo como texto: los tipos se corrigen en silver
-elif ARCHIVO_ORIGEN.lower().endswith((".geojson", ".json")):
-    import geopandas as gpd  # si falla: correr %pip install geopandas en una celda aparte
-    g = gpd.read_file(ARCHIVO_ORIGEN)
-    g["geom_wkt"] = g.geometry.to_wkt()
-    df = spark.createDataFrame(g.drop(columns="geometry").astype(str))
-else:
-    raise ValueError("Definir TABLA_ORIGEN o ARCHIVO_ORIGEN")
+# MAGIC %run ./00_pipeline
 
-df.write.mode("overwrite").option("overwriteSchema", True).saveAsTable(f"{ESQUEMA}.bronze_edificios")
-spark.sql(f"COMMENT ON TABLE {ESQUEMA}.bronze_edificios IS 'Edificios tal como los entregó la organización (análisis satelital, no inspección en terreno). No redistribuir.'")
-print(df.count(), "filas"); df.printSchema()
+# COMMAND ----------
+
+spark.sql(f"CREATE VOLUME IF NOT EXISTS {ESQUEMA}.{EQUIPO} COMMENT 'DataBridge Hack: edificios de la organización y capas externas'")
+print("Subir los archivos a:", VOL)
+
+# COMMAND ----------
+
+import os
+import geopandas as gpd
+from pyspark.sql.types import StringType, StructField, StructType
+
+
+def guardar_texto(pdf, nombre, comentario):
+    """pandas (todo texto) -> tabla Delta con esquema explícito de strings (sirve aunque una columna sea 100 % nula)."""
+    esquema = StructType([StructField(c, StringType()) for c in pdf.columns])
+    spark.createDataFrame(pdf, esquema).write.mode("overwrite").option("overwriteSchema", True).saveAsTable(nombre)
+    spark.sql(f"COMMENT ON TABLE {nombre} IS '{comentario}'")
+    print(f"{nombre}: {len(pdf)} filas, {len(pdf.columns)} columnas")
+
+
+ARCHIVO_ORIGEN = f"{VOL}/Datosprediales.json"
+bronze = bronze_desde_geojson(gpd.read_file(ARCHIVO_ORIGEN))
+assert bronze.shape == (5146, 21), bronze.shape  # la guía: 5.146 filas y 21 columnas (20 propiedades + geometría)
+guardar_texto(bronze, tabla("bronze", "predios"),
+              "Edificios tal como los entregó la organización (análisis satelital, no inspección en terreno). No redistribuir.")
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ## Primera revisión (anotar en la bitácora)
-# MAGIC Columnas reales, tipos, nulos por columna, valores distintos de `Estado_Estructural`, si hay coordenadas o geometría y en qué CRS.
-# MAGIC Con esto se ajusta `COLS` y `SEVERIDAD_ESTADO` en `00_pipeline`.
 
 # COMMAND ----------
 
 from pyspark.sql import functions as F
-t = spark.table(f"{ESQUEMA}.bronze_edificios")
+t = spark.table(tabla("bronze", "predios"))
 display(t.limit(20))
 display(t.select([F.round(100 * F.avg(F.col(c).isNull().cast("int")), 2).alias(c) for c in t.columns]))  # % nulos
-for c in t.columns:
-    if t.select(c).distinct().count() <= 30:
-        display(t.groupBy(c).count().orderBy(F.desc("count")))
+display(t.select([F.sum((F.trim(F.col(c)) == "").cast("int")).alias(c) for c in t.columns]))  # vacíos o solo espacios
+display(t.groupBy("Estado_Estructural").count().orderBy(F.desc("count")))
 
 # COMMAND ----------
 
@@ -68,14 +68,10 @@ for c in t.columns:
 
 # COMMAND ----------
 
-import os
-import geopandas as gpd
-
-for archivo in sorted(os.listdir(VOL_EXT)):
-    if not archivo.endswith(".geojson") or archivo.startswith("edificios"):
-        continue
-    g = gpd.read_file(f"{VOL_EXT}/{archivo}")
-    g["geom_wkt"] = g.geometry.to_wkt()
-    tabla = f"{ESQUEMA}.bronze_{archivo.removesuffix('.geojson').replace('-', '_').replace('.', '_')}"
-    spark.createDataFrame(g.drop(columns="geometry").astype(str)).write.mode("overwrite").option("overwriteSchema", True).saveAsTable(tabla)
-    print(f"{tabla}: {len(g)} filas")
+for archivo in sorted(os.listdir(VOL)):
+    nombre = archivo.rsplit(".", 1)[0].replace("-", "_").replace(".", "_")
+    if archivo.endswith(".geojson"):
+        guardar_texto(bronze_desde_geojson(gpd.read_file(f"{VOL}/{archivo}")), tabla("bronze", nombre), f"Capa externa {archivo} sin modificar")
+    elif archivo.startswith("gem_") and archivo.endswith(".csv"):
+        pdf = pd.read_csv(f"{VOL}/{archivo}", dtype=str, comment="#", keep_default_na=False).replace("", None)
+        guardar_texto(pdf, tabla("bronze", nombre), f"GEM TREQ (CC BY-SA 4.0): {archivo} sin modificar")

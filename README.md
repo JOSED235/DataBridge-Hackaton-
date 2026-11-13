@@ -12,15 +12,17 @@ Solución del equipo para la **DataBridge Hack** (IEEE Computer Society, Colombi
 |---|---|
 | Fuentes externas (USGS, OSM, suelo de GEM TREQ) | Descargadas en `data/externos/` |
 | Funciones espaciales | Listas, con autoprueba |
-| Notebooks bronze/silver/gold | Listos; falta ajustar columnas reales (`TODO-VIERNES`) |
+| Notebooks bronze/silver/gold | Ajustados a los datos oficiales y a los nombres de la guía (`workspace.default.<capa>_icesixuao_<contenido>`) |
 | Simulación con datos ficticios | Pasa de extremo a extremo |
-| Visor | Funciona con datos de muestra ficticios |
+| Corrida local con datos oficiales | Pasa (`scripts/correr_local.py`) |
+| Visor | Lee los GeoJSON generados con datos reales (no se suben al repo) |
 | Guion y preguntas del jurado | Borrador con cifras por llenar |
 
 ## Estructura
 
 ```
 CLAUDE.md / AGENTS.md     Reglas para asistentes de IA (bitácora, commits, README)
+DataBridge_Hack_Guia_Evento_2.md   Guía oficial del evento (datos, entrega, criterios del jurado)
 docs/
   DataBridge_Hack_Plan_Maestro.md   Guía oficial, estrategia y plan general
   PLAN_VIERNES.md                   EMPEZAR AQUÍ: estrategia, pendientes y paso a paso del viernes
@@ -38,12 +40,13 @@ notebooks/                Para importar en Databricks (Workspace → Import)
   03_gold.py              Índice, ranking, sensibilidad, SQL clave y exportación al visor
 scripts/
   descargar_osm.py        Descarga las capas de OSM a data/externos/
-  simular_pipeline.py     Corre el pipeline en local con edificios ficticios y llena visor/data/
+  simular_pipeline.py     Corre el pipeline en local con edificios ficticios (no pisa el mapa real)
+  correr_local.py         Corre el pipeline con los datos oficiales: gold en data/oficiales/salidas/ y mapa en visor/data/
 data/
   externos/               Capas públicas: OSM y USGS (GeoJSON), microzonas y amplificación del suelo de GEM (CSV)
-  oficial/                Datos del evento: NO se suben (están en .gitignore)
+  oficiales/              Datos del evento (Datosprediales.json): NO se suben (están en .gitignore)
 visor/                    MapLibre GL JS + deck.gl, sin build
-  data/                   GeoJSON que lee el visor (hoy: muestra ficticia)
+  data/                   GeoJSON que lee el visor; edificios y comunas con datos reales no se suben
   vendor/                 Librerías locales para funcionar sin internet
 ```
 
@@ -64,6 +67,7 @@ Sin internet funciona igual, con fondo plano en lugar del mapa base.
 ```bash
 python notebooks/00_utils_espacial.py   # autoprueba de funciones espaciales
 python scripts/simular_pipeline.py      # pipeline completo con datos ficticios
+python scripts/correr_local.py          # pipeline con los datos oficiales de data/oficiales/
 python scripts/descargar_osm.py         # volver a bajar capas de OSM (borra antes el archivo a actualizar)
 ```
 
@@ -72,5 +76,5 @@ python scripts/descargar_osm.py         # volver a bajar capas de OSM (borra ant
 ## Reglas importantes
 
 - Los datos de edificios vienen de **imágenes satelitales**: sirven para priorizar, no para declarar una edificación segura o insegura.
-- Los datos oficiales del evento **no se redistribuyen**: van en `data/oficial/` y nunca se suben al repo.
+- Los datos oficiales del evento **no se redistribuyen**: van en `data/oficiales/` y nunca se suben al repo, igual que el mapa generado con ellos.
 - Cada aporte y decisión se documenta en `docs/BITACORA.md`.

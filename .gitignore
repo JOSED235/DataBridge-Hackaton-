@@ -1,5 +1,6 @@
 # Datos oficiales del evento: no se pueden redistribuir
 data/oficial/
+data/oficiales/
 
 # Python
 __pycache__/
@@ -14,3 +15,7 @@ Thumbs.db
 
 # Extractos PBF de Geofabrik (334 MB, no versionar)
 data/cache/
+
+# Mapa generado con datos oficiales: no se sube
+visor/data/edificios.geojson
+visor/data/comunas.geojson
