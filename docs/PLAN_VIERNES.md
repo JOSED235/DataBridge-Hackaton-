@@ -36,7 +36,15 @@ El sábado se sustentan **5 min solo con eso: no hay demo en vivo del visor.** E
 - **Suelo:** **la hipótesis del efecto de sitio no se cumple en esta muestra.** El % de escombros va de 5,4 % a 8,9 % entre microzonas, sin relación con la amplificación, y tampoco cambia con la altura. Se dice así en la entrega; afirmar lo contrario resta puntos. El suelo sigue en el índice porque mide la sacudida *futura* de una réplica, no explica el daño observado. Al mediodía hay que decidir si baja al 10 %.
 - **Área sin dato:** la guía dice que los 435 edificios sin dato suman "cerca del 45 %" del área construida. Nosotros medimos **9,5 %**, tanto en m² (EPSG:9377) como con `Shape__Area`. Anotarlo como discrepancia y no usar el 45 %.
 - **NPISOS:** vale 0 en 1.234 edificios, en proporción pareja entre las 4 categorías (21 % a 29 %). Se imputan con la mediana de la comuna, se marcan con `pisos_imputado` y se excluyen del análisis por altura.
-- **Ranking de comunas por índice p90:** 3, 20, 18, 9, 10, 19 y 17.
+- **Ranking de comunas por índice p90** (con fuentes externas): 3, 9, 10, 18, 17, 20 y 19.
+
+**Fuentes externas (11:00).** Se agregaron el modelo de exposición de GEM edificio por edificio, la licuación de GEM, el ShakeMap del USGS validado con el acelerógrafo del SGC y DYFI, y las réplicas actualizadas. Ficha completa en `docs/FUENTES.md`; índice nuevo en `docs/INDICE_RIESGO.md`. Hallazgos:
+
+- **Población:** 6.907 personas duermen en edificios con daño visible y 2.646 en edificios sin dato.
+- **Vulnerabilidad:** el 35,8 % de los edificios es anterior al código de 1984.
+- **Sacudida:** MMI 6,4 a 7,1 en la zona.
+- **Réplicas:** 47 de las 67 fueron en septiembre.
+- **El daño satelital no se explica por ningún factor ni se agrupa en el espacio.** Ese es el argumento de por qué el índice combina el daño con las fuentes externas.
 
 ## 1. Estrategia
 
@@ -134,7 +142,7 @@ Ambos: revisar juntos el índice al mediodía y ensayar al final. Cada uno anota
 
 1. En Databricks: **Workspace → Import** y subir los 5 archivos de `notebooks/` (se importan como notebooks).
 2. Correr la primera celda de `01_bronze` (crea esquema `workspace.databridge` y los volúmenes).
-3. **Catalog → workspace → databridge → externos → Upload to this volume:** subir los 9 archivos de `data/externos/` (7 `.geojson` y 2 `.csv` de suelo).
+3. **Catalog → workspace → databridge → externos → Upload to this volume:** subir los 15 archivos de `data/externos/` (`.geojson` y `.csv`).
 4. Cargar los edificios según el paso a paso oficial. Poner la tabla o archivo en `TABLA_ORIGEN` o `ARCHIVO_ORIGEN` de `01_bronze` y correrlo completo.
 5. Con la "Primera revisión" de `01_bronze`, anotar en la bitácora: columnas reales, % de nulos, valores de `Estado_Estructural`, si hay coordenadas o polígonos y en qué CRS.
 6. Guardar una copia local de los datos en `data/oficial/` (está en `.gitignore`: **nunca se sube**).

@@ -3,7 +3,7 @@
 # MAGIC # 03 · Gold: índice de riesgo ante réplicas, ranking por comuna y exportación al mapa
 # MAGIC
 # MAGIC Índice = suma ponderada de 6 componentes normalizados a 0..1 (justificación en `docs/INDICE_RIESGO.md`):
-# MAGIC daño observado 30 %, amplificación del suelo 15 %, altura 15 %, exposición 15 %, lejanía a salud 10 %, posible bloqueo de vía 15 %.
+# MAGIC daño observado 25 %, vulnerabilidad de la tipología 20 %, ocupantes 15 %, suelo 10 %, altura 10 %, lejanía a salud 10 %, posible bloqueo de vía 10 %.
 # MAGIC
 # MAGIC Salidas: `gold_icesixuao_predios`, `gold_icesixuao_comunas`, `gold_icesixuao_sensibilidad` y los GeoJSON del mapa en `/Volumes/workspace/default/icesixuao/salidas/`.
 
@@ -88,13 +88,28 @@ GROUP BY 1 ORDER BY 1"""))
 
 # COMMAND ----------
 
-# Hipótesis del efecto de sitio (informe, cap. 6.2): ¿hay más daño donde el suelo amplifica más, a igual altura?
+# ¿Qué factor externo se asocia con el daño satelital? Tasa de daño por categoría y prueba chi-cuadrado.
+# Resultado con los datos del evento: ninguno es significativo (p > 0,05), ni el daño se agrupa en el espacio.
+from scipy.stats import chi2_contingency
+v = g[~g["sin_dato_satelital"]].assign(danio=lambda d: d["sev_estado"] >= 0.7)
+filas = []
+for col in ["periodo_construccion", "estrato", "uso", "microzona", "licuacion_cat", "comuna"]:
+    ct = pd.crosstab(v[col], v["danio"])
+    filas.append({"factor": col, "categorias": len(ct), "p_valor_chi2": round(chi2_contingency(ct)[1], 3),
+                  "pct_danio_min": round(100 * (ct[True] / ct.sum(axis=1)).min(), 1),
+                  "pct_danio_max": round(100 * (ct[True] / ct.sum(axis=1)).max(), 1)})
+factores = pd.DataFrame(filas)
+spark.createDataFrame(factores).write.mode("overwrite").option("overwriteSchema", True).saveAsTable(tabla("gold", "factores"))
+display(factores)
+
+# COMMAND ----------
+
+# Población: ocupantes (GEM, censo 2018) en edificios con daño visible y en edificios sin dato satelital
 display(spark.sql(f"""
-SELECT microzona, count(*) AS n, round(avg(amplif_suelo), 2) AS amplif_media,
-       round(100 * avg(cast(alta_escombros AS int)), 1) AS pct_escombros,
-       round(100 * avg(cast(sev_estado >= 0.7 AS int)), 1) AS pct_escombros_o_techo
-FROM {GP} WHERE NOT sin_dato_satelital
-GROUP BY 1 HAVING count(*) >= 30 ORDER BY amplif_media"""))
+SELECT comuna, round(sum(ocupantes_noche)) AS ocupantes,
+       round(sum(CASE WHEN sev_estado >= 0.7 THEN ocupantes_noche END)) AS en_edif_con_danio,
+       round(sum(CASE WHEN sin_dato_satelital THEN ocupantes_noche END)) AS en_edif_sin_dato
+FROM {GP} GROUP BY comuna ORDER BY en_edif_con_danio DESC"""))
 
 # COMMAND ----------
 

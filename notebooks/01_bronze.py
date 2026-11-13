@@ -3,7 +3,7 @@
 # MAGIC # 01 · Bronze: datos crudos tal como llegan
 # MAGIC
 # MAGIC - **Edificios**: `Datosprediales.json` de la organización (5.146 edificios, 20 propiedades + geometría; análisis satelital, no redistribuible).
-# MAGIC - **Capas externas** (`data/externos/` del repo): comunas, barrios, salud, bomberos/policía, vías (OpenStreetMap), sismos (USGS) y microzonas sísmicas con amplificación del suelo (GEM TREQ).
+# MAGIC - **Capas externas** (`data/externos/` del repo): comunas, barrios, salud, bomberos/policía, vías (OpenStreetMap); réplicas, ShakeMap y estaciones (USGS/SGC); microzonas, amplificación, licuación, pendiente y modelo de exposición edificio por edificio (GEM TREQ).
 # MAGIC
 # MAGIC Bronze no corrige nada: guarda una copia fiel, **todo como texto y con los nulos tal como vienen**, para poder rehacer silver/gold si algo sale mal. Los tipos se corrigen en silver.
 # MAGIC
@@ -72,6 +72,6 @@ for archivo in sorted(os.listdir(VOL)):
     nombre = archivo.rsplit(".", 1)[0].replace("-", "_").replace(".", "_")
     if archivo.endswith(".geojson"):
         guardar_texto(bronze_desde_geojson(gpd.read_file(f"{VOL}/{archivo}")), tabla("bronze", nombre), f"Capa externa {archivo} sin modificar")
-    elif archivo.startswith("gem_") and archivo.endswith(".csv"):
+    elif archivo.startswith(("gem_", "usgs_")) and archivo.endswith(".csv"):
         pdf = pd.read_csv(f"{VOL}/{archivo}", dtype=str, comment="#", keep_default_na=False).replace("", None)
-        guardar_texto(pdf, tabla("bronze", nombre), f"GEM TREQ (CC BY-SA 4.0): {archivo} sin modificar")
+        guardar_texto(pdf, tabla("bronze", nombre), f"Fuente externa {archivo} (ver docs/FUENTES.md)")

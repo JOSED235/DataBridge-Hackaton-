@@ -1,58 +1,159 @@
-# Fuentes de datos
+# Fuentes externas
 
-> Regla: antes de usar o citar una fuente, verificar que existe y dice lo que se afirma. Las cifras oficiales del sismo son preliminares; si dos fuentes no coinciden, anotar la discrepancia y cuál se eligió.
+> **Regla:** antes de usar o citar una fuente, verificar que existe y dice lo que se afirma. Las cifras oficiales del sismo son preliminares; si dos fuentes no coinciden, se anota la discrepancia y cuál se eligió.
+>
+> **Criterio del jurado (guía oficial):** cada dato externo debe ser **verdadero** (fuente identificable y citada), **tener sentido** (cubre Cali, es reciente y se cruza con los edificios) y **aportar valor** (cambia o enriquece la respuesta). Un dato que solo decora no suma; uno falso o una conclusión sin sustento resta. Cada ficha de abajo responde esas tres pruebas.
 
-> **Revisión del 13-nov-2026:** el apartado [Revisión de las fuentes del informe](#revisión-de-las-fuentes-del-informe-13-nov-2026) registra las 20 entradas del catálogo y las 38 referencias de `INFORME_SISMO.md`. Distingue datos inspeccionados, recursos localizados y verificaciones pendientes. Las secciones anteriores a esa revisión conservan el registro de la preparación inicial.
+> **Dos partes:** las fichas 1 a 8 son las fuentes **usadas** en el pipeline y la entrega. La sección [Revisión de las fuentes del informe](#revisión-de-las-fuentes-del-informe-13-nov-2026) revisa las 20 entradas del catálogo y las 38 referencias de `INFORME_SISMO.md`: datos inspeccionados, recursos localizados y verificaciones pendientes.
 
-## Descargadas y verificadas (12-nov-2026)
+Todas las descargas son reproducibles con dos scripts: `scripts/descargar_osm.py` (OpenStreetMap) y `scripts/descargar_externos.py` (USGS y GEM). Los archivos quedan recortados a Cali en `data/externos/`. Los cruces con los edificios están en `cruzar_externos()`, `asignar_suelo()` y `enriquecer()` de `notebooks/00_pipeline.py`. Todas las cifras de este documento salen de `scripts/correr_local.py` sobre los 5.146 edificios oficiales.
 
-| Fuente | Enlace | Archivo | Formato | Contenido | Estado |
+## Resumen
+
+| # | Fuente | Qué responde | Cómo se cruza con cada edificio | Cobertura del cruce | Dónde se usa |
 |---|---|---|---|---|---|
-| USGS, catálogo de sismos | [API FDSN](https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2026-08-01&endtime=2026-11-12&latitude=4.9&longitude=-76.3&maxradiuskm=300&minmagnitude=2.5) | `data/externos/usgs_sismos_2026-08.geojson` | GeoJSON | 76 sismos M ≥ 2,5 a 300 km del epicentro, 1-ago a 12-nov-2026. Principal: M7,4, 10-ago-2026 12:34 UTC (7:34 a. m. hora local), 116 km de profundidad, 4 km SSW de San José del Palmar | Descargada |
-| OpenStreetMap: comunas | Overpass API (`scripts/descargar_osm.py`) | `osm_comunas.geojson` | GeoJSON | 22 comunas (admin_level 8), 122 km² en total | Descargada |
-| OpenStreetMap: barrios | ídem | `osm_barrios.geojson` | GeoJSON | 338 barrios/sectores (admin_level 9) | Descargada |
-| OpenStreetMap: salud | ídem | `osm_salud.geojson` | GeoJSON | 439 puntos (378 `hospital`, 61 `clinic`) | Descargada |
-| OpenStreetMap: emergencia | ídem | `osm_emergencia.geojson` | GeoJSON | 11 estaciones de bomberos, 52 de policía | Descargada |
-| OpenStreetMap: educación | ídem | `osm_educacion.geojson` | GeoJSON | 287 colegios y universidades (posibles albergues) | Descargada |
-| OpenStreetMap: vías | ídem | `osm_vias_principales.geojson` | GeoJSON | 4070 tramos motorway/trunk/primary/secondary | Descargada |
+| 1 | GEM TREQ: modelo de exposición de Cali | ¿Quién vive ahí y qué tan vulnerable es la construcción? | Edificio GEM dentro del polígono o a ≤ 15 m | 98,9 % | `c_vulnerabilidad`, `c_exposicion`, pisos faltantes, análisis de factores, población afectada |
+| 2 | GEM TREQ: microzonificación y funciones de amplificación | ¿Cuánto amplifica el suelo la próxima sacudida? | Punto de grilla más cercano + período propio del edificio | 100 % | `c_suelo` |
+| 3 | GEM TREQ: licuación y pendiente | ¿Puede fallar el terreno bajo el edificio? | Sitio más cercano | 100 % | `c_suelo`, análisis de factores |
+| 4 | USGS ShakeMap v11 (evento us6000tjl2) | ¿Con qué intensidad se sacudió cada edificio? | Nodo más cercano (~1 km) | 100 % | Análisis de factores, contexto |
+| 5 | SGC (acelerógrafo RAC2C) y USGS DYFI | ¿El ShakeMap es creíble en Cali? | Comparación estación/celda contra nodo | 1 estación, 32 celdas | Validación |
+| 6 | USGS: catálogo de réplicas | ¿Siguen ocurriendo réplicas? | Contexto regional (no por edificio) | — | Contexto y mapa |
+| 7 | OpenStreetMap | ¿Qué servicios urbanos quedan expuestos? | Distancia, unión espacial, conteo en radio | 100 % | `c_acceso_salud`, `c_bloqueo_via`, comuna y barrio |
+| 8 | Informes oficiales y prensa | Cifras de impacto para el contexto | No se cruzan | — | Diapositiva de contexto |
 
-Licencia OSM: ODbL, citar "© colaboradores de OpenStreetMap".
+---
 
-## Contexto del sismo (para la presentación, no para el modelo)
+## 1. GEM TREQ: modelo de exposición de Cali (edificio por edificio)
+
+| | |
+|---|---|
+| **Qué es** | Inventario de los 348.483 edificios de Cali con su tipología constructiva, construido para la evaluación de riesgo sísmico de la ciudad. Por edificio: período de construcción, estrato, uso, pisos, ocupantes nocturnos, área, valor de reposición y clase de taxonomía GEM. |
+| **Quién lo produce** | Fundación GEM (Global Earthquake Model), proyecto TREQ, con la Alcaldía de Cali. Base: geodatabase de la Alcaldía (Etapas I y II), catastro al 30-abr-2021, censo DANE 2018 y 25.641 encuestas a edificaciones. Metodología: Yepes-Estrada et al. (2022). |
+| **Enlace** | [github.com/gem/treq-riesgo-urbano/tree/master/Cali/Exposicion](https://github.com/gem/treq-riesgo-urbano/tree/master/Cali/Exposicion): `Exposure_Cali_Colombia.csv` y `taxonomy_mapping_MEAN.csv` |
+| **Licencia** | CC BY-SA 4.0: citar "GEM Foundation, proyecto TREQ". |
+| **Cómo se obtuvo** | `scripts/descargar_externos.py`, 13-nov-2026. Se descargó el archivo completo (47,6 MB) y se recortó a las 7 comunas de los datos oficiales (3, 9, 10, 17, 18, 19, 20): 95.010 edificios, 8 MB, en `data/externos/gem_exposicion.csv`. |
+| **Cómo se calculó la vulnerabilidad** | GEM no asigna una sola tipología a cada edificio: cada clase (uso / período / pisos / estrato) se reparte entre varias tipologías con pesos que suman 1, según el criterio de expertos (esquema `MEAN`). Se sumaron los pesos de las tipologías con **ductilidad baja o nula** (`DUL`, `DNO`) → `p_ductilidad_baja`. Igual con mampostería no reforzada y adobe (`MUR`) → `p_mamposteria_no_reforzada`. La ductilidad es la capacidad de deformarse sin colapsar; GEM la asocia con el cumplimiento del código y la formalidad de la construcción. |
+| **Cómo se cruzó** | `sjoin_nearest` en EPSG:9377 con un máximo de 15 m: si el punto GEM cae dentro del polígono oficial la distancia es 0. Resultado: 98,9 % de los edificios cruzados; en 3.084 (60 %) el punto GEM está dentro del polígono; mediana 0 m; el 95 % a menos de 9 m. |
+| **Por qué esta fuente** | Es la única base pública de Cali **por edificio** con año, ocupantes y tipología. Las alternativas eran más gruesas: población DANE por manzana (geoportal por verificar y sin tipología), densidad de edificios como proxy (lo que usábamos) o grillas globales de población (WorldPop, Kontur), que no distinguen un edificio de otro. |
+| **Qué aportó** | (1) **Población afectada** (dimensión población): 30.234 ocupantes en los edificios analizados, **6.907 en edificios con daño visible** (escombros o techo), 1.404 en edificios con escombros y 2.646 en edificios sin dato satelital. (2) **Vulnerabilidad**: el 35,8 % se construyó antes de 1985, es decir, antes del primer código sísmico (Decreto-Ley 1400 de 1984); la probabilidad media de ductilidad baja es 0,82. (3) **Pisos faltantes**: de los 1.245 edificios con `NPISOS` = 0 o nulo, 1.221 se completaron con los pisos de GEM en lugar de la mediana de la comuna. (4) **Servicios**: 86 edificios institucionales con daño visible. |
+| **Validación** | Donde ambos tienen pisos, `NPISOS` y GEM coinciden exactamente en el 54 % (correlación 0,55). GEM agrupa 6 a 10 pisos en una sola categoría y su catastro es de 2021. |
+| **Limitaciones** | Es un modelo: la tipología es probabilística, no observada en cada edificio. Fecha de corte del catastro: abril de 2021. Los ocupantes son nocturnos (el sismo fue a las 7:34 a. m., cuando mucha gente seguía en casa). |
+| **Tablas** | `silver_icesixuao_predios` (columnas `periodo_construccion`, `estrato`, `uso`, `ocupantes_noche`, `p_ductilidad_baja`, `pisos_fuente`, ...), `gold_icesixuao_predios`, `gold_icesixuao_comunas` (`ocupantes_en_edif_con_danio`, `pct_antes_1985`), `gold_icesixuao_factores`. |
+
+## 2. GEM TREQ: microzonificación sísmica y funciones de amplificación
+
+| | |
+|---|---|
+| **Qué es** | Microzonificación sísmica oficial de Cali (INGEOMINAS y DAGMA, 2005), con 10 zonas de respuesta, publicada por GEM como una grilla de 792 puntos (~750 m). Incluye la función de amplificación del suelo de cada microzona por período espectral (0,1 a 2,0 s) y nivel de sacudida en roca. |
+| **Enlace** | [github.com/gem/treq-riesgo-urbano/tree/master/Cali/Condiciones_Sitio](https://github.com/gem/treq-riesgo-urbano/tree/master/Cali/Condiciones_Sitio): `site_model_uniform_grid_ampcodes.csv` y `soil_amplification_model_20210825_sigaf03.csv`, guardados como `gem_microzonas_grilla.csv` y `gem_amplificacion_suelo.csv`. |
+| **Licencia** | CC BY-SA 4.0. |
+| **Por qué esta fuente** | La capa oficial vivía en la IDESC, caída desde el 21-oct-2026 (ver "No disponibles"). GEM publica la misma microzonificación en formato abierto. Se descartó el Vs30 global del USGS (más grueso y sin microzonas) y el Vs30 de la propia grilla: dentro de las microzonas vale 800 m/s (roca de referencia), porque allí manda la función de amplificación. |
+| **Cómo se cruzó** | Microzona del punto de grilla más cercano. Período propio del edificio T ≈ pisos/10 s, redondeado al período más cercano del modelo. Amplificación leída para 0,23 g en roca. Fuera de la microzonificación (`noaf`), el factor es 1. |
+| **Qué aportó** | Un factor físico de la sacudida **futura** para cada edificio: los 5.146 caen en 7 microzonas (1, 2, 3, 4a, 4c, 4d, 5), con una amplificación de 1,0 a 1,9 veces. |
+| **Resultado honesto** | El daño satelital **no** cambia con la microzona (escombros entre 5,4 % y 8,9 %, chi-cuadrado p = 0,21; escombros o techo, p = 0,34). El suelo no explica el daño observado en esta muestra; entra al índice como amplificador de la próxima réplica, con peso bajo (10 %). |
+| **Limitaciones** | Resolución de ~750 m: en los bordes entre microzonas un edificio puede quedar en la vecina. Las funciones son modelos estadísticos, no mediciones de este sismo. |
+
+## 3. GEM TREQ: susceptibilidad a licuación y pendiente
+
+| | |
+|---|---|
+| **Qué es** | 4.169 sitios de Cali con la unidad geológica, la susceptibilidad a licuación (`vh` muy alta, `h`, `m`, `l`, `vl`, `n` nula), la profundidad del nivel freático y la pendiente del terreno. |
+| **Enlace** | Misma carpeta de GEM: `sites_liquefaction.csv` y `sites_landslide.csv`, unidos en `gem_sitio_licuacion_ladera.csv` (se comprobó que los sitios coinciden fila a fila). |
+| **Por qué** | El USGS emitió alerta roja de licuación para este evento (producto *ground-failure*). El modelo del USGS es un ráster global de ~1 km; el de GEM es local y por unidad geológica de Cali. |
+| **Cómo se cruzó** | Sitio más cercano. Categoría convertida a 0..1 (`vh` 1,0 · `h` 0,8 · `m` 0,5 · `l` 0,25 · `vl` 0,1 · `n` 0). |
+| **Qué aportó** | La comuna 10 tiene el 34,5 % de sus edificios en susceptibilidad alta o muy alta; las demás, entre 0 % y 4,7 %. Entra al índice dentro de `c_suelo`, promediado con la amplificación. |
+| **Resultado honesto** | Sin relación con el daño satelital (chi-cuadrado p = 0,18). |
+
+## 4. USGS ShakeMap del sismo principal
+
+| | |
+|---|---|
+| **Qué es** | Mapa oficial del movimiento del suelo del evento us6000tjl2 (M7,4, 10-ago-2026), versión 11. Cada nodo (~1 km) trae la intensidad Mercalli (MMI), PGA, PGV y aceleración espectral a 0,3, 0,6, 1,0 y 3,0 s. Combina 66 estaciones sísmicas, 458 observaciones de intensidad y modelos de atenuación. |
+| **Enlace** | [Página del evento](https://earthquake.usgs.gov/earthquakes/eventpage/us6000tjl2/shakemap): archivo `grid.xml` del producto ShakeMap. |
+| **Licencia** | Dominio público (gobierno de EE. UU.). |
+| **Cómo se obtuvo** | `scripts/descargar_externos.py` lee el `grid.xml` (28 MB, 674 × 671 nodos) y lo recorta al casco urbano: 306 nodos en `usgs_shakemap_cali.csv`. PGA y PSA vienen en %g y se pasan a g. |
+| **Por qué** | Es la estimación oficial de cuánto se sacudió cada punto. Sin ella, "Cali está a 160 km del epicentro" no dice nada de la sacudida real. |
+| **Qué aportó** | Los edificios analizados recibieron **MMI 6,4 a 7,1 (fuerte a muy fuerte) y PGA de 0,19 a 0,23 g**. Es la cifra de contexto de la mitad (a). |
+| **Resultado honesto** | Dentro de la zona de los datos la sacudida varió poco y no se asocia con el daño satelital. Por eso no entra al índice: describe el sismo que ya pasó, no la próxima réplica. |
+
+## 5. Validación: acelerógrafo del SGC y "Did You Feel It?" del USGS
+
+| | |
+|---|---|
+| **Qué es** | Las observaciones que usa el ShakeMap dentro de Cali: la estación RAC2C de la Red Nacional de Acelerógrafos del SGC y 32 celdas de 1 km de reportes ciudadanos DYFI. |
+| **Enlace** | `stationlist.json` del producto ShakeMap; [DYFI del evento](https://earthquake.usgs.gov/earthquakes/eventpage/us6000tjl2/dyfi). |
+| **Cómo se usó** | Se comparó cada observación con el nodo del ShakeMap más cercano. Archivo: `usgs_estaciones_cali.geojson`. |
+| **Qué aportó** | **El ShakeMap es consistente en Cali.** La estación RAC2C (SGC) registró PGA 0,116 g y MMI 6,9; el ShakeMap da MMI 6,8 en ese punto, aunque con PGA 0,154 g, un 33 % más alta. Las 32 celdas DYFI promedian una intensidad de 6,86 y el ShakeMap 6,79 en los mismos puntos. Esto le da credibilidad a la fuente 4 ante el jurado. |
+
+## 6. USGS: catálogo de réplicas
+
+| | |
+|---|---|
+| **Qué es** | Catálogo ComCat: sismos M ≥ 2,5 a menos de 150 km del epicentro, del 10-ago al 13-nov-2026. |
+| **Enlace** | [API FDSN](https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2026-08-10&endtime=2026-11-14&latitude=4.8601&longitude=-76.2558&maxradiuskm=150&minmagnitude=2.5&orderby=time-asc), guardado como `usgs_replicas.geojson`. |
+| **Qué aportó** | 67 réplicas después del sismo principal, la mayor de M5,4. **47 fueron en septiembre**, un mes después del sismo, y la última fue el 3-nov. La amenaza de réplicas sigue vigente, que es la premisa de la pregunta. |
+| **Limitaciones** | Todas las registradas por el USGS en la zona son M ≥ 4: su red no detecta las pequeñas tan lejos. La prensa citó más de 130 réplicas (fuente 8). No se cruza por edificio porque todas están a más de 100 km de Cali. |
+
+## 7. OpenStreetMap: servicios urbanos, vías y límites
+
+| | |
+|---|---|
+| **Qué es** | Comunas (22), barrios (338), salud (439: 378 `hospital`, 61 `clinic`), bomberos y policía (63), educación (287) y vías principales (4.070 tramos motorway/trunk/primary/secondary). |
+| **Enlace y licencia** | Overpass API (`scripts/descargar_osm.py`, 12-nov-2026) y extracto PBF de Geofabrik (`scripts/extraer_osm_pbf.py`, que agrega `osm_puntos_encuentro.geojson`). ODbL: citar "© colaboradores de OpenStreetMap". |
+| **Por qué** | El portal de datos abiertos de Cali y la IDESC están fuera de línea desde el 21-oct-2026. OSM es la única fuente abierta con servicios y vías de toda la ciudad. |
+| **Cómo se cruzó** | Distancia al hospital o clínica más cercano; distancia a la vía principal más cercana; comuna y barrio por unión espacial (se completaron las 2 comunas vacías). |
+| **Qué aportó** | Servicios urbanos: 147 edificios con escombros a menos de 200 m de un centro de salud. 5 edificios con escombros podrían bloquear una vía principal (regla: distancia a la vía ≤ altura, pisos × 3 m); son pocos porque los edificios son bajos (mediana de 2 pisos). |
+| **Limitaciones** | OSM etiqueta como "hospital" muchas IPS pequeñas, así que la distancia a salud es optimista. Barrios con nombres de OSM, no los códigos catastrales. |
+
+## 8. Contexto del sismo (para la presentación, no para el modelo)
 
 | Fuente | Enlace | Dato | Nota |
 |---|---|---|---|
 | OPS, Sitrep 1 | [PDF](https://www.paho.org/sites/default/files/2026/08/sitrep1-terremoto-colombia-agosto-20260.pdf) | 111 fallecidos y 87 heridos (corte 13:30 del 10-ago) | Preliminar. Profundidad 103 km según OPS |
-| Cambio Colombia | [Nota](https://cambiocolombia.com/pais/articulo/2026/8/sismo-de-magnitud-74-con-epicentro-en-choco-se-sintio-en-gran-parte-de-colombia-que-se-sabe-hasta-ahora) | Profundidad 96 km según boletín del SGC | **Discrepancia de profundidad:** SGC 96 km, OPS 103 km, USGS 116 km. Usamos la de USGS porque es la del catálogo que descargamos. |
-| Infobae | [Nota](https://www.infobae.com/colombia/2026/08/12/nuevo-temblor-en-choco-se-sintio-con-fuerza-en-cali-y-genero-nuevas-afectaciones-en-la-infraestructura/) | Réplica del 12-ago con nuevas afectaciones en Cali | Útil para el argumento "las réplicas siguen causando daño" |
-| NTN24 | [Nota](https://www.ntn24.com/noticias-actualidad/nuevo-sismo-sacudio-la-region-de-choco-en-colombia-reportan-que-se-sintio-tambien-en-cali-651737) | Secuencia de más de 130 réplicas | El USGS registra menos porque su umbral es M ≥ 2,5 |
+| Cambio Colombia | [Nota](https://cambiocolombia.com/pais/articulo/2026/8/sismo-de-magnitud-74-con-epicentro-en-choco-se-sintio-en-gran-parte-de-colombia-que-se-sabe-hasta-ahora) | Profundidad 96 km según boletín del SGC | **Discrepancia de profundidad:** SGC 96 km (boletín), OPS 103 km, USGS 116 km. Usamos la del USGS porque es la del catálogo y el ShakeMap que usamos. |
+| Infobae | [Nota](https://www.infobae.com/colombia/2026/08/12/nuevo-temblor-en-choco-se-sintio-con-fuerza-en-cali-y-genero-nuevas-afectaciones-en-la-infraestructura/) | Réplica del 12-ago con nuevas afectaciones en Cali | Argumento: "las réplicas siguen causando daño" |
+| NTN24 | [Nota](https://www.ntn24.com/noticias-actualidad/nuevo-sismo-sacudio-la-region-de-choco-en-colombia-reportan-que-se-sintio-tambien-en-cali-651737) | Más de 130 réplicas | El USGS registra menos (ver fuente 6) |
+| USGS, página del evento | [us6000tjl2](https://earthquake.usgs.gov/earthquakes/eventpage/us6000tjl2) | M7,4 Mww, 116 km, alerta roja PAGER, 1.253 reportes DYFI | Verificado el 13-nov-2026 por la API |
+| Informe de investigación del equipo | `docs/INFORME_SISMO.md` | Comparación con Venezuela, banco de 19 casos, historia del código | Verificar cada cifra contra su fuente antes de ponerla en una diapositiva |
 
-### Suelo (agregado el 13-nov-2026)
+## Qué dicen las fuentes externas sobre el daño satelital
 
-| Fuente | Enlace | Dato | Nota |
-|---|---|---|---|
-| GEM, proyecto TREQ (riesgo urbano de Cali) | [github.com/gem/treq-riesgo-urbano](https://github.com/gem/treq-riesgo-urbano/tree/master/Cali/Condiciones_Sitio) | Grilla de 792 puntos con la microzona sísmica (INGEOMINAS-DAGMA 2005) y funciones de amplificación del suelo por microzona, período y nivel de sacudida | Licencia CC BY-SA 4.0 (citar a GEM). Originales `site_model_uniform_grid_ampcodes.csv` y `soil_amplification_model_20210825_sigaf03.csv`, guardados como `data/externos/gem_microzonas_grilla.csv` y `gem_amplificacion_suelo.csv`. Verificado el 13-nov-2026. Dentro de las microzonas la columna `vs30` vale 800 (roca de referencia), por eso se usa el factor de amplificación y no el Vs30. |
-| Informe de investigación previa del equipo | `docs/INFORME_SISMO.md` | Parámetros oficiales, comparación con Venezuela, banco de 19 casos, suelo, ondas, código y corrupción constructiva | Cada cifra cita fuente y fecha de corte; verificarla contra su fuente antes de ponerla en una diapositiva. **Discrepancia:** el informe da SGC ≈ 103 km de profundidad; arriba se anotó 96 km del boletín del SGC. Seguimos con USGS 116 km. |
+Se probó si alguna variable externa se asocia con el daño observado (escombros o techo desaparecido), con una prueba chi-cuadrado sobre los 4.711 edificios con dato satelital (tabla `gold_icesixuao_factores`):
 
-**TODO-VIERNES:** si hay tiempo, buscar el balance oficial más reciente de UNGRD y SGC para la diapositiva de contexto.
+| Factor (fuente) | % con daño, mínimo y máximo entre categorías | p-valor |
+|---|---|---|
+| Período de construcción (GEM) | 26,7 % a 34,0 % | 0,14 |
+| Estrato (GEM) | 20,0 % a 29,0 % | 0,94 |
+| Uso (GEM) | 28,3 % a 31,8 % | 0,85 |
+| Microzona (GEM) | — | 0,34 |
+| Licuación (GEM) | 20,8 % a 29,1 % | 0,18 |
+| Comuna | — | 0,51 |
+
+Además, el daño **no se agrupa en el espacio**: los vecinos a menos de 50 m de un edificio con escombros tienen escombros en la misma proporción que los vecinos de uno sin escombros (6,1 % frente a 6,3 %; prueba de permutación, p = 0,62).
+
+**Lectura:** con estos datos, el daño satelital se comporta como una señal individual, no como un patrón explicable por el suelo, la edad o el uso. Hay dos explicaciones posibles: el daño fue parejo en esta zona, o la clasificación satelital tiene mucho ruido por edificio (la guía advierte que son inferencias, no inspecciones). Ninguna de las dos se puede descartar con estos datos. **Consecuencia práctica:** el dato satelital sirve para marcar edificios a inspeccionar, pero no basta para priorizar. Por eso el índice combina el daño observado con lo que las fuentes externas sí saben de cada edificio (vulnerabilidad, ocupantes, suelo y servicios).
+
+## Lista para el correo de entrega
+
+1. **GEM TREQ, modelo de exposición de Cali** (github.com/gem/treq-riesgo-urbano): por edificio, año, estrato, uso, ocupantes y vulnerabilidad de la tipología. Aportó la población en edificios dañados y la vulnerabilidad del índice.
+2. **GEM TREQ, microzonificación INGEOMINAS-DAGMA 2005, amplificación y licuación** (misma fuente): componente de suelo del índice ante réplicas.
+3. **USGS ShakeMap v11 del evento us6000tjl2** (earthquake.usgs.gov): intensidad MMI 6,4 a 7,1 y PGA 0,19 a 0,23 g en los edificios analizados.
+4. **SGC, acelerógrafo RAC2C, y USGS DYFI**: validan el ShakeMap en Cali.
+5. **USGS, catálogo de réplicas** (API FDSN): 67 réplicas M ≥ 4 hasta el 3-nov, 47 de ellas en septiembre.
+6. **OpenStreetMap** (Overpass API): salud, bomberos, vías principales, comunas y barrios; distancia a salud y posible bloqueo de vías.
 
 ## No disponibles (y por qué)
 
 | Fuente | Enlace | Problema | Alternativa |
 |---|---|---|---|
 | Datos abiertos Cali | [datos.cali.gov.co](https://datos.cali.gov.co/) | Fuera de línea desde el 21-oct-2026 por "medidas de seguridad" (comunicado de la Alcaldía) | Comunas y barrios desde OSM |
-| IDESC (geovisor y WFS) | [idesc.cali.gov.co](https://idesc.cali.gov.co/) | Redirige al portal de la Alcaldía; el WFS responde 404 | Microzonificación desde GEM TREQ (ver Suelo) |
-| Microzonificación sísmica de Cali (capa vectorial) | [Alcaldía](https://www.cali.gov.co/dagma/publicaciones/1099/microzonificacion-sismica-cali/) | Solo como mapa (PDF); la capa vectorial vivía en la IDESC | Grilla de GEM TREQ con la microzona por punto (~750 m), usada como `c_suelo` |
-| Población por manzana (DANE CNPV 2018) | geoportal del DANE | Por verificar | Densidad de edificios como proxy |
+| IDESC (geovisor y WFS) | [idesc.cali.gov.co](https://idesc.cali.gov.co/) | Redirige al portal de la Alcaldía; el WFS responde 404 | Microzonificación desde GEM TREQ |
+| Microzonificación (capa vectorial) | [Alcaldía](https://www.cali.gov.co/dagma/publicaciones/1099/microzonificacion-sismica-cali/) | Solo como mapa (PDF) | Grilla de GEM TREQ (fuente 2) |
+| Población por manzana (DANE CNPV 2018) | geoportal del DANE | Sin tiempo para verificar la descarga | Ocupantes por edificio de GEM, que usa el mismo censo (fuente 1) |
+| Modelo de licuación del USGS (*ground-failure*) | producto del evento | Ráster de ~1 km; requiere `rasterio` | Licuación local de GEM (fuente 3) |
+| Copernicus EMS, activación EMSR916 | [mapping.emergency.copernicus.eu](https://mapping.emergency.copernicus.eu/activations/EMSR916) | El portal responde, pero no se alcanzó a revisar si cubre las comunas de los datos | Pendiente: sería la validación independiente del daño satelital |
 
 Este hallazgo sirve en la presentación: la ciudad perdió su infraestructura de datos abiertos justo cuando más se necesita, y el pipeline se armó con fuentes abiertas alternativas.
-
-## Tabla de seguimiento (completar el viernes)
-
-| Fuente | Enlace | Formato | Cubre Cali | Fecha | Estado | Responsable |
-|---|---|---|---|---|---|---|
-| Edificios (organización) | entregado en el evento | por confirmar | sí | 13-nov-2026 | pendiente | |
-| | | | | | | |
 
 ## Revisión de las fuentes del informe (13-nov-2026)
 

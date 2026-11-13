@@ -24,7 +24,7 @@ raw = bronze_desde_geojson(gpd.read_file(OFI / "Datosprediales.json"))
 assert raw.shape == (5146, 21), raw.shape  # la guía: 5.146 filas y 20 propiedades + geometría
 
 silver, reporte = limpiar(raw)
-g = enriquecer(a_geo(silver), capas["comunas"], capas["barrios"], capas["salud"], bomberos, capas["vias_principales"])
+g = enriquecer(cruzar_externos(a_geo(silver), EXT), capas["comunas"], capas["barrios"], capas["salud"], bomberos, capas["vias_principales"])
 g = asignar_suelo(g, *leer_suelo(EXT))
 reporte["geometrias_reparadas"] = int(g["geom_reparada"].sum())
 reporte["comuna_completada_con_osm"] = int(silver["comuna"].isna().sum())

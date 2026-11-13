@@ -48,20 +48,22 @@ METROS_POR_PISO = 3.0         # altura típica de entrepiso en vivienda colombia
 
 # Pesos del índice de riesgo ante réplicas (se re-escalan a suma 1). Justificación en docs/INDICE_RIESGO.md
 PESOS = {
-    "c_danio": 0.30,        # daño observado (prob. de escombros + estado estructural)
-    "c_suelo": 0.15,        # amplificación del suelo en el período propio del edificio (GEM TREQ)
-    "c_altura": 0.15,       # más pisos = más masa que puede caer y más ocupantes
-    "c_exposicion": 0.15,   # densidad de edificios alrededor (proxy de población expuesta)
-    "c_acceso_salud": 0.10, # lejanía al centro de salud más cercano (OSM, la medida menos confiable)
-    "c_bloqueo_via": 0.15,  # sus escombros podrían bloquear una vía principal
+    "c_danio": 0.25,          # daño observado desde el satélite (categoría de Estado_Estructural)
+    "c_vulnerabilidad": 0.20, # prob. de ductilidad baja o nula según la tipología (GEM exposición)
+    "c_exposicion": 0.15,     # ocupantes del edificio (GEM, censo 2018)
+    "c_suelo": 0.10,          # amplificación en el período del edificio + susceptibilidad a licuación (GEM)
+    "c_altura": 0.10,         # más pisos = más masa que puede caer
+    "c_acceso_salud": 0.10,   # lejanía al centro de salud más cercano (OSM)
+    "c_bloqueo_via": 0.10,    # sus escombros podrían bloquear una vía principal (OSM)
 }
-# Borrador anterior, sin suelo: queda como escenario para mostrar cuánto cambia el ranking al agregarlo.
+# Borradores anteriores: quedan como escenarios para mostrar cuánto cambia el ranking.
 PESOS_SIN_SUELO = {"c_danio": 0.35, "c_altura": 0.20, "c_exposicion": 0.15, "c_acceso_salud": 0.15, "c_bloqueo_via": 0.15}
 ESCENARIOS_SENSIBILIDAD = {
     "base": PESOS,
+    "solo_datos_oficiales": {"c_danio": 0.6, "c_altura": 0.4},
+    "sin_fuentes_gem": {k: v for k, v in PESOS.items() if k not in ("c_vulnerabilidad", "c_suelo")},
     "sin_suelo": PESOS_SIN_SUELO,
     "pesos_iguales": {k: 1 for k in PESOS},
-    "solo_danio_altura": {"c_danio": 0.6, "c_altura": 0.4},
     "enfasis_servicios": {**PESOS, "c_acceso_salud": 0.3, "c_bloqueo_via": 0.3},
     "enfasis_poblacion": {**PESOS, "c_exposicion": 0.35},
 }
@@ -193,12 +195,66 @@ def asignar_suelo(gdf, grilla, amplif):
     return out
 
 
+# Fuentes sísmicas y de exposición (scripts/descargar_externos.py; detalle en docs/FUENTES.md).
+DIST_MAX_GEM_M = 15  # el 95 % de los edificios oficiales tiene un punto GEM a menos de 9 m
+PISOS_GEM = {"1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6-10": 8, "11+": 12}
+SUSC_LICUACION = {"vh": 1.0, "h": 0.8, "m": 0.5, "l": 0.25, "vl": 0.1, "n": 0.0}  # muy alta ... nula (GEM)
+
+
+def _mas_cercano(gdf, puntos, cols, max_m=None):
+    """Copia `cols` del punto más cercano (si es un polígono y el punto cae dentro, la distancia es 0)."""
+    j = gpd.sjoin_nearest(gdf[["geometry"]].to_crs(CRS_METROS), puntos[cols + ["geometry"]].to_crs(CRS_METROS),
+                          how="left", max_distance=max_m, distance_col="_d")
+    return j[~j.index.duplicated(keep="first")].reindex(gdf.index)
+
+
+def cruzar_externos(gdf, carpeta):
+    """Une a cada edificio:
+    - GEM exposición (edificio GEM dentro del polígono o a <= 15 m): año, estrato, uso, pisos, ocupantes, valor y vulnerabilidad.
+      Si NPISOS era 0 o nulo, se toman los pisos de GEM (catastro 2021) antes que la mediana de la comuna.
+    - GEM sitio: susceptibilidad a licuación y pendiente del sitio más cercano.
+    - USGS ShakeMap: intensidad y aceleraciones del nodo más cercano (~1 km)."""
+    out = gdf.copy()
+    ex = a_gdf(pd.read_csv(f"{carpeta}/gem_exposicion.csv", dtype={"MICROZONE": str, "FLOORS": str}))
+    j = _mas_cercano(out, ex, ["CONSTRUCTION_PERIOD", "INCOME_LEVEL", "FLOORS", "OCCUPANCY", "night", "structural",
+                               "p_ductilidad_baja", "p_mamposteria_no_reforzada"], DIST_MAX_GEM_M)
+    out["dist_gem_m"] = j["_d"].round(1)
+    out["periodo_construccion"] = j["CONSTRUCTION_PERIOD"]
+    out["estrato"] = j["INCOME_LEVEL"].astype("Int64")
+    out["uso"] = j["OCCUPANCY"]
+    out["pisos_gem"] = j["FLOORS"].map(PISOS_GEM)
+    out["ocupantes_noche"] = j["night"]
+    out["valor_reemplazo_usd"] = j["structural"].round(0)
+    out["p_ductilidad_baja"] = j["p_ductilidad_baja"]
+    out["p_mamposteria_no_reforzada"] = j["p_mamposteria_no_reforzada"]
+    usar_gem = out["pisos_imputado"] & out["pisos_gem"].notna()
+    out["pisos_fuente"] = np.where(~out["pisos_imputado"], "oficial", np.where(usar_gem, "gem", "mediana_comuna"))
+    out.loc[usar_gem, "pisos"] = out.loc[usar_gem, "pisos_gem"]
+
+    sitio = a_gdf(pd.read_csv(f"{carpeta}/gem_sitio_licuacion_ladera.csv"))
+    j = _mas_cercano(out, sitio, ["liq_susc_cat", "pendiente_grados"])
+    out["licuacion_cat"] = j["liq_susc_cat"]
+    out["licuacion"] = j["liq_susc_cat"].map(SUSC_LICUACION)
+    out["pendiente_grados"] = j["pendiente_grados"]
+
+    sm = a_gdf(pd.read_csv(f"{carpeta}/usgs_shakemap_cali.csv"))
+    j = _mas_cercano(out, sm, ["mmi", "pga", "psa10"])
+    out["mmi"] = j["mmi"]
+    out["pga_g"] = (j["pga"] / 100).round(3)    # ShakeMap entrega %g
+    out["psa10_g"] = (j["psa10"] / 100).round(3)
+    return out
+
+
 def calcular_indice(gdf, pesos=PESOS):
     g = gdf.copy()
     g["c_danio"] = g[["prob_escombros", "sev_estado"]].mean(axis=1, skipna=True)  # NaN si no hay ninguno
-    g["c_suelo"] = normalizar(g["amplif_suelo"]) if "amplif_suelo" in g else np.nan  # sin capa de suelo: su peso se reparte
+    # Sin una capa externa, su componente queda NaN y su peso se reparte entre los demás.
+    g["c_vulnerabilidad"] = g["p_ductilidad_baja"] if "p_ductilidad_baja" in g else np.nan
+    suelo = [normalizar(g["amplif_suelo"])] if "amplif_suelo" in g else []
+    suelo += [g["licuacion"]] if "licuacion" in g else []
+    g["c_suelo"] = pd.concat(suelo, axis=1).mean(axis=1) if suelo else np.nan
     g["c_altura"] = normalizar(g["pisos"])
-    g["c_exposicion"] = normalizar(g["n_edif_100m"])
+    g["c_exposicion"] = normalizar(g["ocupantes_noche"]) if "ocupantes_noche" in g else normalizar(g["n_edif_100m"])
     g["c_acceso_salud"] = normalizar(g["dist_salud_m"])
     g["c_bloqueo_via"] = g["puede_bloquear_via"].astype(float)
     g["indice_riesgo"] = indice_riesgo(g, pesos)
@@ -223,6 +279,16 @@ def gold_comunas(g, comunas, salud, bomberos):
         amplif_suelo_prom=("amplif_suelo", lambda s: round(s.mean(), 3)),
         microzona_predominante=("microzona", lambda s: s.mode().iat[0]),
     ).reset_index()
+    if "ocupantes_noche" in g:  # fuentes GEM y USGS
+        ext = g.groupby("comuna").agg(
+            ocupantes_noche=("ocupantes_noche", "sum"),
+            ocupantes_en_edif_con_danio=("ocupantes_noche", lambda s: s[g.loc[s.index, "sev_estado"] >= 0.7].sum()),
+            pct_antes_1985=("periodo_construccion", lambda s: round(100 * s.isin(["<= 1960", "1961 - 1985"]).mean(), 1)),
+            p_ductilidad_baja_prom=("p_ductilidad_baja", lambda s: round(s.mean(), 3)),
+            pct_licuacion_alta=("licuacion", lambda s: round(100 * (s >= 0.8).mean(), 1)),
+            mmi_prom=("mmi", lambda s: round(s.mean(), 2)),
+        ).reset_index()
+        agg = agg.merge(ext, on="comuna", how="left")
     if "area_m2" in g:  # la guía: los edificios sin dato pesan mucho más en área que en número
         area = g.groupby("comuna").apply(lambda d: round(100 * d.loc[d["sin_dato_satelital"], "area_m2"].sum() / d["area_m2"].sum(), 2))
         agg = agg.merge(area.rename("pct_area_sin_dato"), on="comuna", how="left")
@@ -249,6 +315,7 @@ def para_spark(gdf):
 
 COLS_VISOR = ["id", "comuna", "barrio", "estado", "sev_estado", "area_m2", "pisos", "prob_escombros", "alta_escombros", "sin_dato_satelital",
               "dist_salud_m", "dist_via_principal_m", "puede_bloquear_via", "microzona", "amplif_suelo",
+              "periodo_construccion", "estrato", "ocupantes_noche", "p_ductilidad_baja", "licuacion_cat", "mmi",
               "indice_riesgo", "prioridad"]
 
 

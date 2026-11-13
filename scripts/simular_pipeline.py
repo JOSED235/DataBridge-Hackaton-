@@ -46,7 +46,7 @@ raw.loc[rng.choice(n, 20, replace=False), "NPISOS"] = 0  # errores de captura
 # --- Pipeline ----------------------------------------------------------------------------------
 silver, reporte = limpiar(raw, COLS_SIM)
 print("Reporte de limpieza:", reporte)
-g = enriquecer(a_geo(silver), capas["comunas"], capas["barrios"], capas["salud"], bomberos, capas["vias_principales"])
+g = enriquecer(cruzar_externos(a_geo(silver), EXT), capas["comunas"], capas["barrios"], capas["salud"], bomberos, capas["vias_principales"])
 g = asignar_suelo(g, *leer_suelo(EXT))
 g = calcular_indice(g)
 gc = gold_comunas(g, capas["comunas"], capas["salud"], bomberos)

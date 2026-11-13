@@ -6,6 +6,7 @@
 # MAGIC 2. Marca `sin_dato_satelital`: esos edificios **no se borran**; se marcan para verificación en terreno.
 # MAGIC 3. Cruces con OSM: comuna faltante, barrio, distancia a salud, bomberos y vía principal, densidad de edificios a 100 m y si sus escombros podrían bloquear una vía.
 # MAGIC 4. Cruce con la microzonificación sísmica (GEM TREQ): microzona y amplificación del suelo en el período propio del edificio.
+# MAGIC 5. Cruce con el modelo de exposición de GEM (edificio por edificio: año, estrato, uso, pisos, ocupantes, vulnerabilidad), la susceptibilidad a licuación y pendiente (GEM) y el ShakeMap del USGS. NPISOS = 0 se completa con los pisos de GEM.
 
 # COMMAND ----------
 
@@ -29,7 +30,7 @@ reporte  # copiar a la bitácora: es la justificación de cada paso de limpieza
 
 capas = {n: gpd.read_file(f"{VOL}/osm_{n}.geojson") for n in ("comunas", "barrios", "salud", "emergencia", "vias_principales")}
 bomberos = capas["emergencia"][capas["emergencia"]["amenity"] == "fire_station"]
-g = enriquecer(a_geo(silver), capas["comunas"], capas["barrios"], capas["salud"], bomberos, capas["vias_principales"])
+g = enriquecer(cruzar_externos(a_geo(silver), VOL), capas["comunas"], capas["barrios"], capas["salud"], bomberos, capas["vias_principales"])
 g = asignar_suelo(g, *leer_suelo(VOL))  # microzona y amplificación del suelo (GEM TREQ)
 reporte["geometrias_reparadas"] = int(g["geom_reparada"].sum())
 reporte["comuna_completada_con_osm"] = int(silver["comuna"].isna().sum())
@@ -57,6 +58,17 @@ comentarios = {
     "microzona": "Microzona sísmica INGEOMINAS-DAGMA 2005 (grilla GEM TREQ); noaf = fuera de la microzonificación",
     "periodo_s": "Período propio estimado del edificio, T = pisos/10 s, redondeado a los períodos del modelo GEM",
     "amplif_suelo": "Factor de amplificación del suelo de su microzona en su período propio (GEM TREQ, roca 0,23 g)",
+    "dist_gem_m": "Metros al edificio del modelo de exposición GEM usado (0 = dentro del polígono; nulo si > 15 m)",
+    "periodo_construccion": "Período de construcción según GEM (catastro 2021); hitos del código: 1984, 1998, 2010",
+    "estrato": "Estrato socioeconómico según GEM",
+    "ocupantes_noche": "Ocupantes nocturnos estimados por GEM con el censo 2018",
+    "p_ductilidad_baja": "Probabilidad de ductilidad baja o nula de su tipología (GEM, esquema de expertos MEAN)",
+    "p_mamposteria_no_reforzada": "Probabilidad de mampostería no reforzada o adobe de su tipología (GEM)",
+    "pisos_fuente": "oficial = NPISOS; gem = NPISOS era 0 o nulo y se tomó de GEM; mediana_comuna = sin dato en ambos",
+    "licuacion_cat": "Susceptibilidad a licuación del sitio más cercano (GEM): vh, h, m, l, vl, n",
+    "pendiente_grados": "Pendiente del terreno en el sitio más cercano (GEM)",
+    "mmi": "Intensidad Mercalli del sismo principal en su nodo del ShakeMap v11 del USGS (~1 km)",
+    "pga_g": "Aceleración pico del suelo (g) en su nodo del ShakeMap del USGS",
 }
 for col, txt in comentarios.items():
     spark.sql(f"ALTER TABLE {tabla('silver', 'predios')} ALTER COLUMN {col} COMMENT '{txt}'")

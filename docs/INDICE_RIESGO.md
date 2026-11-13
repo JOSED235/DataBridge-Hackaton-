@@ -1,58 +1,70 @@
 # Índice de riesgo ante réplicas
 
-> Borrador. Los pesos y categorías se revisan el viernes con los datos reales; cada cambio va a la tabla de decisiones de `BITACORA.md`.
-> Código: `calcular_indice()` en `notebooks/00_pipeline.py`.
+> Versión con los datos oficiales y las fuentes externas (13-nov-2026, 10:55). Si cambian los pesos, la decisión va a la tabla de `BITACORA.md`.
+> Código: `calcular_indice()` en `notebooks/00_pipeline.py`. Fuentes: `docs/FUENTES.md`.
 
 ## Qué mide
 
 Para cada edificio, **qué tan urgente es inspeccionarlo antes de la próxima réplica**. No mide si el edificio es seguro: los datos son satelitales y solo sirven para priorizar.
 
+## Por qué combina daño observado y fuentes externas
+
+El daño satelital no se asocia con ninguna característica conocida: ni la edad, el estrato, el uso, la microzona o la licuación, ni la cercanía a otros edificios dañados (`docs/FUENTES.md`, última sección). Por edificio se comporta como una señal individual con mucho ruido posible. Por eso el índice no depende solo de él: suma lo que las fuentes externas sí saben de cada edificio, que es qué tan frágil es, cuánta gente hay dentro, en qué suelo está y qué servicios afectaría.
+
 ## Explicación en 30 segundos (para el jurado)
 
-> "Cada edificio recibe un puntaje de 0 a 1 que suma seis factores: qué tanto daño se ve desde el satélite, cuánto amplifica su suelo justo la vibración a la que ese edificio es sensible, qué tan alto es, cuánta gente hay alrededor, qué tan lejos está del hospital más cercano y si sus escombros podrían tapar una vía principal. El daño pesa más porque es lo único observado; los otros cinco dicen cuánto empeora la situación si una réplica lo termina de tumbar. Probamos seis combinaciones de pesos, incluida una sin suelo, y comparamos el ranking."
+> "Cada edificio recibe un puntaje de 0 a 1. El satélite dice si se ve dañado, y eso pesa más, pero no basta: el daño satelital no sigue ningún patrón, así que le sumamos lo que sí sabemos de cada edificio. Del modelo de exposición de GEM tomamos qué tan frágil es su tipo de construcción y cuánta gente duerme ahí; de la microzonificación, cuánto amplifica su suelo y si puede licuarse; y de OpenStreetMap, qué tan lejos está del hospital y si sus escombros tapan una vía. Con siete combinaciones de pesos distintas, el ranking se mantiene correlacionado entre 0,70 y 0,97."
 
 ## Componentes
 
-Todos normalizados a 0..1 (1 = más urgente). Para que un valor atípico no aplaste al resto, se recortan los percentiles 1 y 99 antes de normalizar.
+Todos de 0 a 1 (1 = más urgente). Para que un valor atípico no aplaste al resto, se recortan los percentiles 1 y 99 antes de normalizar.
 
-| Componente | Peso | Cómo se calcula | Por qué |
-|---|---|---|---|
-| `c_danio` | 30 % | Severidad del `Estado_Estructural`: escombros 1,0, techo desaparecido 0,7, sin cambio aparente 0,1 (los datos no traen probabilidad; `Indice_Escombros` tiene daño en las dos colas) | Es el único dato observado del daño. Va primero porque un edificio ya dañado es el que más puede colapsar con una réplica. |
-| `c_suelo` | 15 % | Factor de amplificación de su microzona (INGEOMINAS-DAGMA 2005, funciones de GEM TREQ) en el período propio del edificio, T ≈ pisos/10 s, leído para 0,23 g en roca | La misma sacudida daña distinto según el suelo. En Cali el suelo amplifica hasta ~2 veces los períodos largos, los de edificios de 15 a 25 pisos (resonancia). Ver `docs/INFORME_SISMO.md`, caps. 5 y 8. |
-| `c_altura` | 15 % | `NPISOS` normalizado | Más pisos = más masa que cae, más ocupantes y mayor alcance de los escombros. |
-| `c_exposicion` | 15 % | Edificios a menos de 100 m (proxy de población) | Sin datos de población por manzana disponibles, la densidad construida aproxima cuántas personas quedan expuestas. |
-| `c_acceso_salud` | 10 % | Distancia al hospital o clínica más cercano (OSM) | Si hay heridos, la lejanía a salud aumenta el impacto. Pesa menos porque es la medida menos confiable (OSM etiqueta como hospital muchas IPS pequeñas). |
-| `c_bloqueo_via` | 15 % | 1 si tiene alta prob. de escombros y está a menos de su altura (pisos × 3 m) de una vía principal | Responde a "servicios urbanos": escombros sobre una vía principal cortan el paso de ambulancias y bomberos. |
+| Componente | Peso | Fuente | Cómo se calcula | Por qué |
+|---|---|---|---|---|
+| `c_danio` | 25 % | Datos oficiales | Severidad del `Estado_Estructural`: escombros 1,0, techo desaparecido 0,7, sin cambio aparente 0,1. Los datos no traen probabilidad, y `Indice_Escombros` tiene daño en las dos colas | Es lo único observado del sismo. Un edificio ya dañado es el que más puede colapsar con una réplica. |
+| `c_vulnerabilidad` | 20 % | GEM exposición | Probabilidad de que su tipología tenga ductilidad baja o nula (`p_ductilidad_baja`) | Un edificio poco dúctil (informal o anterior al código de 1984) colapsa con menos sacudida. Es lo que más pesa en los modelos de riesgo, y en Kumamoto 2016 colapsó el 28 % de las casas anteriores al código frente al 2 % de las nuevas (`INFORME_SISMO.md`, cap. 9). |
+| `c_exposicion` | 15 % | GEM exposición (censo 2018) | Ocupantes nocturnos del edificio | Responde a "población": cuántas personas quedan en riesgo. Reemplaza el proxy anterior (edificios a menos de 100 m). |
+| `c_suelo` | 10 % | GEM microzonificación | Promedio de (a) la amplificación de su microzona en su período propio (T ≈ pisos/10 s) y (b) la susceptibilidad a licuación | Una réplica se amplifica o hace fallar el terreno según el suelo. Pesa poco porque en esta muestra no explica el daño observado. |
+| `c_altura` | 10 % | Datos oficiales (GEM si `NPISOS` = 0) | Pisos normalizados | Más pisos = más masa que cae y mayor alcance de los escombros. |
+| `c_acceso_salud` | 10 % | OpenStreetMap | Distancia al hospital o clínica más cercano | Si hay heridos, la lejanía a salud aumenta el impacto. |
+| `c_bloqueo_via` | 10 % | OpenStreetMap | 1 si tiene escombros y está a menos de su altura (pisos × 3 m) de una vía principal | Responde a "servicios urbanos": escombros sobre la vía cortan el paso de ambulancias y bomberos. |
 
-**Faltantes:** si a un edificio le falta un componente, su peso se reparte entre los que sí tiene (ni se castiga ni se premia el faltante). Los edificios **sin dato satelital** reciben la categoría propia *"Sin dato: verificar en terreno"*, porque no sabemos nada de su daño.
+**Faltantes:** si a un edificio le falta un componente (por ejemplo, el 1,1 % sin edificio GEM a menos de 15 m), su peso se reparte entre los que sí tiene. Así no se castiga ni se premia el faltante. Los edificios **sin dato satelital** reciben la categoría propia *"Sin dato: verificar en terreno"*.
 
 ## Categorías de prioridad
 
-| Prioridad | Regla |
-|---|---|
-| Muy alta | 5 % de índice más alto |
-| Alta | siguiente 10 % |
-| Media | siguiente 25 % |
-| Baja | resto |
-| Sin dato: verificar en terreno | sin información satelital |
+| Prioridad | Regla | Edificios |
+|---|---|---|
+| Muy alta | 5 % de índice más alto | 247 |
+| Alta | siguiente 10 % | 476 |
+| Media | siguiente 25 % | 1.124 |
+| Baja | resto | 2.864 |
+| Sin dato: verificar en terreno | sin información satelital | 435 |
 
 Se usan percentiles (no cortes fijos) porque el objetivo es ordenar a quién inspeccionar primero con recursos limitados.
 
 ## Por comuna
 
-`gold_comunas` ordena las comunas por el **percentil 90 del índice** (no por el promedio): una comuna con muchos edificios sanos y un grupo muy crítico no debe quedar escondida por el promedio. También reporta % de alta probabilidad de escombros, % sin dato, centros de salud y bomberos dentro de la comuna y edificios que podrían bloquear vías.
+`gold_icesixuao_comunas` ordena las comunas por el **percentil 90 del índice**, no por el promedio: una comuna con muchos edificios sanos y un grupo muy crítico no debe quedar escondida. Ranking: **3, 9, 10, 18, 17, 20, 19**. La comuna 3 queda primera por su vulnerabilidad: el 66,8 % de sus edificios se construyó antes de 1985 y la ductilidad baja promedio es 0,92. La comuna 19 tiene la mayor cantidad de gente en edificios con daño (3.731), pero queda última en el p90 porque su construcción es más reciente.
 
-## Sensibilidad
+## Sensibilidad (datos reales)
 
-`sensibilidad()` compara el ranking base con cinco escenarios de pesos: sin suelo (el borrador anterior), pesos iguales, solo daño y altura, énfasis en servicios y énfasis en población. Reporta la correlación de Spearman y qué porcentaje del top 50 se mantiene.
+| Escenario | Spearman vs. base | Top 50 que se mantiene |
+|---|---|---|
+| Solo datos oficiales (daño 60 %, altura 40 %) | 0,705 | 30 % |
+| Sin fuentes GEM (sin vulnerabilidad ni suelo) | 0,842 | 54 % |
+| Sin suelo (borrador de la mañana) | 0,846 | 54 % |
+| Pesos iguales | 0,921 | 60 % |
+| Énfasis en servicios | 0,910 | 66 % |
+| Énfasis en población | 0,972 | 52 % |
 
-Con los datos ficticios de prueba: Spearman entre 0,78 y 0,97; el top 50 se mantiene entre 28 % y 66 % (sin suelo: 0,89 y 60 %). Los datos ficticios no tienen relación real con el suelo, así que esto solo prueba que el cálculo funciona. **TODO-VIERNES:** reemplazar por los valores reales y comentarlos (si un escenario cambia mucho el top, decir cuál factor manda).
+**Lectura:** el orden general es estable (Spearman ≥ 0,84 en todos los escenarios con fuentes externas). **Lo que más cambia el top 50 es quitar las fuentes externas:** con solo los datos oficiales, solo el 30 % del top se mantiene. Esa es la prueba de que las fuentes externas cambian la respuesta, no solo la decoran.
 
 ## Limitaciones a decir en voz alta
 
 - Datos satelitales: priorizan, no certifican seguridad.
-- Suelo con resolución de ~750 m: la capa vectorial de la IDESC no está disponible (portal caído desde el 21-oct-2026), así que cada edificio toma la microzona del punto más cercano de la grilla de GEM TREQ. Cerca de los bordes entre microzonas puede quedar en la vecina.
-- Las funciones de amplificación son modelos estadísticos, no mediciones de esta sacudida, y T ≈ pisos/10 es una regla práctica.
-- Población aproximada por densidad de edificios, no por censo.
+- La vulnerabilidad y los ocupantes vienen de un modelo (GEM, catastro 2021 y censo 2018), no de inspección. La tipología es probabilística.
+- Suelo con resolución de ~750 m. Las funciones de amplificación son modelos y T ≈ pisos/10 es una regla práctica.
 - OSM etiqueta como "hospital" muchas IPS pequeñas: la distancia a salud es optimista.
 - El umbral de bloqueo de vía (pisos × 3 m) es una regla práctica, no un modelo de caída de escombros.
+- Los pesos son una decisión del equipo, justificada arriba y probada con la sensibilidad.

@@ -76,7 +76,7 @@ La guía oficial exige trabajar en `workspace.default`, con un volumen y tablas 
 
 1. Abrir `01_bronze` y correr las celdas hasta la que dice `CREATE VOLUME` (incluida). Crea el volumen `workspace.default.icesixuao`.
 2. Menú **Catalog** → `workspace` → `default` → **Volumes** → `icesixuao` → **Upload to this volume**. Si no aparece, refrescar el Catalog.
-3. Subir **todo junto al mismo volumen**: `Datosprediales.json` (datos oficiales, de `data/oficiales/`) y los 9 archivos de `data/externos/`.
+3. Subir **todo junto al mismo volumen**: `Datosprediales.json` (datos oficiales, de `data/oficiales/`) y los 15 archivos de `data/externos/` (`.geojson` y `.csv`).
 
 ## 5. Viernes: bronze
 
@@ -123,7 +123,7 @@ Plan B si Databricks falla: `python scripts/correr_local.py` da las mismas tabla
 
 ```
 Hoy:      cuenta → Git folder o import → notebook "prueba" → autoprueba OK
-Viernes:  01_bronze hasta CREATE VOLUME → subir Datosprediales.json + data/externos al volumen
+Viernes:  01_bronze hasta CREATE VOLUME → subir Datosprediales.json + los 15 de data/externos al volumen
           → 01_bronze completo → 02_silver → 03_gold → captura del Catalog
           → descargar salidas → mapa → Genie → correo antes de las 5:00 p. m.
 ```

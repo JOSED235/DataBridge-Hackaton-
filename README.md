@@ -10,8 +10,8 @@ Solución del equipo para la **DataBridge Hack** (IEEE Computer Society, Colombi
 
 | Parte | Estado |
 |---|---|
-| Fuentes externas (USGS, OSM, suelo de GEM TREQ) | Descargadas en `data/externos/` |
 | Contraste entre ciudades y sismos | Fuentes candidatas revisadas en `docs/FUENTES.md`: 20 entradas de catálogo y 38 referencias, con alcance y pendientes de verificación; integración pendiente |
+| Fuentes externas (GEM TREQ: exposición, suelo, licuación; USGS: ShakeMap, estaciones, réplicas; OSM) | Descargadas y recortadas en `data/externos/`, con una ficha por fuente en `docs/FUENTES.md` |
 | Funciones espaciales | Listas, con autoprueba |
 | Notebooks bronze/silver/gold | Ajustados a los datos oficiales y a los nombres de la guía (`workspace.default.<capa>_icesixuao_<contenido>`) |
 | Simulación con datos ficticios | Pasa de extremo a extremo |
@@ -41,10 +41,11 @@ notebooks/                Para importar en Databricks (Workspace → Import)
   03_gold.py              Índice, ranking, sensibilidad, SQL clave y exportación al visor
 scripts/
   descargar_osm.py        Descarga las capas de OSM a data/externos/
+  descargar_externos.py   Descarga y recorta GEM (exposición, licuación) y USGS (ShakeMap, estaciones, réplicas)
   simular_pipeline.py     Corre el pipeline en local con edificios ficticios (no pisa el mapa real)
   correr_local.py         Corre el pipeline con los datos oficiales: gold en data/oficiales/salidas/ y mapa en visor/data/
 data/
-  externos/               Capas públicas: OSM y USGS (GeoJSON), microzonas y amplificación del suelo de GEM (CSV)
+  externos/               Fuentes externas públicas recortadas a Cali: OSM, USGS y GEM (detalle en docs/FUENTES.md)
   oficiales/              Datos del evento (Datosprediales.json): NO se suben (están en .gitignore)
 visor/                    MapLibre GL JS + deck.gl, sin build
   data/                   GeoJSON que lee el visor; edificios y comunas con datos reales no se suben
@@ -70,6 +71,7 @@ python notebooks/00_utils_espacial.py   # autoprueba de funciones espaciales
 python scripts/simular_pipeline.py      # pipeline completo con datos ficticios
 python scripts/correr_local.py          # pipeline con los datos oficiales de data/oficiales/
 python scripts/descargar_osm.py         # volver a bajar capas de OSM (borra antes el archivo a actualizar)
+python scripts/descargar_externos.py    # volver a bajar GEM y USGS (~80 MB)
 ```
 
 **Databricks:** ver `docs/GUIA_DATABRICKS.md` (paso a paso desde cero) y `docs/PLAN_VIERNES.md`.
