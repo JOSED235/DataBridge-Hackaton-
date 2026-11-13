@@ -230,7 +230,7 @@ def main():
 </style></head><body><div class="wrap">
 
 <h1>Réplicas en Cali: <span>dónde inspeccionar primero</span></h1>
-<p class="sub">DataBridge Hack 2026 · equipo icesixuao: Nicolas Zapato (Universidad Autónoma de Occidente) y
+<p class="sub">DataBridge Hack 2026 · equipo icesixuao: Nicolas Zapata (Universidad Autónoma de Occidente) y
 José David Rodríguez Pinilla (Universidad Icesi) · corrida {procesado:%d-%m-%Y %H:%M} · {remoto}</p>
 <p class="sub">Mapa interactivo: <a href="./" style="color:var(--azul)">visor del equipo</a> ·
 código: <a href="https://github.com/JOSED235/DataBridge-Hackaton-" style="color:var(--azul)">repositorio</a>

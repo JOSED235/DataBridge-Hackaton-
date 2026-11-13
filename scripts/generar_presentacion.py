@@ -83,7 +83,7 @@ def texto(slide, x, y, w, h, parrafos, ancla=MSO_ANCHOR.TOP, margen=0.0, nombre=
     return tb
 
 
-EQUIPO = "Equipo icesixuao · Nicolas Zapato (UAO) · José David Rodríguez Pinilla (Icesi)"
+EQUIPO = "Equipo icesixuao · Nicolas Zapata (UAO) · José David Rodríguez Pinilla (Icesi)"
 
 
 def titulo(slide, kicker, frase):
