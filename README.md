@@ -32,6 +32,7 @@ docs/
   INDICE_RIESGO.md                  Componentes, pesos y justificación del índice
   FUENTES.md                        Fuentes, revisión de las 20 entradas y 38 referencias, cobertura y pendientes
   GUION_PRESENTACION.md             Guion de 5 a 7 min y respuestas al jurado
+  ENTREGA.md                        Borrador del correo: textos de 200 y 500 palabras, fuentes y 3 diapositivas
   INFORME_SISMO.md                  Informe de investigación previa (suelo, profundidad, Venezuela, casos)
 notebooks/                Para importar en Databricks (Workspace → Import)
   00_utils_espacial.py    Funciones espaciales + autoprueba

@@ -93,6 +93,11 @@
 **Por qué:** Saber qué sostienen los datos antes de concluir. Que nada explique el daño satelital es un hallazgo: indica una señal individual con posible ruido, y justifica que el índice combine el daño con lo que las fuentes externas saben de cada edificio.
 **Archivos:** `notebooks/03_gold.py` (tabla `gold_icesixuao_factores`), `docs/FUENTES.md`
 
+### 2026-11-13 11:10 · José David
+**Qué:** Borrador del correo de entrega: texto de decisiones en silver y gold (183 palabras), respuesta a las dos preguntas (≤ 500 palabras), lista de fuentes, contenido de las 3 diapositivas y especificación del pantallazo del mapa. Cada cifra apunta a su tabla gold.
+**Por qué:** La entrega es lo único que se presenta el sábado; dejarla escrita con cifras rastreables mientras corre Databricks.
+**Archivos:** `docs/ENTREGA.md`, `README.md`
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |
