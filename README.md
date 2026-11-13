@@ -54,6 +54,7 @@ scripts/
   correr_oro.py           Consume Parquet plata y materializa 13 tablas oro privadas
   correr_plata.py         Materializa y valida solo plata en data/oficiales/plata/ (Parquet privado)
   correr_local.py         Plata nueva → gold en data/oficiales/salidas/ y mapa en visor/data/
+  generar_dashboard.py    Dashboard HTML autónomo de conclusiones desde oro y plata (salida privada)
 analisis_bronce/          EDA independiente del pipeline: notebooks por dataset, ejecutor y soporte
   notebooks/             Notebooks fuente, sin salidas ni registros oficiales
   ejecutados/            Notebooks con salidas y HTML para visualizar (fuera de git)

@@ -291,6 +291,8 @@ def calcular_indice(gdf, pesos=PESOS):
 
 
 def gold_comunas(g, comunas, salud, bomberos):
+    """Agregación de comunas del flujo antiguo: solo la usa scripts/simular_pipeline.py
+    (prueba de humo con edificios ficticios). El camino oficial es comunas_oro en 00_gold."""
     agg = g.groupby("comuna").agg(
         n_edificios=("id", "size"),
         n_alta_escombros=("alta_escombros", "sum"),

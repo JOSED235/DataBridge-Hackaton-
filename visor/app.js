@@ -1,4 +1,4 @@
-// Visor de prioridad de inspección ante réplicas. Datos en ./data (exportados por notebooks/03_gold).
+// Visor de prioridad de inspección ante réplicas. Datos en ./data: edificios y comunas exportados de las tablas gold por scripts/correr_local.py (en Databricks, notebooks/03_gold); salud, vías y sismos vienen de bronze.
 const { MapboxOverlay, GeoJsonLayer, ColumnLayer, ScatterplotLayer, HeatmapLayer, TextLayer } = deck;
 
 const CALI = { longitude: -76.522, latitude: 3.43, zoom: 11.6, pitch: 0, bearing: 0 };
