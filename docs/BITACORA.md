@@ -206,6 +206,11 @@
 **Verificación:** `python -m pytest -q tests/test_gold.py`: 13 pruebas aprobadas. Simulación de `comentar_oro_spark` con un Spark falso: 70 sentencias, comillas balanceadas.
 **Archivos:** `notebooks/00_gold.py`, `notebooks/03_gold.py`, `tests/test_gold.py`, `docs/GENIE.md` (nuevo), `README.md`, `docs/PLAN_VIERNES.md`, `docs/BITACORA.md`.
 
+### 2026-11-13 15:47 · José David
+**Qué:** Capturas del Catalog para el correo: `capturas/primeracatalog.png`, `segundacatalog.png` y `terceracatalog.png` muestran `workspace.default` con 45 tablas (16 bronze, 16 silver y 13 gold). Reemplazan `primera.png` y `segunda.png`. Nuevo pantallazo del visor con capa de concentración de riesgo para la diapositiva 3; se recortó a 16:9 por el borde derecho (zona rural sin predios) para no deformarlo y se regeneró la presentación. El pantallazo queda en `data/oficiales/salidas/`, fuera de Git, porque muestra predios con datos oficiales.
+**Por qué:** El correo pide la captura del Catalog con las tres capas, y la diapositiva 3 debe mostrar el mapa vigente.
+**Archivos:** `capturas/`, `docs/BITACORA.md`; `mapa.png`, `Mapanuevo.png` y `presentacion_icesixuao.pptx` en `data/oficiales/salidas/` (ignorados).
+
 ## Decisiones
 
 | Fecha/hora | Decisión | Razón | Alternativas descartadas | Responsable |
